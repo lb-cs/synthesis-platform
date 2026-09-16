@@ -32,7 +32,7 @@ Open <http://localhost:3000>.
 | `npm run type-check` | Generate route types, then `tsc --noEmit` |
 
 CI (`.github/workflows/ci.yml`) runs lint, format check, type-check, and build on
-every PR to `main`.
+every pull request and on pushes to `main`.
 
 ## Layout
 
