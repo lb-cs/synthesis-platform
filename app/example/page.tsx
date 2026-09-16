@@ -1,14 +1,14 @@
-import Link from "next/link";
+import Link from 'next/link';
 
-import { HealthCheck } from "@/components/health-check";
-import { Button } from "@/components/ui/button";
+import { HealthCheck } from '@/components/health-check';
+import { Button } from '@/components/ui/button';
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
+} from '@/components/ui/card';
 
 export default function ExamplePage() {
   return (
@@ -17,8 +17,8 @@ export default function ExamplePage() {
         <CardHeader>
           <CardTitle>Example route</CardTitle>
           <CardDescription>
-            A page under <code className="font-mono">app/example</code> using
-            shadcn/ui components and calling a Route Handler.
+            A page under <code className="font-mono">app/example</code> using shadcn/ui
+            components and calling a Route Handler.
           </CardDescription>
         </CardHeader>
         <CardContent>
