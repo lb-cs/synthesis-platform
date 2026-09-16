@@ -25,7 +25,7 @@ export default function ExamplePage() {
           <HealthCheck />
         </CardContent>
       </Card>
-      <Button variant="ghost" render={<Link href="/" />}>
+      <Button variant="ghost" render={<Link href="/" />} nativeButton={false}>
         Back home
       </Button>
     </main>
