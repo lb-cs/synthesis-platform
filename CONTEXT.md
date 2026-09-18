@@ -43,16 +43,43 @@ A route the guard lets a signed-out visitor reach. The list is `PUBLIC_PATHS` in
 **protected** and redirects to `/login`.
 _Avoid_: "unprotected", "open route", "whitelist".
 
+## Research content
+
+**Project**:
+The unit a user organises research by — one topic, its sources, and its conversations.
+Routes live under `app/(app)/projects/[projectId]/`. There is no table yet; the id in
+the URL is a placeholder until CECS491-9 lands.
+_Avoid_: "workspace" as a noun for the project itself (that is the screen, below),
+"folder", "notebook".
+
+**Workspace**:
+The split-panel screen for one project — sources on one side, the AI chat on the other
+(`app/(app)/projects/[projectId]/page.tsx`). A project has exactly one.
+_Avoid_: "project page", "chat page".
+
+**Source**:
+Something a user adds to a project for the AI to draw on: an uploaded PDF or text file
+today, a web link or YouTube video as a stretch goal. Listed under `…/sources`.
+_Avoid_: "document" (reserved for the chunked text a source becomes), "file" (only one
+kind of source), "paper".
+
+## Shell
+
+**Dashboard**:
+The signed-in landing screen (`/dashboard`): the list of projects and the way to create
+one. Named after the Jira wireframes; not a metrics dashboard.
+_Avoid_: "home" (that is the signed-out `/`), "projects page".
+
+**App shell**:
+The sidebar-plus-header frame every signed-in screen renders inside —
+`app/(app)/layout.tsx`, `components/app-sidebar.tsx`, `components/app-breadcrumb.tsx`.
+Routes in the `(app)` group get it; `/` and `/login` do not.
+_Avoid_: "nav", "chrome".
+
 ## Areas to expect
 
 Sections that will almost certainly need entries as the product takes shape. Delete any
 that turn out not to apply.
-
-### Research content
-
-What a user brings in and works on — the source material, the unit of work, how a
-collection of them is named. Decide early whether the product word is "document",
-"source", "paper", or something else, and stick to it.
 
 ### Synthesis
 

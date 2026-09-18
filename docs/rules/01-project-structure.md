@@ -11,6 +11,7 @@ Prettier and ESLint config. Everything runs from the root.
 app/              App Router routes — layout.tsx, page.tsx, api/*/route.ts
 components/       app components (kebab-case files, PascalCase exports)
 components/ui/    shadcn/ui primitives — added with `npx shadcn@latest add <name>`
+hooks/            hooks shared by more than one component
 lib/              shared, framework-free utilities and the real work behind route handlers
 public/           static assets
 docs/             these rules, code style, ADRs
@@ -18,8 +19,8 @@ docs/             these rules, code style, ADRs
 .cursor/rules/    thin glob-scoped stubs pointing at docs/rules/
 ```
 
-`hooks/` is aliased in `components.json` but does not exist yet. Create it the first
-time a hook is shared by two components; until then a hook lives next to its component.
+`hooks/` holds hooks shared by more than one component (`use-mobile.ts`, pulled in by
+the shadcn sidebar). A hook used by a single component lives next to that component.
 
 ## Import alias
 

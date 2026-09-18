@@ -22,7 +22,7 @@ never the raw value:
 | Lines    | `border-border`, `border-input`, `ring-ring`                                 |
 | Radius   | `rounded-sm` … `rounded-4xl`, all derived from `--radius`                    |
 | Fonts    | `font-sans`, `font-mono`, `font-heading` (Geist, loaded in `app/layout.tsx`) |
-| Sidebar  | `bg-sidebar`, `text-sidebar-foreground`, … — reserved for a sidebar shell    |
+| Sidebar  | `bg-sidebar`, `text-sidebar-foreground`, … — the app shell's sidebar only    |
 
 Never hardcode a hex or an arbitrary color (`bg-[#fafafa]`) for something a token covers.
 If a token is genuinely missing, add it to `globals.css` in both palettes — don't work
