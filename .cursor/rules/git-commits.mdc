@@ -1,0 +1,6 @@
+---
+description: Git commit message format
+alwaysApply: true
+---
+
+**Git commits**: `type: description` format. Types: `feat`, `fix`, `refactor`, `docs`, `style`, `test`, `chore`. Lower-case, imperative, no trailing period.

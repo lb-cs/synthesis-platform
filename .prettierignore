@@ -5,3 +5,6 @@ build
 coverage
 package-lock.json
 next-env.d.ts
+.agents
+.claude
+supabase/.temp

@@ -1,0 +1,9 @@
+---
+globs: **/*.ts,**/*.tsx
+description: Strict TS via next typegen, generated route types, status unions, readable types
+---
+
+See @docs/rules/04-typescript-conventions.md for the full rules.
+
+Content lives in `docs/rules/` so every agent reads the same source. Edit it there,
+not here — this file only carries the glob scoping.

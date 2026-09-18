@@ -1,0 +1,9 @@
+---
+globs: **/__tests__/**,**/*.test.ts,**/*.test.tsx
+description: No test suite yet — what CI checks instead, and the guidelines for when one lands
+---
+
+See @docs/rules/05-testing.md for the full rules.
+
+Content lives in `docs/rules/` so every agent reads the same source. Edit it there,
+not here — this file only carries the glob scoping.

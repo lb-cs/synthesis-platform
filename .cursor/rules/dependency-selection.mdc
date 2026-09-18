@@ -1,0 +1,14 @@
+---
+description: Require established, well-supported third-party dependencies
+alwaysApply: true
+---
+
+# Dependency selection
+
+- Prefer platform APIs, existing dependencies, and official Next / React / shadcn packages. shadcn primitives are added with `npx shadcn@latest add <name>`, not installed as a package.
+- Before adding a dependency, verify its maintenance activity, compatibility with Next 16 / React 19, security posture, documentation, and meaningful community adoption.
+- Do not add obscure, unmaintained, or low-adoption packages without explicit user approval.
+- If no established dependency exists, explain the platform limitation and propose a dependency-free fallback before considering a niche package.
+- Keep dependencies narrowly scoped; do not add a package for behavior that can be implemented safely with existing APIs.
+
+Full context: @docs/rules/06-coding-standards.md

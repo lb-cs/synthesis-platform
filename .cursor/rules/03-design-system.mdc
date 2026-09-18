@@ -1,0 +1,9 @@
+---
+globs: components/**/*.tsx,app/**/*.tsx,app/globals.css
+description: Tailwind v4 tokens, shadcn/ui on Base UI (render, not asChild), lucide icons
+---
+
+See @docs/rules/03-design-system.md for the full rules.
+
+Content lives in `docs/rules/` so every agent reads the same source. Edit it there,
+not here — this file only carries the glob scoping.

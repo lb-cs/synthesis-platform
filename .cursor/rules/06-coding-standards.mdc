@@ -1,0 +1,9 @@
+---
+globs: **/*.ts,**/*.tsx,**/*.mjs
+description: Naming, formatting, import order, dependencies, security, commits
+---
+
+See @docs/rules/06-coding-standards.md for the full rules.
+
+Content lives in `docs/rules/` so every agent reads the same source. Edit it there,
+not here — this file only carries the glob scoping.

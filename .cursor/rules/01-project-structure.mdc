@@ -1,0 +1,9 @@
+---
+description: Repo layout, the @/ alias, where a change goes
+alwaysApply: true
+---
+
+See @docs/rules/01-project-structure.md for the full rules.
+
+Content lives in `docs/rules/` so every agent reads the same source. Edit it there,
+not here — this file only carries the routing.

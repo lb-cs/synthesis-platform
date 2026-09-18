@@ -8,12 +8,13 @@ export default function Home() {
       <div className="flex flex-col gap-3">
         <h1 className="text-4xl font-semibold tracking-tight">Synthesis Platform</h1>
         <p className="max-w-md text-lg text-muted-foreground">
-          Next.js, Tailwind CSS, and shadcn/ui foundation. Nothing else is wired up yet.
+          Next.js, Tailwind CSS, shadcn/ui, and Supabase auth. Nothing else is wired up
+          yet.
         </p>
       </div>
       <div className="flex gap-3">
-        <Button render={<Link href="/example" />} nativeButton={false}>
-          Example route
+        <Button render={<Link href="/login" />} nativeButton={false}>
+          Sign in
         </Button>
         <Button
           variant="outline"
