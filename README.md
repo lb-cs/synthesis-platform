@@ -2,43 +2,77 @@
 
 AI-assisted research workspace — CECS 491, Team Quintessential Algorithms.
 
-This repo is the project foundation: Next.js (App Router), Tailwind CSS v4,
-shadcn/ui, Supabase (auth + Postgres), ESLint, Prettier, and CI. Email OTP login
-works; no application tables or features yet.
+## Quick start
 
-## Prerequisites
+You need **Node 24**, **npm 11**, **Docker** (running), and the
+[Supabase CLI](https://supabase.com/docs/guides/local-development/cli/getting-started).
 
-- Node 24 (see `.nvmrc`)
-- npm 11
-
-## Setup
+**1. Install dependencies**
 
 ```bash
 npm ci
-cp .env.example .env.local   # then fill in the Supabase values (below)
+```
+
+**2. Start Supabase**
+
+```bash
+supabase start
+```
+
+It prints an API URL and a publishable key. You need both in the next step.
+
+**3. Create `.env`**
+
+```bash
+cp .env.example .env
+```
+
+Paste in the two values from step 2:
+
+```
+NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=sb_publishable_...
+```
+
+**4. Run the app**
+
+```bash
 npm run dev
 ```
 
 Open <http://localhost:3000>.
 
-### Supabase
+**5. Sign in**
 
-Two options. Local is the default for day-to-day work — no rate limits, no shared
-state, emails land in a local inbox.
+Go to <http://localhost:3000/login> and enter any email. No real email is sent — the
+6-digit code lands in the local inbox at <http://127.0.0.1:54324>. Copy it into the form.
 
-**Local (recommended):** needs Docker and the
-[Supabase CLI](https://supabase.com/docs/guides/local-development/cli/getting-started).
+**Handy URLs**
 
-```bash
-supabase start          # prints the API URL and publishable key
-```
+| What                         | Where                    |
+| ---------------------------- | ------------------------ |
+| App                          | <http://localhost:3000>  |
+| Sign-in codes (local inbox)  | <http://127.0.0.1:54324> |
+| Supabase Studio (DB browser) | <http://127.0.0.1:54323> |
 
-Put the URL (`http://127.0.0.1:54321`) and the publishable key it prints into
-`.env.local`. Sign-in codes arrive in the local inbox at <http://127.0.0.1:54324>;
-Studio is at <http://127.0.0.1:54323>. `supabase/config.toml` already wires the
-one-time-code email template (`supabase/templates/magic-link.html`).
+Done for the day? `supabase stop`.
 
-**Cloud:** create a project at <https://supabase.com/dashboard>, then:
+---
+
+## What's here
+
+This repo is the project foundation: Next.js (App Router), Tailwind CSS v4,
+shadcn/ui, Supabase (auth + Postgres), ESLint, Prettier, and CI. Email OTP login
+works; no application tables or features yet.
+
+## Supabase: cloud instead of local
+
+Local is the default for day-to-day work — no rate limits, no shared state, emails
+land in a local inbox. `supabase/config.toml` already wires the one-time-code email
+template (`supabase/templates/magic-link.html`).
+
+If you need a cloud project instead, create one at <https://supabase.com/dashboard>,
+then:
 
 1. **Project Settings → API Keys.** Copy the project URL and the `sb_publishable_...`
    key into `.env.local`.
