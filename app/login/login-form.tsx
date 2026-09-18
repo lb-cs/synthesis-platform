@@ -140,7 +140,6 @@ function CodeStep({ email, onBack }: { email: string; onBack: () => void }) {
                     autoComplete="one-time-code"
                     autoFocus
                     aria-invalid={fieldState.invalid}
-                    onComplete={form.handleSubmit(onSubmit)}
                   >
                     <InputOTPGroup>
                       {Array.from({ length: 6 }, (_, index) => (
