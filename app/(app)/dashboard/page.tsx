@@ -1,8 +1,10 @@
 import type { Metadata } from 'next';
-import { FolderOpen, FolderPlus, Plus } from 'lucide-react';
+import { CircleAlert, FolderOpen, FolderPlus, Plus } from 'lucide-react';
 import Link from 'next/link';
 
 import { PageHeader } from '@/components/page-header';
+import { listProjects } from '@/lib/projects';
+import { createClient } from '@/lib/supabase/server';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -21,23 +23,36 @@ import {
   EmptyTitle,
 } from '@/components/ui/empty';
 
-import { listProjects } from '../projects/actions';
-
 export const metadata: Metadata = {
   title: 'Dashboard · Synthesis Platform',
 };
 
 export default async function DashboardPage() {
-  const projects = await listProjects();
+  const supabase = await createClient();
+  const result = await listProjects(supabase);
+
+  if (!result.ok) {
+    return (
+      <>
+        <DashboardHeader />
+        <Empty>
+          <EmptyHeader>
+            <EmptyMedia variant="icon">
+              <CircleAlert />
+            </EmptyMedia>
+            <EmptyTitle>Could not load projects</EmptyTitle>
+            <EmptyDescription>Refresh the page to try again.</EmptyDescription>
+          </EmptyHeader>
+        </Empty>
+      </>
+    );
+  }
+
+  const { projects } = result;
 
   return (
     <>
-      <PageHeader title="Dashboard" description="Your research projects, one per topic.">
-        <Button render={<Link href="/projects/new" />} nativeButton={false}>
-          <Plus />
-          New project
-        </Button>
-      </PageHeader>
+      <DashboardHeader />
 
       {projects.length === 0 ? (
         <Empty>
@@ -95,5 +110,16 @@ export default async function DashboardPage() {
         </div>
       )}
     </>
+  );
+}
+
+function DashboardHeader() {
+  return (
+    <PageHeader title="Dashboard" description="Your research projects, one per topic.">
+      <Button render={<Link href="/projects/new" />} nativeButton={false}>
+        <Plus />
+        New project
+      </Button>
+    </PageHeader>
   );
 }

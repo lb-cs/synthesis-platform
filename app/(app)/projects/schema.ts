@@ -1,6 +1,8 @@
 import * as z from 'zod';
 
-import { DESCRIPTION_MAX_LENGTH, TITLE_MAX_LENGTH } from '@/lib/projects/types';
+// Title matches the check constraint on public.projects; description is a UI-only cap.
+export const TITLE_MAX_LENGTH = 100;
+export const DESCRIPTION_MAX_LENGTH = 500;
 
 export const createProjectSchema = z.object({
   title: z

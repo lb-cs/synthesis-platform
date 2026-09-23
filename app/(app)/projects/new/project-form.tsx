@@ -18,8 +18,11 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 
 import { createProject } from '../actions';
-import { createProjectSchema, type CreateProjectInput } from '../schema';
-import { TITLE_MAX_LENGTH } from '@/lib/projects/types';
+import {
+  createProjectSchema,
+  TITLE_MAX_LENGTH,
+  type CreateProjectInput,
+} from '../schema';
 
 export function ProjectForm() {
   const form = useForm<CreateProjectInput>({
