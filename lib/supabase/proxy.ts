@@ -1,13 +1,15 @@
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 
-// Reachable signed out. Everything else redirects to /login. `/` is handled separately.
+import type { Database } from './database.types';
+
+// Reachable signed out. Everything else redirects to /login (or 401s under /api).
 const PUBLIC_PATHS = ['/home', '/login', '/api/health'];
 
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });
 
-  const supabase = createServerClient(
+  const supabase = createServerClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
     {
@@ -35,6 +37,7 @@ export async function updateSession(request: NextRequest) {
   // getClaims() verifies the JWT; getSession() would trust a spoofable cookie.
   const { data } = await supabase.auth.getClaims();
   const user = data?.claims;
+  const isPublic = PUBLIC_PATHS.includes(request.nextUrl.pathname);
 
   // `/` has no page of its own: signed in goes to the dashboard, signed out to the landing.
   if (request.nextUrl.pathname === '/') {
@@ -43,7 +46,12 @@ export async function updateSession(request: NextRequest) {
     return redirectWithSession(url, supabaseResponse);
   }
 
-  if (!user && !PUBLIC_PATHS.includes(request.nextUrl.pathname)) {
+  // An API caller wants a status code, not the sign-in page's HTML.
+  if (!user && request.nextUrl.pathname.startsWith('/api/') && !isPublic) {
+    return NextResponse.json({ error: 'Authentication is required.' }, { status: 401 });
+  }
+
+  if (!user && !isPublic) {
     const url = request.nextUrl.clone();
     url.pathname = '/login';
     return NextResponse.redirect(url);

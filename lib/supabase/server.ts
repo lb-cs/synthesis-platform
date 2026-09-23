@@ -1,10 +1,14 @@
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 
+import type { SupabaseClient } from '@supabase/supabase-js';
+
+import type { Database } from './database.types';
+
 export async function createClient() {
   const cookieStore = await cookies();
 
-  return createServerClient(
+  return createServerClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
     {
@@ -24,4 +28,12 @@ export async function createClient() {
       },
     },
   );
+}
+
+// The signed-in user's verified JWT claims, or null. getClaims() checks the signature;
+// the proxy already gates /api, but every data access checks again.
+export async function getSupabaseUser(supabase: SupabaseClient<Database>) {
+  const { data } = await supabase.auth.getClaims();
+
+  return data?.claims ?? null;
 }

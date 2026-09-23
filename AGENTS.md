@@ -19,8 +19,8 @@ it in place.
 Synthesis Platform — an AI-assisted research workspace. CECS 491, Team Quintessential
 Algorithms. The repo is the **foundation only** right now: routing, styling, lint, format,
 typecheck, CI, Supabase auth (email one-time code, route guard in `proxy.ts`), and the
-initial schema in `supabase/migrations/` (projects, sources, chunks, chat, citations). No
-features read or write it yet.
+initial schema in `supabase/migrations/` (projects, sources, chunks, chat, citations).
+The only thing that reads or writes it is the project REST API (`app/api/projects/`).
 
 **Tech stack**: Next.js 16 (App Router) / React 19 / TypeScript, Tailwind CSS v4,
 shadcn/ui on Base UI, lucide-react, Supabase (`@supabase/ssr`), zod + react-hook-form.
