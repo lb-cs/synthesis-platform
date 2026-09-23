@@ -39,8 +39,9 @@ in the email template), "password" (there are none).
 
 **Public path**:
 A route the guard lets a signed-out visitor reach. The list is `PUBLIC_PATHS` in
-`lib/supabase/proxy.ts` (`/`, `/login`, `/api/health`); everything not on it is
-**protected** and redirects to `/login`.
+`lib/supabase/proxy.ts` (`/home`, `/login`, `/api/health`); everything not on it is
+**protected** and redirects to `/login`. `/` itself has no page: the proxy sends it to
+`/dashboard` or `/home` depending on whether there is a user.
 _Avoid_: "unprotected", "open route", "whitelist".
 
 ## Research content
@@ -89,13 +90,18 @@ _Avoid_: "reference", "footnote", "source" (a citation points into a source).
 **Dashboard**:
 The signed-in landing screen (`/dashboard`): the list of projects and the way to create
 one. Named after the Jira wireframes; not a metrics dashboard.
-_Avoid_: "home" (that is the signed-out `/`), "projects page".
+_Avoid_: "home" (that is the landing page, `/home`), "projects page".
 
 **App shell**:
 The sidebar-plus-header frame every signed-in screen renders inside —
 `app/(app)/layout.tsx`, `components/app-sidebar.tsx`, `components/app-breadcrumb.tsx`.
-Routes in the `(app)` group get it; `/` and `/login` do not.
+Routes in the `(app)` group get it; `/home` and `/login` do not.
 _Avoid_: "nav", "chrome".
+
+**Landing page**:
+The public marketing page at `/home` (`app/home/`), with its own top bar
+(`components/site-header.tsx`) instead of the app shell. Where signed-out visitors land.
+_Avoid_: "home" for the dashboard, "splash".
 
 ## Areas to expect
 

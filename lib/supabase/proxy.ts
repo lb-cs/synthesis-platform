@@ -1,8 +1,8 @@
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 
-// Reachable signed out. Everything else redirects to /login.
-const PUBLIC_PATHS = ['/', '/login', '/api/health'];
+// Reachable signed out. Everything else redirects to /login. `/` is handled separately.
+const PUBLIC_PATHS = ['/home', '/login', '/api/health'];
 
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });
@@ -35,6 +35,13 @@ export async function updateSession(request: NextRequest) {
   // getClaims() verifies the JWT; getSession() would trust a spoofable cookie.
   const { data } = await supabase.auth.getClaims();
   const user = data?.claims;
+
+  // `/` has no page of its own: signed in goes to the dashboard, signed out to the landing.
+  if (request.nextUrl.pathname === '/') {
+    const url = request.nextUrl.clone();
+    url.pathname = user ? '/dashboard' : '/home';
+    return redirectWithSession(url, supabaseResponse);
+  }
 
   if (!user && !PUBLIC_PATHS.includes(request.nextUrl.pathname)) {
     const url = request.nextUrl.clone();
