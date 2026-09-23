@@ -19,6 +19,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from '@/components/ui/sidebar';
+import { ThemeSwitcher } from '@/components/theme-switcher';
 
 export function NavUser({ email }: { email: string }) {
   const { isMobile } = useSidebar();
@@ -59,6 +60,11 @@ export function NavUser({ email }: { email: string }) {
                 <Settings />
                 Settings
               </DropdownMenuItem>
+              {/* Not a menu item: clicking a theme should switch it without closing the menu. */}
+              <div className="flex items-center justify-between gap-4 px-1.5 py-1 text-sm">
+                Theme
+                <ThemeSwitcher />
+              </div>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
