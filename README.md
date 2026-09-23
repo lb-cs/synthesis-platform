@@ -63,7 +63,8 @@ Done for the day? `supabase stop`.
 
 This repo is the project foundation: Next.js (App Router), Tailwind CSS v4,
 shadcn/ui, Supabase (auth + Postgres), ESLint, Prettier, and CI. Email OTP login
-works; no application tables or features yet.
+works. The initial database schema is in `supabase/migrations/`; no features use it
+yet.
 
 ## Supabase: cloud instead of local
 
