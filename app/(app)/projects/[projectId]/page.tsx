@@ -1,8 +1,12 @@
 import type { Metadata } from 'next';
-import { FileText, MessageSquare, Plus, Send } from 'lucide-react';
+import { CircleAlert, FileText, MessageSquare, Plus, Send } from 'lucide-react';
 import Link from 'next/link';
+import { notFound } from 'next/navigation';
 
+import { projectIdSchema } from '@/app/api/projects/schema';
 import { PageHeader } from '@/components/page-header';
+import { getProject } from '@/lib/projects';
+import { createClient } from '@/lib/supabase/server';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -31,12 +35,41 @@ export default async function WorkspacePage({
 }: PageProps<'/projects/[projectId]'>) {
   const { projectId } = await params;
 
+  // A malformed id can't match a row, and Postgres would reject it as a uuid anyway.
+  if (!projectIdSchema.safeParse(projectId).success) {
+    notFound();
+  }
+
+  const supabase = await createClient();
+  const result = await getProject(supabase, projectId);
+
+  // RLS hides other users' projects, so theirs land here too.
+  if (!result.ok && result.kind === 'not-found') {
+    notFound();
+  }
+
+  if (!result.ok) {
+    return (
+      <Empty>
+        <EmptyHeader>
+          <EmptyMedia variant="icon">
+            <CircleAlert />
+          </EmptyMedia>
+          <EmptyTitle>Could not load this project</EmptyTitle>
+          <EmptyDescription>Refresh the page to try again.</EmptyDescription>
+        </EmptyHeader>
+      </Empty>
+    );
+  }
+
+  const { project } = result;
+  const description =
+    project.description ??
+    "Ask questions and get answers grounded in this project's sources.";
+
   return (
     <>
-      <PageHeader
-        title="Workspace"
-        description="Ask questions and get answers grounded in this project's sources."
-      >
+      <PageHeader title={project.title} description={description}>
         <Button
           variant="outline"
           render={<Link href={`/projects/${projectId}/sources`} />}
