@@ -39,16 +39,17 @@ in the email template), "password" (there are none).
 
 **Public path**:
 A route the guard lets a signed-out visitor reach. The list is `PUBLIC_PATHS` in
-`lib/supabase/proxy.ts` (`/`, `/login`, `/api/health`); everything not on it is
-**protected** and redirects to `/login`.
+`lib/supabase/proxy.ts` (`/home`, `/login`, `/api/health`); everything not on it is
+**protected** and redirects to `/login`. `/` itself has no page: the proxy sends it to
+`/dashboard` or `/home` depending on whether there is a user.
 _Avoid_: "unprotected", "open route", "whitelist".
 
 ## Research content
 
 **Project**:
 The unit a user organises research by — one topic, its sources, and its conversations.
-Routes live under `app/(app)/projects/[projectId]/`. There is no table yet; the id in
-the URL is a placeholder until CECS491-9 lands.
+Routes live under `app/(app)/projects/[projectId]/`; the row is `public.projects`, owned
+by one user. Every other research table hangs off a project, and RLS follows its owner.
 _Avoid_: "workspace" as a noun for the project itself (that is the screen, below),
 "folder", "notebook".
 
@@ -63,18 +64,44 @@ today, a web link or YouTube video as a stretch goal. Listed under `…/sources`
 _Avoid_: "document" (reserved for the chunked text a source becomes), "file" (only one
 kind of source), "paper".
 
+**Processing status**:
+Where a source is in the worker's pipeline: `'pending' | 'processing' | 'ready' |
+'failed'` (`public.sources.status`). Only the worker (service role) moves it; a source is
+answerable once it is `ready`.
+_Avoid_: "state", "job" (there is no job table; the status column is the queue).
+
+**Document chunk**:
+One passage of a source's parsed text, with its page number and embedding
+(`public.document_chunks`). Retrieval returns chunks via `match_document_chunks`.
+_Avoid_: "document" on its own, "segment", "embedding" (that is one column of a chunk).
+
+**Chat message**:
+One turn in a project's single conversation, `role` `'user' | 'assistant'`
+(`public.chat_messages`). An assistant message is `'streaming' | 'complete' | 'failed'`.
+_Avoid_: "conversation" or "thread" for a message; "chat" is the whole history.
+
+**Citation**:
+A link from an assistant message to a document chunk that supports it
+(`public.citations`). The chunk gives the source and page.
+_Avoid_: "reference", "footnote", "source" (a citation points into a source).
+
 ## Shell
 
 **Dashboard**:
 The signed-in landing screen (`/dashboard`): the list of projects and the way to create
 one. Named after the Jira wireframes; not a metrics dashboard.
-_Avoid_: "home" (that is the signed-out `/`), "projects page".
+_Avoid_: "home" (that is the landing page, `/home`), "projects page".
 
 **App shell**:
 The sidebar-plus-header frame every signed-in screen renders inside —
 `app/(app)/layout.tsx`, `components/app-sidebar.tsx`, `components/app-breadcrumb.tsx`.
-Routes in the `(app)` group get it; `/` and `/login` do not.
+Routes in the `(app)` group get it; `/home` and `/login` do not.
 _Avoid_: "nav", "chrome".
+
+**Landing page**:
+The public marketing page at `/home` (`app/home/`), with its own top bar
+(`components/site-header.tsx`) instead of the app shell. Where signed-out visitors land.
+_Avoid_: "home" for the dashboard, "splash".
 
 ## Areas to expect
 
