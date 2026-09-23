@@ -40,8 +40,8 @@ in the email template), "password" (there are none).
 **Public path**:
 A route the guard lets a signed-out visitor reach. The list is `PUBLIC_PATHS` in
 `lib/supabase/proxy.ts` (`/home`, `/login`, `/api/health`); everything not on it is
-**protected** and redirects to `/login`. `/` itself has no page: the proxy sends it to
-`/dashboard` or `/home` depending on whether there is a user.
+**protected**: a page redirects to `/login`, an `/api/*` route answers 401. `/` has no
+page: the proxy sends it to `/dashboard` or `/home` depending on whether there is a user.
 _Avoid_: "unprotected", "open route", "whitelist".
 
 ## Research content
@@ -121,5 +121,12 @@ access control versus organisation.
 
 ### Data and transport
 
-Once the app has a database and an API: the shape a row has versus the shape the client
-receives, and the word for each. Keep the two words distinct from day one.
+**Row**:
+A table's shape as Postgres returns it, snake_case — `Tables<'projects'>` from the
+generated `lib/supabase/database.types.ts`. Never leaves `lib/`.
+_Avoid_: "record", "model".
+
+**Domain type**:
+What `lib/` hands to route handlers and the API returns, camelCase — `Project` in
+`lib/projects.ts`. Mapped from a row by one `to…` function.
+_Avoid_: "DTO", "entity".

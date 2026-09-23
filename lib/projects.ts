@@ -1,95 +1,77 @@
+/**
+ * Project CRUD. Every query runs as the signed-in user, so RLS on `public.projects`
+ * scopes it to their rows — another user's project reads as not found.
+ */
 import type { SupabaseClient } from '@supabase/supabase-js';
+
+import type {
+  Database,
+  Tables,
+  TablesInsert,
+  TablesUpdate,
+} from '@/lib/supabase/database.types';
 
 export type Project = {
   id: string;
   title: string;
   description: string | null;
-  ownerId: string;
+  createdAt: string;
+  updatedAt: string;
 };
 
-export type CreateProjectInput = {
-  title: string;
-  description?: string | null;
-};
+export type CreateProjectInput = Pick<TablesInsert<'projects'>, 'title' | 'description'>;
 
-type ProjectRow = {
-  id: string;
-  title: string;
-  description: string | null;
-  owner_id: string;
-};
+export type UpdateProjectInput = Pick<TablesUpdate<'projects'>, 'title' | 'description'>;
 
-type ProjectResult =
+export type ProjectResult =
   { ok: true; project: Project } | { ok: false; kind: 'not-found' | 'database-error' };
 
-type ProjectListResult =
+export type ProjectListResult =
   { ok: true; projects: Project[] } | { ok: false; kind: 'database-error' };
 
-const PROJECT_COLUMNS = 'id, title, description, owner_id';
+export type DeleteProjectResult =
+  { ok: true } | { ok: false; kind: 'not-found' | 'database-error' };
+
+type Client = SupabaseClient<Database>;
+
+type ProjectRow = Pick<
+  Tables<'projects'>,
+  'id' | 'title' | 'description' | 'created_at' | 'updated_at'
+>;
+
+const PROJECT_COLUMNS = 'id, title, description, created_at, updated_at';
 
 function toProject(row: ProjectRow): Project {
   return {
     id: row.id,
     title: row.title,
     description: row.description,
-    ownerId: row.owner_id,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
   };
 }
 
-export async function createProject(
-  supabase: SupabaseClient,
-  ownerId: string,
-  input: CreateProjectInput,
-): Promise<ProjectResult> {
-  const description = input.description || null;
-  const { data, error } = await supabase
-    .from('projects')
-    .insert({
-      title: input.title,
-      description,
-      owner_id: ownerId,
-    })
-    .select(PROJECT_COLUMNS)
-    .single();
-
-  if (error || !data) {
-    return { ok: false, kind: 'database-error' };
-  }
-
-  return { ok: true, project: toProject(data as ProjectRow) };
-}
-
-export async function listProjects(
-  supabase: SupabaseClient,
-  ownerId: string,
-): Promise<ProjectListResult> {
+export async function listProjects(supabase: Client): Promise<ProjectListResult> {
   const { data, error } = await supabase
     .from('projects')
     .select(PROJECT_COLUMNS)
-    .eq('owner_id', ownerId);
+    .order('created_at', { ascending: false });
 
-  if (error || !data) {
+  if (error) {
     return { ok: false, kind: 'database-error' };
   }
 
-  const rows = data as ProjectRow[];
-  const projects = rows.map((row) => {
-    return toProject(row);
-  });
-
-  return { ok: true, projects };
+  return { ok: true, projects: data.map(toProject) };
 }
 
 export async function getProject(
-  supabase: SupabaseClient,
-  ownerId: string,
+  supabase: Client,
   projectId: string,
 ): Promise<ProjectResult> {
   const { data, error } = await supabase
     .from('projects')
     .select(PROJECT_COLUMNS)
     .eq('id', projectId)
-    .eq('owner_id', ownerId)
     .maybeSingle();
 
   if (error) {
@@ -100,5 +82,69 @@ export async function getProject(
     return { ok: false, kind: 'not-found' };
   }
 
-  return { ok: true, project: toProject(data as ProjectRow) };
+  return { ok: true, project: toProject(data) };
+}
+
+// user_id is left out on purpose: the column defaults to auth.uid().
+export async function createProject(
+  supabase: Client,
+  input: CreateProjectInput,
+): Promise<ProjectResult> {
+  const { data, error } = await supabase
+    .from('projects')
+    .insert(input)
+    .select(PROJECT_COLUMNS)
+    .single();
+
+  if (error) {
+    return { ok: false, kind: 'database-error' };
+  }
+
+  return { ok: true, project: toProject(data) };
+}
+
+export async function updateProject(
+  supabase: Client,
+  projectId: string,
+  input: UpdateProjectInput,
+): Promise<ProjectResult> {
+  const { data, error } = await supabase
+    .from('projects')
+    .update(input)
+    .eq('id', projectId)
+    .select(PROJECT_COLUMNS)
+    .maybeSingle();
+
+  if (error) {
+    return { ok: false, kind: 'database-error' };
+  }
+
+  if (!data) {
+    return { ok: false, kind: 'not-found' };
+  }
+
+  return { ok: true, project: toProject(data) };
+}
+
+// Sources, chunks, and chat cascade in the database. Storage files do not.
+export async function deleteProject(
+  supabase: Client,
+  projectId: string,
+): Promise<DeleteProjectResult> {
+  const { data, error } = await supabase
+    .from('projects')
+    .delete()
+    .eq('id', projectId)
+    .select('id')
+    .maybeSingle();
+
+  if (error) {
+    return { ok: false, kind: 'database-error' };
+  }
+
+  if (!data) {
+    return { ok: false, kind: 'not-found' };
+  }
+
+  return { ok: true };
 }

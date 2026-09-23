@@ -1,18 +1,17 @@
-import { createClient } from '@/lib/supabase/server';
 import { createProject, listProjects } from '@/lib/projects';
+import { createClient, getSupabaseUser } from '@/lib/supabase/server';
 
 import { createProjectSchema } from './schema';
 
 export async function GET() {
   const supabase = await createClient();
-  const { data, error } = await supabase.auth.getClaims();
-  const ownerId = data?.claims?.sub;
+  const supabaseUser = await getSupabaseUser(supabase);
 
-  if (error || !ownerId) {
+  if (!supabaseUser) {
     return Response.json({ error: 'Authentication is required.' }, { status: 401 });
   }
 
-  const result = await listProjects(supabase, ownerId);
+  const result = await listProjects(supabase);
 
   if (!result.ok) {
     return Response.json({ error: 'Could not load projects.' }, { status: 500 });
@@ -23,21 +22,14 @@ export async function GET() {
 
 export async function POST(request: Request) {
   const supabase = await createClient();
-  const { data, error } = await supabase.auth.getClaims();
-  const ownerId = data?.claims?.sub;
+  const supabaseUser = await getSupabaseUser(supabase);
 
-  if (error || !ownerId) {
+  if (!supabaseUser) {
     return Response.json({ error: 'Authentication is required.' }, { status: 401 });
   }
 
-  let body: unknown;
-
-  try {
-    body = await request.json();
-  } catch {
-    return Response.json({ error: 'Request body must be valid JSON.' }, { status: 400 });
-  }
-
+  // Malformed JSON becomes null and fails validation like any other bad body.
+  const body: unknown = await request.json().catch(() => null);
   const parsed = createProjectSchema.safeParse(body);
 
   if (!parsed.success) {
@@ -47,11 +39,16 @@ export async function POST(request: Request) {
     );
   }
 
-  const result = await createProject(supabase, ownerId, parsed.data);
+  const result = await createProject(supabase, parsed.data);
 
   if (!result.ok) {
     return Response.json({ error: 'Could not create project.' }, { status: 500 });
   }
 
-  return Response.json({ project: result.project }, { status: 201 });
+  const location = `/api/projects/${result.project.id}`;
+
+  return Response.json(
+    { project: result.project },
+    { status: 201, headers: { Location: location } },
+  );
 }
