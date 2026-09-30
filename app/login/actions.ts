@@ -24,7 +24,7 @@ export async function sendCode(input: EmailInput): Promise<{ error?: string }> {
   return {};
 }
 
-export async function verifyCode(input: CodeInput): Promise<{ error: string }> {
+export async function verifyCode(input: CodeInput): Promise<{ error?: string }> {
   const parsed = codeSchema.safeParse(input);
   if (!parsed.success) {
     return { error: 'Enter the 6-digit code.' };
