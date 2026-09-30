@@ -1,5 +1,7 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
+# Ticket # https://quintessentialalgorithms.atlassian.net/browse/CECS491-34?atlOrigin=eyJpIjoiZWI1ZTQ2YzI0YzAxNGVhY2JlNmZlYWE0MTI2MjQxZjEiLCJwIjoiaiJ9
+
 # dependencies
 /node_modules
 /.pnp
