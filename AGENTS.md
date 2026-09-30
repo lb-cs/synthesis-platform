@@ -26,6 +26,13 @@ The only thing that reads or writes it is the project REST API (`app/api/project
 shadcn/ui on Base UI, lucide-react, Supabase (`@supabase/ssr`), zod + react-hook-form.
 Node 24, npm 11. One package at the repo root.
 
+**What the product must become** is specified in [`docs/product/`](docs/product/README.md)
+(use cases UC-01 – UC-20, requirements, NFR targets). How it's built is in
+[`docs/design/`](docs/design/): [architecture](docs/design/architecture.md) (route
+handlers and server actions over `lib/`, Supabase Auth, RLS — no controller layer) and
+[data model](docs/design/data-model.md). Map: [`docs/README.md`](docs/README.md). The
+code and `CONTEXT.md` win on names and decisions.
+
 ## Common commands
 
 ```bash

@@ -16,6 +16,9 @@ the detail, loaded when they're relevant to what you're working on.
 
 ## Related docs
 
+- `docs/README.md` — map of all docs, including the product spec (`docs/product/`) and
+  architecture and data model (`docs/design/`)
+
 - `docs/agents/code-style.md` — the deep code-style reference (how code is _shaped_ here)
 - `docs/adr/` — architecture decision records, and when to write one
 - `CONTEXT.md` — domain glossary (repo root)

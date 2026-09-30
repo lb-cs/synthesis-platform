@@ -137,6 +137,7 @@ Import alias: `@/*` maps to the repo root (e.g. `@/components/ui/button`).
 
 ## Working in this repo
 
+- `docs/README.md` — map of all project docs: product spec, use cases, design, rules
 - `AGENTS.md` — entry point for AI coding agents; the rules in `docs/rules/` are for
   humans too
 - `docs/agents/code-style.md` — how code is shaped here
