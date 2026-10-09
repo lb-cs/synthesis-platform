@@ -116,9 +116,16 @@ function CodeStep({ email, onBack }: { email: string; onBack: () => void }) {
   async function resend() {
     setNotice(null);
     setResending(true);
-    const { error } = await sendCode({ email });
-    setResending(false);
-    setNotice(error ?? 'We sent you a new code.');
+
+    // A server action rejects only when the request never reaches the server.
+    try {
+      const { error } = await sendCode({ email });
+      setNotice(error ?? 'We sent you a new code.');
+    } catch {
+      setNotice('Could not reach the server. Check your connection and try again.');
+    } finally {
+      setResending(false);
+    }
   }
 
   return (
