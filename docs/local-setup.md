@@ -44,15 +44,12 @@ cd synthesis-platform
 npm ci
 ```
 
-The README expects the Supabase CLI. If a global install is blocked on your machine, install it
-in the project instead and prefix commands with `npx`:
+The README expects the Supabase CLI. If a global install is blocked on your machine, run it
+through `npx` instead. It downloads the CLI on first use and changes no files in the repo:
 
 ```
-npm install supabase --save-dev
 npx supabase --version
 ```
-
-(Do not commit the resulting `package.json` / `package-lock.json` change.)
 
 ## 5. Start the database (Docker must be running)
 
