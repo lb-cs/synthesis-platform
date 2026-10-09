@@ -61,6 +61,8 @@ _Avoid_: "project page", "chat page".
 **Source**:
 Something a user adds to a project for the AI to draw on: an uploaded PDF or text file
 today, a web link or YouTube video as a stretch goal. Listed under `…/sources`.
+**Removing** one (`deleteSource` in `lib/sources.ts`) deletes the row — chunks and
+citations cascade — then its file in the `sources` bucket, which the database can't.
 _Avoid_: "document" (reserved for the chunked text a source becomes), "file" (only one
 kind of source), "paper".
 
