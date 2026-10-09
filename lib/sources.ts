@@ -5,6 +5,7 @@
  */
 import type { SupabaseClient } from '@supabase/supabase-js';
 
+import { removeFiles } from '@/lib/storage';
 import type { Database, Json, Tables } from '@/lib/supabase/database.types';
 
 // Mirror the check constraints on public.sources.status and public.sources.kind.
@@ -38,8 +39,6 @@ type SourceRow = Pick<
 >;
 
 const SOURCE_COLUMNS = 'id, title, kind, status, processing_error, metadata, created_at';
-
-const SOURCES_BUCKET = 'sources';
 
 function toSource(row: SourceRow): Source {
   return {
@@ -94,11 +93,9 @@ export async function deleteSource(
     return { ok: false, kind: 'not-found' };
   }
 
-  const { error: storageError } = await supabase.storage
-    .from(SOURCES_BUCKET)
-    .remove([data.storage_path]);
+  const removeResult = await removeFiles(supabase, [data.storage_path]);
 
-  if (storageError) {
+  if (!removeResult.ok) {
     return { ok: false, kind: 'storage-error' };
   }
 

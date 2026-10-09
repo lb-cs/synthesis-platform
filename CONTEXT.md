@@ -66,6 +66,12 @@ citations cascade — then its file in the `sources` bucket, which the database 
 _Avoid_: "document" (reserved for the chunked text a source becomes), "file" (only one
 kind of source), "paper".
 
+**Stored file**:
+An object in the private `sources` bucket, at `{user_id}/{folder}/{uuid}-{name}`
+(`StoredFile` in `lib/storage.ts`, which owns every bucket call). A source points at one
+through `storage_path`; a stored file can exist with no source row.
+_Avoid_: "source" for the file itself, "blob", "attachment".
+
 **Processing status**:
 Where a source is in the worker's pipeline: `'pending' | 'processing' | 'ready' |
 'failed'` (`public.sources.status`). Only the worker (service role) moves it; a source is
