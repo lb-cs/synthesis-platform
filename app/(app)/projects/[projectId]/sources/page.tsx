@@ -1,6 +1,10 @@
 import type { Metadata } from 'next';
-import { FileText, Link2, Upload } from 'lucide-react';
+import { CircleAlert, Link2, Upload } from 'lucide-react';
+import { notFound } from 'next/navigation';
 
+import { projectIdSchema } from '@/app/api/projects/schema';
+import { getProject } from '@/lib/projects';
+import { createClient } from '@/lib/supabase/server';
 import { PageHeader } from '@/components/page-header';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -13,11 +17,55 @@ import {
   EmptyTitle,
 } from '@/components/ui/empty';
 
+import { loadSources } from './load-sources';
+import { SourcesList } from './sources-list';
+
 export const metadata: Metadata = {
   title: 'Sources · Synthesis Platform',
 };
 
-export default function SourcesPage() {
+function LoadError() {
+  return (
+    <Empty>
+      <EmptyHeader>
+        <EmptyMedia variant="icon">
+          <CircleAlert />
+        </EmptyMedia>
+        <EmptyTitle>Could not load sources</EmptyTitle>
+        <EmptyDescription>Refresh the page to try again.</EmptyDescription>
+      </EmptyHeader>
+    </Empty>
+  );
+}
+
+export default async function SourcesPage({
+  params,
+}: PageProps<'/projects/[projectId]/sources'>) {
+  const { projectId } = await params;
+
+  // A malformed id can't match a row, and Postgres would reject it as a uuid anyway.
+  if (!projectIdSchema.safeParse(projectId).success) {
+    notFound();
+  }
+
+  const supabase = await createClient();
+  const projectResult = await getProject(supabase, projectId);
+
+  // RLS hides other users' projects, so theirs land here too.
+  if (!projectResult.ok && projectResult.kind === 'not-found') {
+    notFound();
+  }
+
+  if (!projectResult.ok) {
+    return <LoadError />;
+  }
+
+  const sourcesResult = await loadSources(supabase, projectId);
+
+  if (!sourcesResult.ok) {
+    return <LoadError />;
+  }
+
   return (
     <>
       <PageHeader title="Sources" description="Files and links the AI can draw on.">
@@ -45,17 +93,7 @@ export default function SourcesPage() {
         </CardContent>
       </Card>
 
-      <Empty className="border">
-        <EmptyHeader>
-          <EmptyMedia variant="icon">
-            <FileText />
-          </EmptyMedia>
-          <EmptyTitle>No sources yet</EmptyTitle>
-          <EmptyDescription>
-            Uploaded sources will be listed here with their processing status.
-          </EmptyDescription>
-        </EmptyHeader>
-      </Empty>
+      <SourcesList sources={sourcesResult.sources} />
     </>
   );
 }
