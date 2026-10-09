@@ -44,8 +44,8 @@ flowchart LR
 | Route guard    | `proxy.ts` → `lib/supabase/proxy.ts`                   | Refreshes the session cookie. Signed out: pages redirect to `/login`, `/api/*` answers 401. Public paths are listed there |
 | Pages          | `app/**/page.tsx`                                      | Server components. Read data on the server through `lib/`                                                                 |
 | Route handlers | `app/api/**/route.ts`                                  | The REST API. Check sign-in → zod → `lib/` → `Response.json`                                                              |
-| Server actions | `app/**/actions.ts`                                    | The app's own forms (sign-in, create project). Same three steps as a route handler                                        |
-| `lib/`         | `lib/projects.ts`, `lib/supabase/*`                    | Queries. Maps snake_case rows to camelCase domain types. Returns `{ ok, … }` results, never throws for expected failures  |
+| Server actions | `app/**/actions.ts`                                    | The app's own forms (sign-in, create project, remove source). Same three steps as a route handler                         |
+| `lib/`         | `lib/projects.ts`, `lib/sources.ts`, `lib/supabase/*`  | Queries. Maps snake_case rows to camelCase domain types. Returns `{ ok, … }` results, never throws for expected failures  |
 | Supabase Auth  | hosted                                                 | Sign-in codes, sessions (a cookie pair), JWTs, the `auth.users` table                                                     |
 | Postgres + RLS | `supabase/migrations/`                                 | All data. RLS limits every query to the signed-in user's projects. Deletes cascade                                        |
 | pgvector       | `document_chunks.embedding`, `match_document_chunks()` | Semantic search, filtered to one project                                                                                  |
@@ -78,12 +78,12 @@ build — something else already does it.
 
 ### Projects and sources — thin routes over `lib/`
 
-| Spec controller         | Now                                                                                                                                              | Status       |
-| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ | ------------ |
-| ProjectController       | `lib/projects.ts`, exposed by `app/api/projects/**` and the `createProject` server action                                                        | Built        |
-| SourceController        | A `lib/sources.ts` in the same shape. Insert, list, rename, delete a `sources` row                                                               | Not built    |
-| UploadController        | **Mostly dropped.** The bucket enforces type (PDF, text, Markdown) and size (50 MiB). The app uploads to Storage, then inserts the `sources` row | Not built    |
-| LinkIngestionController | Link sources — websites, YouTube                                                                                                                 | Stretch goal |
+| Spec controller         | Now                                                                                                                                               | Status       |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| ProjectController       | `lib/projects.ts`, exposed by `app/api/projects/**` and the `createProject` server action                                                         | Built        |
+| SourceController        | `lib/sources.ts` in the same shape. List (sources page) and delete (row, then Storage file, via `removeSource`) are built. Insert, rename to come | Partly built |
+| UploadController        | **Mostly dropped.** The bucket enforces type (PDF, text, Markdown) and size (50 MiB). The app uploads to Storage, then inserts the `sources` row  | Not built    |
+| LinkIngestionController | Link sources — websites, YouTube                                                                                                                  | Stretch goal |
 
 ### Processing — the worker
 
