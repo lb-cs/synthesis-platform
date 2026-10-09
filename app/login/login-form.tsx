@@ -101,6 +101,7 @@ function EmailStep({ onSent }: { onSent: (email: string) => void }) {
 
 function CodeStep({ email, onBack }: { email: string; onBack: () => void }) {
   const [notice, setNotice] = useState<string | null>(null);
+  const [resending, setResending] = useState(false);
   const form = useForm<CodeInput>({
     resolver: zodResolver(codeSchema),
     defaultValues: { email, token: '' },
@@ -114,8 +115,17 @@ function CodeStep({ email, onBack }: { email: string; onBack: () => void }) {
 
   async function resend() {
     setNotice(null);
-    const { error } = await sendCode({ email });
-    setNotice(error ?? 'We sent you a new code.');
+    setResending(true);
+
+    // A server action rejects only when the request never reaches the server.
+    try {
+      const { error } = await sendCode({ email });
+      setNotice(error ?? 'We sent you a new code.');
+    } catch {
+      setNotice('Could not reach the server. Check your connection and try again.');
+    } finally {
+      setResending(false);
+    }
   }
 
   return (
@@ -171,7 +181,13 @@ function CodeStep({ email, onBack }: { email: string; onBack: () => void }) {
           <Button type="button" variant="ghost" size="sm" onClick={onBack}>
             Use a different email
           </Button>
-          <Button type="button" variant="ghost" size="sm" onClick={resend}>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={resend}
+            disabled={resending}
+          >
             Resend code
           </Button>
         </div>
