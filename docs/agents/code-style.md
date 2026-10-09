@@ -324,18 +324,18 @@ export async function POST(request: Request) {
 
 ## 12. Naming
 
-- **Files** — kebab-case throughout: `health-check.tsx`, `button.tsx`, `utils.ts`. Routes
+- **Files** — kebab-case throughout: `project-form.tsx`, `button.tsx`, `utils.ts`. Routes
   follow Next's fixed names: `page.tsx`, `layout.tsx`, `route.ts`, `loading.tsx`
-- **Components** — PascalCase exports from kebab-case files: `HealthCheck` in
-  `health-check.tsx`
+- **Components** — PascalCase exports from kebab-case files: `ProjectForm` in
+  `project-form.tsx`
 - **Hooks** — `use-thing.ts` exporting `useThing`
 - **Constants** — `SCREAMING_SNAKE_CASE` at the top of the file: `PAGE_SIZE = 20`
 - **Booleans** — `is` / `has` / `can`: `hasMore`, `isSelected`, `canEdit`
 - **Functions** — verb first: `fetchItems`, `buildUrl`, `getEmptyText`, `reset`
-- **Lifecycle state** — a discriminated union, not a bag of booleans. `HealthState` in
-  `components/health-check.tsx` is the reference:
+- **Lifecycle state** — a discriminated union, not a bag of booleans:
   `{ kind: 'idle' } | { kind: 'loading' } | { kind: 'ok'; body } | { kind: 'error'; message }`
-  — `idle` is not the same as empty, and each branch carries only the data it has
+  — `idle` is not the same as empty, and each branch carries only the data it has.
+  `ProjectResult` in `lib/projects.ts` is the in-repo instance, discriminated on `ok`
 
 ---
 

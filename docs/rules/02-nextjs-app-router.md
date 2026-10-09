@@ -19,8 +19,9 @@ Every file under `app/` and `components/` is a **server component** unless it op
 handlers, or browser APIs — and put it on the smallest leaf that needs it, never on a
 page or layout just because one child is interactive.
 
-`components/health-check.tsx` is the reference: the page stays a server component; the
-one interactive card is the client boundary.
+`app/(app)/projects/[projectId]/sources/` is the reference: `page.tsx` stays a server
+component and fetches; `sources-list.tsx` is the one client boundary, for search and
+filters.
 
 ## Route files
 

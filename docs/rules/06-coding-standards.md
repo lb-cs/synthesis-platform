@@ -33,13 +33,13 @@ file. It has no parser for `.mdc` — the Cursor stubs are skipped, which is exp
 
 | Thing              | Convention                  | Example                                  |
 | ------------------ | --------------------------- | ---------------------------------------- |
-| Files              | kebab-case                  | `health-check.tsx`, `button.tsx`         |
+| Files              | kebab-case                  | `project-form.tsx`, `button.tsx`         |
 | Route files        | Next's fixed names          | `page.tsx`, `layout.tsx`, `route.ts`     |
-| Components         | PascalCase export           | `HealthCheck`, `CardHeader`              |
+| Components         | PascalCase export           | `ProjectForm`, `CardHeader`              |
 | Hooks              | `use-thing.ts` / `useThing` | `use-search.ts` → `useSearch`            |
 | Variables          | camelCase                   | `currentCursor`                          |
 | Constants          | `SCREAMING_SNAKE_CASE`      | `PAGE_SIZE`, `MAX_QUERY_LENGTH`          |
-| Types / interfaces | PascalCase                  | `HealthState`, `ItemsPage`               |
+| Types / interfaces | PascalCase                  | `ProjectResult`, `Source`                |
 | Booleans           | `is` / `has` / `can`        | `hasMore`, `isSelected`                  |
 | Functions          | verb first                  | `fetchItems`, `buildUrl`, `getEmptyText` |
 | Route handlers     | HTTP method, named export   | `export function GET()`                  |
@@ -51,7 +51,8 @@ file. It has no parser for `.mdc` — the Cursor stubs are skipped, which is exp
 3. Internal modules (`@/lib/…`)
 4. Components (`@/components/…`)
 
-One blank line between groups. `app/example/page.tsx` is the reference.
+One blank line between groups, then relative imports last.
+`app/(app)/projects/[projectId]/sources/sources-list.tsx` is the reference.
 
 ## Functions
 
@@ -92,7 +93,8 @@ restatement of the signature. Full treatment in `docs/agents/code-style.md` §7.
   behind that prefix.
 - Server secrets are read from `process.env` on the server only, in one place per
   concern — not scattered through components.
-- Never trust a client-supplied identity; derive it on the server once auth exists.
+- Never trust a client-supplied identity; derive it on the server with
+  `getSupabaseUser()` (`lib/supabase/server.ts`) and let RLS scope the query.
 
 ## Accessibility
 
@@ -105,7 +107,8 @@ restatement of the signature. Full treatment in `docs/agents/code-style.md` §7.
 ## Git commits
 
 `type: description`. Types: `feat`, `fix`, `refactor`, `docs`, `style`, `test`, `chore`.
-Lower-case, imperative, no trailing period: `feat: add search route`.
+Lower-case, imperative, no trailing period. End with the Jira key in parentheses when
+there is one: `feat: add sources list with search and filters (CECS491-62)`.
 
 ## Before you open a PR
 

@@ -4,8 +4,9 @@ AI-assisted research workspace — CECS 491, Team Quintessential Algorithms.
 
 ## Quick start
 
-You need **Node 24**, **npm 11**, **Docker** (running), and the
-[Supabase CLI](https://supabase.com/docs/guides/local-development/cli/getting-started).
+You need **Node 24**, **npm 11**, and **Docker** (running). The
+[Supabase CLI](https://supabase.com/docs/guides/local-development/cli/getting-started)
+needs no install — `npx supabase` downloads it on first use.
 
 **1. Install dependencies**
 
@@ -16,7 +17,7 @@ npm ci
 **2. Start Supabase**
 
 ```bash
-supabase start
+npx supabase start
 ```
 
 It prints an API URL and a publishable key. You need both in the next step.
@@ -55,16 +56,17 @@ Go to <http://localhost:3000/login> and enter any email. No real email is sent �
 | Sign-in codes (local inbox)  | <http://127.0.0.1:54324> |
 | Supabase Studio (DB browser) | <http://127.0.0.1:54323> |
 
-Done for the day? `supabase stop`.
+Done for the day? `npx supabase stop`.
 
 ---
 
 ## What's here
 
 This repo is the project foundation: Next.js (App Router), Tailwind CSS v4,
-shadcn/ui, Supabase (auth + Postgres), ESLint, Prettier, and CI. Email OTP login
-works. The initial database schema is in `supabase/migrations/`; no features use it
-yet.
+shadcn/ui, Supabase (auth + Postgres), ESLint, Prettier, and CI. Email OTP login,
+projects (dashboard, create, REST API), and the sources list work. The schema is in
+`supabase/migrations/`. What's built per screen:
+[`docs/design/architecture.md`](docs/design/architecture.md).
 
 ## Supabase: cloud instead of local
 
@@ -103,12 +105,16 @@ every pull request.
 
 ```
 app/                  App Router routes
-  page.tsx            Landing page (public)
-  api/health/route.ts GET /api/health → { "status": "ok" } (public)
+  page.tsx            / — redirects to /dashboard or /home by sign-in state
+  home/               Landing page (public)
   login/              Sign-in page (public): page.tsx, login-form.tsx, actions.ts, schema.ts
-  dashboard/page.tsx  Placeholder page after sign-in (protected)
-components/ui/        shadcn/ui components (add more: npx shadcn@latest add <name>)
-lib/supabase/         Supabase clients from the docs: client.ts, server.ts, proxy.ts
+  (app)/              Signed-in screens inside the app shell: dashboard, projects, settings
+  api/health/route.ts GET /api/health → { "status": "ok" } (public)
+  api/projects/       Project REST API (protected)
+components/           App components; components/ui/ is shadcn (npx shadcn@latest add <name>)
+lib/                  Queries behind the routes: projects.ts, sources.ts
+lib/supabase/         Supabase clients from the docs (client.ts, server.ts, proxy.ts) + DB types
+supabase/             Local Supabase config, migrations, email template
 proxy.ts              Calls lib/supabase/proxy.ts on every request (Next 16's "middleware")
 public/               Static assets
 ```
@@ -123,9 +129,9 @@ The setup follows Supabase's
 [Next.js server-side auth guide](https://supabase.com/docs/guides/auth/server-side/nextjs)
 file for file.
 
-- **Route guard:** `lib/supabase/proxy.ts`. Only `/`, `/login`, and `/api/health` work
-  signed out; anything else redirects to `/login`. Add a path to `PUBLIC_PATHS` there to
-  open it.
+- **Route guard:** `lib/supabase/proxy.ts`. Only `/home`, `/login`, and `/api/health`
+  work signed out (`/` redirects by sign-in state); any other page redirects to `/login`,
+  any other `/api/*` route answers 401. Add a path to `PUBLIC_PATHS` there to open it.
 - **Server code:** `const supabase = await createClient()` from
   `@/lib/supabase/server`, then `supabase.auth.getClaims()` to read the user.
   Never trust `getSession()` on the server — it doesn't verify the JWT.
@@ -141,7 +147,7 @@ Import alias: `@/*` maps to the repo root (e.g. `@/components/ui/button`).
 - `AGENTS.md` — entry point for AI coding agents; the rules in `docs/rules/` are for
   humans too
 - `docs/agents/code-style.md` — how code is shaped here
-- `CONTEXT.md` — domain glossary (skeleton until the first feature lands)
+- `CONTEXT.md` — domain glossary: the words the code uses
 - `docs/adr/` — architecture decision records
 
 ## Project tracking

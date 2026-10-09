@@ -65,19 +65,18 @@ type SortOrder = (typeof SORT_ORDERS)[number]; // 'newest' | 'oldest'
 
 ## Status, not booleans
 
-Model a lifecycle as a discriminated union, not a bag of booleans. `HealthState` in
-`components/health-check.tsx` is the reference:
+Model a lifecycle or an outcome as a discriminated union, not a bag of booleans. The
+`lib/` results are the in-repo reference — `ProjectResult` in `lib/projects.ts`:
 
 ```ts
-type HealthState =
-  | { kind: 'idle' }
-  | { kind: 'loading' }
-  | { kind: 'ok'; body: string }
-  | { kind: 'error'; message: string };
+type ProjectResult =
+  { ok: true; project: Project } | { ok: false; kind: 'not-found' | 'database-error' };
 ```
 
-`idle` is not the same as empty, and each branch carries only the data that branch has —
-so `state.body` cannot be read without narrowing on `kind` first.
+Each branch carries only the data that branch has — so `result.project` cannot be read
+without narrowing on `ok` first. UI state takes the same shape:
+`{ kind: 'idle' } | { kind: 'loading' } | { kind: 'error'; message: string }` — and
+`idle` is not the same as empty.
 
 ## Component props
 

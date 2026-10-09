@@ -44,8 +44,8 @@ cd synthesis-platform
 npm ci
 ```
 
-The README expects the Supabase CLI. If a global install is blocked on your machine, run it
-through `npx` instead. It downloads the CLI on first use and changes no files in the repo:
+No Supabase CLI install is needed: run it through `npx`. It downloads the CLI on first use
+and changes no files in the repo:
 
 ```
 npx supabase --version

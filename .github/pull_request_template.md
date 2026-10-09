@@ -23,4 +23,5 @@
 - [ ] `npm run lint` passes
 - [ ] `npm run type-check` passes
 - [ ] `npm run format:check` passes
+- [ ] `npm run build` passes
 - [ ] Tested locally

@@ -5,7 +5,7 @@ Applies to: `**/__tests__/**`, `*.test.ts`, `*.test.tsx`.
 ## There is no test suite yet
 
 No test runner is installed and there is no `test` script in `package.json`. The only
-automated checks today are the three static ones, and CI runs exactly these:
+automated checks today are the static ones plus the build, and CI runs exactly these:
 
 ```bash
 npm run lint           # ESLint (eslint-config-next + Prettier conflicts off)

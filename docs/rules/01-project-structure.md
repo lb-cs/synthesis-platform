@@ -13,6 +13,9 @@ components/       app components (kebab-case files, PascalCase exports)
 components/ui/    shadcn/ui primitives — added with `npx shadcn@latest add <name>`
 hooks/            hooks shared by more than one component
 lib/              shared, framework-free utilities and the real work behind route handlers
+lib/supabase/     Supabase clients (server, browser, proxy) and generated database.types.ts
+supabase/         local Supabase config, migrations, email template
+proxy.ts          route guard — Next 16's name for middleware
 public/           static assets
 docs/             these rules, code style, ADRs
 .agents/skills/   agent skills (source); .claude/skills/ symlinks to them
@@ -38,14 +41,16 @@ imports from `@/lib/utils`.
 
 ## Where a change goes
 
-| You are changing                       | Where                                                   |
-| -------------------------------------- | ------------------------------------------------------- |
-| A route, page, or layout               | `app/` — thin; delegate rendering to `components/`      |
-| An HTTP endpoint                       | `app/api/<name>/route.ts` — validate, then call `lib/`  |
-| Logic a test should reach without HTTP | `lib/`                                                  |
-| A shared UI primitive                  | `components/ui/` via the shadcn CLI — see 03            |
-| How something looks                    | Tailwind classes + tokens in `app/globals.css` — see 03 |
-| Anything about how code is _shaped_    | `docs/agents/code-style.md`                             |
+| You are changing                       | Where                                                           |
+| -------------------------------------- | --------------------------------------------------------------- |
+| A route, page, or layout               | `app/` — thin; delegate rendering to `components/`              |
+| An HTTP endpoint                       | `app/api/<name>/route.ts` — validate, then call `lib/`          |
+| A form in the app's own UI             | `actions.ts` beside the route — validate, call `lib/`           |
+| A table or column                      | `npx supabase migration new <name>` — never edit an applied one |
+| Logic a test should reach without HTTP | `lib/`                                                          |
+| A shared UI primitive                  | `components/ui/` via the shadcn CLI — see 03                    |
+| How something looks                    | Tailwind classes + tokens in `app/globals.css` — see 03         |
+| Anything about how code is _shaped_    | `docs/agents/code-style.md`                                     |
 
 Route files stay thin: a `page.tsx` composes components and passes data; it does not own
 state or fetch logic that another route would want. A component used by two routes lives

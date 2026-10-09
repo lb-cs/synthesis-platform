@@ -17,10 +17,11 @@ it in place.
 ## Project overview
 
 Synthesis Platform — an AI-assisted research workspace. CECS 491, Team Quintessential
-Algorithms. The repo is the **foundation only** right now: routing, styling, lint, format,
-typecheck, CI, Supabase auth (email one-time code, route guard in `proxy.ts`), and the
-initial schema in `supabase/migrations/` (projects, sources, chunks, chat, citations).
-The only thing that reads or writes it is the project REST API (`app/api/projects/`).
+Algorithms. Built so far: Supabase auth (email one-time code, route guard in `proxy.ts`),
+the schema in `supabase/migrations/` (projects, sources, chunks, chat, citations), and
+the first features over it — projects (dashboard, create, REST API in
+`app/api/projects/`) and the sources list with remove. Upload, processing, and chat are
+not built; [architecture](docs/design/architecture.md) tracks status per screen.
 
 **Tech stack**: Next.js 16 (App Router) / React 19 / TypeScript, Tailwind CSS v4,
 shadcn/ui on Base UI, lucide-react, Supabase (`@supabase/ssr`), zod + react-hook-form.
@@ -65,8 +66,8 @@ Read the file that matches what you're touching. Cursor loads these automaticall
 reference for how code is _shaped_ here — braces on arrow functions, guard clauses over
 nesting, named intermediates over long chains, no nested ternaries, comment style.
 
-`CONTEXT.md` is the domain glossary. It is a skeleton until the first feature lands —
-read it before naming anything new, and add the word there when you do.
+`CONTEXT.md` is the domain glossary — read it before naming anything new, and add the
+word there when you do.
 
 ## Things that will bite you
 
@@ -87,6 +88,14 @@ read it before naming anything new, and add the word there when you do.
   `format:check`. Run `npm run format` rather than reordering by hand
 - ⚠️ **`next dev` rewrites the top of this file.** The `nextjs-agent-rules` block comes
   back on every run — commit it, don't delete it
+- ⚠️ **RLS is the ownership check.** Query through `createClient()` from
+  `lib/supabase/server.ts`, never the service role — it bypasses RLS and leaks other
+  users' rows. Every route handler and server action still calls `getSupabaseUser()` and
+  validates with zod; server actions are public endpoints
+- ⚠️ **Deleting a source row leaves its file in Storage.** Remove the file through the
+  Storage API too — `deleteSource` in `lib/sources.ts` is the pattern
+- ⚠️ **Regenerated DB types fail `format:check`.** After a migration, run
+  `npx supabase gen types --local > lib/supabase/database.types.ts`, then `npm run format`
 - **Everything is a server component by default.** `'use client'` goes on the smallest
   leaf that needs it, never on a page or layout for one interactive child
 - **`NEXT_PUBLIC_*` is inlined into the browser bundle.** Never a secret behind that
@@ -96,8 +105,8 @@ read it before naming anything new, and add the word there when you do.
 
 ## Project conventions
 
-- **Git commits** — `type: description`. Types: `feat`, `fix`, `refactor`, `docs`,
-  `style`, `test`, `chore`
+- **Git commits** — `type: description (CECS491-NN)`. Types: `feat`, `fix`, `refactor`,
+  `docs`, `style`, `test`, `chore`. Jira key in parentheses at the end when there is one
 - **Architecture decisions** — recorded as ADRs in `docs/adr/`. Write one only when the
   decision is hard to reverse, surprising without context, and a real trade-off. Most
   work needs none. **Offer, don't assume** — say a decision looks like it qualifies and

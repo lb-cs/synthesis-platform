@@ -14,6 +14,7 @@ markdown, no tool-specific format.
 | See how the app is built, and what's built | [design/architecture.md](design/architecture.md)                                 |
 | See the tables and their rules             | [design/data-model.md](design/data-model.md)                                     |
 | Know what changed from the original spec   | [product/spec-vs-build.md](product/spec-vs-build.md)                             |
+| Get the app running on your machine        | [local-setup.md](local-setup.md)                                                 |
 | Write code that fits the repo              | [rules/README.md](rules/README.md), [agents/code-style.md](agents/code-style.md) |
 | Record or read an architecture decision    | [adr/README.md](adr/README.md)                                                   |
 
@@ -22,6 +23,7 @@ markdown, no tool-specific format.
 ```
 docs/
   README.md                 This file — the map
+  local-setup.md            Fresh machine → app running, with troubleshooting
   product/                  What the product must do (from the team's spec documents)
     README.md               Overview: purpose, users, core principle, team, timeline
     requirements.md         RFP + SRS requirements: features, constraints, interfaces
