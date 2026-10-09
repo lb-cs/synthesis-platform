@@ -1,4 +1,4 @@
-import type { SourceKind, SourceListItem, SourceStatus } from './source-types';
+import type { Source, SourceKind, SourceStatus } from '@/lib/sources';
 
 export type SourceFilters = {
   query: string;
@@ -6,10 +6,7 @@ export type SourceFilters = {
   kind: SourceKind | 'all';
 };
 
-export function filterSources(
-  sources: SourceListItem[],
-  filters: SourceFilters,
-): SourceListItem[] {
+export function filterSources(sources: Source[], filters: SourceFilters): Source[] {
   const query = filters.query.trim().toLowerCase();
 
   return sources.filter((source) => {

@@ -3,6 +3,9 @@
 import { FileText, SearchX } from 'lucide-react';
 import { useState } from 'react';
 
+import type { Source } from '@/lib/sources';
+
+import { SOURCE_KINDS, SOURCE_STATUSES } from '@/lib/sources';
 import { Button } from '@/components/ui/button';
 import {
   Empty,
@@ -18,13 +21,7 @@ import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { filterSources, type SourceFilters } from './filter-sources';
 import { SourceDetailsSheet } from './source-details-sheet';
 import { SourceRow } from './source-row';
-import {
-  KIND_LABELS,
-  SOURCE_KINDS,
-  SOURCE_STATUSES,
-  STATUS_LABELS,
-  type SourceListItem,
-} from './source-types';
+import { KIND_LABELS, STATUS_LABELS } from './source-types';
 
 const STATUS_OPTIONS = ['all', ...SOURCE_STATUSES] as const;
 const KIND_OPTIONS = ['all', ...SOURCE_KINDS] as const;
@@ -48,7 +45,7 @@ function pickOption<Option extends string>(
   return options.find((option) => option === values[0]) ?? fallback;
 }
 
-export function SourcesList({ sources }: { sources: SourceListItem[] }) {
+export function SourcesList({ sources }: { sources: Source[] }) {
   const [query, setQuery] = useState('');
   const [status, setStatus] = useState<SourceFilters['status']>('all');
   const [kind, setKind] = useState<SourceFilters['kind']>('all');

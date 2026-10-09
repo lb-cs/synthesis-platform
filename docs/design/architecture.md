@@ -78,12 +78,12 @@ build — something else already does it.
 
 ### Projects and sources — thin routes over `lib/`
 
-| Spec controller         | Now                                                                                                                                                 | Status       |
-| ----------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| ProjectController       | `lib/projects.ts`, exposed by `app/api/projects/**` and the `createProject` server action                                                           | Built        |
-| SourceController        | `lib/sources.ts` in the same shape. Delete (row, then Storage file) is built, behind the `removeSource` server action. Insert, list, rename to come | Partly built |
-| UploadController        | **Mostly dropped.** The bucket enforces type (PDF, text, Markdown) and size (50 MiB). The app uploads to Storage, then inserts the `sources` row    | Not built    |
-| LinkIngestionController | Link sources — websites, YouTube                                                                                                                    | Stretch goal |
+| Spec controller         | Now                                                                                                                                               | Status       |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| ProjectController       | `lib/projects.ts`, exposed by `app/api/projects/**` and the `createProject` server action                                                         | Built        |
+| SourceController        | `lib/sources.ts` in the same shape. List (sources page) and delete (row, then Storage file, via `removeSource`) are built. Insert, rename to come | Partly built |
+| UploadController        | **Mostly dropped.** The bucket enforces type (PDF, text, Markdown) and size (50 MiB). The app uploads to Storage, then inserts the `sources` row  | Not built    |
+| LinkIngestionController | Link sources — websites, YouTube                                                                                                                  | Stretch goal |
 
 ### Processing — the worker
 

@@ -1,14 +1,16 @@
 import { FileText } from 'lucide-react';
 
+import type { Source } from '@/lib/sources';
+
 import { formatAddedDate } from './format-source';
 import { SourceStatusBadge } from './source-status-badge';
-import { KIND_LABELS, type SourceListItem } from './source-types';
+import { KIND_LABELS } from './source-types';
 
 export function SourceRow({
   source,
   onSelect,
 }: {
-  source: SourceListItem;
+  source: Source;
   onSelect: (sourceId: string) => void;
 }) {
   const failureReason = source.processingError ?? 'Processing failed.';

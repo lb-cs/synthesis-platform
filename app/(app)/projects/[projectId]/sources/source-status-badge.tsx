@@ -2,7 +2,9 @@ import { CircleAlert, CircleCheck, Clock, Loader, type LucideIcon } from 'lucide
 
 import { Badge } from '@/components/ui/badge';
 
-import { STATUS_LABELS, type SourceStatus } from './source-types';
+import type { SourceStatus } from '@/lib/sources';
+
+import { STATUS_LABELS } from './source-types';
 
 type BadgeVariant = NonNullable<React.ComponentProps<typeof Badge>['variant']>;
 

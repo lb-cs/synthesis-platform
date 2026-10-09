@@ -1,3 +1,5 @@
+import type { Source } from '@/lib/sources';
+
 import {
   Sheet,
   SheetContent,
@@ -8,7 +10,7 @@ import {
 
 import { formatAddedDate, getMetadataEntries } from './format-source';
 import { SourceStatusBadge } from './source-status-badge';
-import { KIND_LABELS, type SourceListItem } from './source-types';
+import { KIND_LABELS } from './source-types';
 
 function DetailRow({ label, children }: { label: string; children: React.ReactNode }) {
   return (
@@ -24,7 +26,7 @@ export function SourceDetailsSheet({
   open,
   onOpenChange,
 }: {
-  source: SourceListItem | undefined;
+  source: Source | undefined;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {

@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation';
 
 import { projectIdSchema } from '@/app/api/projects/schema';
 import { getProject } from '@/lib/projects';
+import { listSources } from '@/lib/sources';
 import { createClient } from '@/lib/supabase/server';
 import { PageHeader } from '@/components/page-header';
 import { Badge } from '@/components/ui/badge';
@@ -17,7 +18,6 @@ import {
   EmptyTitle,
 } from '@/components/ui/empty';
 
-import { loadSources } from './load-sources';
 import { SourcesList } from './sources-list';
 
 export const metadata: Metadata = {
@@ -60,7 +60,7 @@ export default async function SourcesPage({
     return <LoadError />;
   }
 
-  const sourcesResult = await loadSources(supabase, projectId);
+  const sourcesResult = await listSources(supabase, projectId);
 
   if (!sourcesResult.ok) {
     return <LoadError />;
