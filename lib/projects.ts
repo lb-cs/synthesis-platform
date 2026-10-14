@@ -4,6 +4,7 @@
  */
 import type { SupabaseClient } from '@supabase/supabase-js';
 
+import { removeFiles } from '@/lib/storage';
 import type {
   Database,
   Tables,
@@ -30,7 +31,7 @@ export type ProjectListResult =
   { ok: true; projects: Project[] } | { ok: false; kind: 'database-error' };
 
 export type DeleteProjectResult =
-  { ok: true } | { ok: false; kind: 'not-found' | 'database-error' };
+  { ok: true } | { ok: false; kind: 'not-found' | 'database-error' | 'storage-error' };
 
 type Client = SupabaseClient<Database>;
 
@@ -131,6 +132,15 @@ export async function deleteProject(
   supabase: Client,
   projectId: string,
 ): Promise<DeleteProjectResult> {
+  const { data: sources, error: sourcesError } = await supabase
+    .from('sources')
+    .select('storage_path')
+    .eq('project_id', projectId);
+
+  if (sourcesError) {
+    return { ok: false, kind: 'database-error' };
+  }
+
   const { data, error } = await supabase
     .from('projects')
     .delete()
@@ -144,6 +154,16 @@ export async function deleteProject(
 
   if (!data) {
     return { ok: false, kind: 'not-found' };
+  }
+
+  const paths = sources.map((source) => source.storage_path);
+
+  if (paths.length > 0) {
+    const removeResult = await removeFiles(supabase, paths);
+
+    if (!removeResult.ok) {
+      return { ok: false, kind: 'storage-error' };
+    }
   }
 
   return { ok: true };
