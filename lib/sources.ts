@@ -1,7 +1,7 @@
 /**
  * Source CRUD. Every query runs as the signed-in user, so RLS on `public.sources` and
  * the `sources` bucket scopes it to their projects — another user's source reads as
- * not found. List and delete are here so far; create and rename land with CECS491-61.
+ * not found. Create, list, rename, and delete stay here so routes can remain thin.
  */
 import type { SupabaseClient } from '@supabase/supabase-js';
 
@@ -27,6 +27,14 @@ export type Source = {
 
 export type SourceListResult =
   { ok: true; sources: Source[] } | { ok: false; kind: 'database-error' };
+
+export type CreateSourceInput = Pick<Source, 'kind' | 'title'> & {
+  storagePath: string;
+};
+
+export type SourceResult =
+  { ok: true; source: Source } |
+  { ok: false; kind: 'not-found' | 'database-error' };
 
 export type DeleteSourceResult =
   { ok: true } | { ok: false; kind: 'not-found' | 'database-error' | 'storage-error' };
@@ -68,6 +76,54 @@ export async function listSources(
   }
 
   return { ok: true, sources: data.map(toSource) };
+}
+
+export async function createSource(
+  supabase: Client,
+  projectId: string,
+  input: CreateSourceInput,
+): Promise<SourceResult> {
+  const { data, error } = await supabase
+    .from('sources')
+    .insert({
+      project_id: projectId,
+      kind: input.kind,
+      title: input.title,
+      storage_path: input.storagePath,
+    })
+    .select(SOURCE_COLUMNS)
+    .single();
+
+  if (error) {
+    return { ok: false, kind: 'database-error' };
+  }
+
+  return { ok: true, source: toSource(data) };
+}
+
+export async function renameSource(
+  supabase: Client,
+  projectId: string,
+  sourceId: string,
+  title: string,
+): Promise<SourceResult> {
+  const { data, error } = await supabase
+    .from('sources')
+    .update({ title })
+    .eq('id', sourceId)
+    .eq('project_id', projectId)
+    .select(SOURCE_COLUMNS)
+    .maybeSingle();
+
+  if (error) {
+    return { ok: false, kind: 'database-error' };
+  }
+
+  if (!data) {
+    return { ok: false, kind: 'not-found' };
+  }
+
+  return { ok: true, source: toSource(data) };
 }
 
 // Row first, then file: a failure in between leaves an unreachable file, never a row
