@@ -13,11 +13,11 @@ Use **PyMuPDF** for the worker's first PDF text extraction pass. Iterate pages i
 
 ## Results
 
-| Library | Pages | Extracted characters | Elapsed |
-| --- | ---: | ---: | ---: |
-| PyMuPDF | 26 | 52,292 | 109 ms |
-| pypdf | 26 | 53,646 | 798 ms |
-| pdfplumber | 26 | 54,710 | 2,465 ms |
+| Library    | Pages | Extracted characters |  Elapsed |
+| ---------- | ----: | -------------------: | -------: |
+| PyMuPDF    |    26 |               52,292 |   109 ms |
+| pypdf      |    26 |               53,646 |   798 ms |
+| pdfplumber |    26 |               54,710 | 2,465 ms |
 
 All three preserved the 26-page boundary when called once per page. PyMuPDF's first-page text read cleanly. pypdf's output was similar but introduced extra spaces in some words. pdfplumber was slowest and produced a scrambled line for one decorative text element. These are qualitative observations from one sample, not a broad corpus benchmark.
 
