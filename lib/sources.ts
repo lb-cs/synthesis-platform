@@ -33,8 +33,7 @@ export type CreateSourceInput = Pick<Source, 'kind' | 'title'> & {
 };
 
 export type SourceResult =
-  { ok: true; source: Source } |
-  { ok: false; kind: 'not-found' | 'database-error' };
+  { ok: true; source: Source } | { ok: false; kind: 'not-found' | 'database-error' };
 
 export type DeleteSourceResult =
   { ok: true } | { ok: false; kind: 'not-found' | 'database-error' | 'storage-error' };

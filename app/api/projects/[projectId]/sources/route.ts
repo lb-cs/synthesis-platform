@@ -89,7 +89,10 @@ export async function POST(request: Request, context: Context) {
   const expectedPathPrefix = `${supabaseUser.sub}/${projectId}/`;
 
   if (!parsed.data.storagePath.startsWith(expectedPathPrefix)) {
-    return Response.json({ error: 'The file must belong to this project.' }, { status: 400 });
+    return Response.json(
+      { error: 'The file must belong to this project.' },
+      { status: 400 },
+    );
   }
 
   const result = await createSource(supabase, projectId, parsed.data);

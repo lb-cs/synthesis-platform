@@ -67,11 +67,7 @@ export async function DELETE(_request: Request, context: Context) {
     return Response.json({ error: 'Source not found.' }, { status: 404 });
   }
 
-  const result = await deleteSource(
-    supabase,
-    parsedProjectId.data,
-    parsedSourceId.data,
-  );
+  const result = await deleteSource(supabase, parsedProjectId.data, parsedSourceId.data);
 
   if (!result.ok && result.kind === 'not-found') {
     return Response.json({ error: 'Source not found.' }, { status: 404 });
