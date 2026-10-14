@@ -118,7 +118,7 @@ build — something else already does it.
 | Summaries             | `/projects/[projectId]/summaries`             | UC-17         | Placeholder |
 | Analysis              | `/projects/[projectId]/analysis`              | UC-18, UC-19  | Placeholder |
 | Settings              | `/settings`                                   | UC-04 – UC-06 | Page exists |
-| Edit project          | —                                             | UC-08         | API only    |
+| Edit project          | `/projects/[projectId]/edit`                  | UC-08         | Built       |
 | Citation viewer       | —                                             | UC-20         | Not built   |
 
 ## How a source gets processed (UC-11, UC-15)

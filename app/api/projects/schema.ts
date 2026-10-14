@@ -7,6 +7,7 @@ const title = z.string().trim().min(1).max(100);
 const description = z
   .string()
   .trim()
+  .max(500)
   .transform((value) => value || null)
   .nullable();
 

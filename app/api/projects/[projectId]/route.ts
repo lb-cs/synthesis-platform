@@ -90,6 +90,13 @@ export async function DELETE(_request: Request, context: Context) {
     return Response.json({ error: 'Project not found.' }, { status: 404 });
   }
 
+  if (!result.ok && result.kind === 'storage-error') {
+    return Response.json(
+      { error: 'The project was deleted, but its source files could not be removed.' },
+      { status: 500 },
+    );
+  }
+
   if (!result.ok) {
     return Response.json({ error: 'Could not delete project.' }, { status: 500 });
   }

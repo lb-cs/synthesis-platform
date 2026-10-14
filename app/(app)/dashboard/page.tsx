@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { CircleAlert, FolderOpen, FolderPlus, Plus } from 'lucide-react';
+import { CircleAlert, FolderOpen, FolderPlus, Pencil, Plus } from 'lucide-react';
 import Link from 'next/link';
 
 import { PageHeader } from '@/components/page-header';
@@ -27,7 +27,8 @@ export const metadata: Metadata = {
   title: 'Dashboard · Synthesis Platform',
 };
 
-export default async function DashboardPage() {
+export default async function DashboardPage({ searchParams }: PageProps<'/dashboard'>) {
+  const { notice } = await searchParams;
   const supabase = await createClient();
   const result = await listProjects(supabase);
 
@@ -53,6 +54,13 @@ export default async function DashboardPage() {
   return (
     <>
       <DashboardHeader />
+
+      {notice === 'storage-cleanup' && (
+        <p role="status" className="rounded-md border bg-muted p-3 text-sm">
+          The project was deleted, but some source files could not be removed from
+          storage.
+        </p>
+      )}
 
       {projects.length === 0 ? (
         <Empty>
@@ -88,13 +96,21 @@ export default async function DashboardPage() {
               <CardContent>
                 <p className="text-sm text-muted-foreground">0 sources</p>
               </CardContent>
-              <CardFooter>
+              <CardFooter className="gap-2">
                 <Button
                   variant="outline"
                   render={<Link href={`/projects/${project.id}`} />}
                   nativeButton={false}
                 >
                   Open workspace
+                </Button>
+                <Button
+                  variant="ghost"
+                  render={<Link href={`/projects/${project.id}/edit`} />}
+                  nativeButton={false}
+                >
+                  <Pencil />
+                  Edit project
                 </Button>
               </CardFooter>
             </Card>
