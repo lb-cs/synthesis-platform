@@ -9,6 +9,7 @@ import {
 } from '@/components/ui/sheet';
 
 import { formatAddedDate, getMetadataEntries } from './format-source';
+import { SourceEditForm } from './source-edit-form';
 import { SourceStatusBadge } from './source-status-badge';
 import { KIND_LABELS } from './source-types';
 
@@ -22,10 +23,12 @@ function DetailRow({ label, children }: { label: string; children: React.ReactNo
 }
 
 export function SourceDetailsSheet({
+  projectId,
   source,
   open,
   onOpenChange,
 }: {
+  projectId: string;
   source: Source | undefined;
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -44,6 +47,13 @@ export function SourceDetailsSheet({
           <SheetTitle>{source.title}</SheetTitle>
           <SheetDescription>Source details</SheetDescription>
         </SheetHeader>
+        {/* Keyed so switching sources resets the title field. */}
+        <SourceEditForm
+          key={source.id}
+          projectId={projectId}
+          source={source}
+          onRemoved={() => onOpenChange(false)}
+        />
         <dl className="flex flex-col gap-4 px-4 text-sm">
           <DetailRow label="Status">
             <SourceStatusBadge status={source.status} />

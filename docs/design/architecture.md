@@ -82,7 +82,7 @@ build — something else already does it.
 | ----------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
 | ProjectController       | `lib/projects.ts`, exposed by `app/api/projects/**` and the `createProject` server action                                                                        | Built        |
 | SourceController        | `lib/sources.ts` with authenticated GET/POST and PATCH/DELETE source routes. User edits can change only the title; delete removes the Storage file after the row | Built        |
-| UploadController        | **Mostly dropped.** The bucket enforces type (PDF, text, Markdown) and size (50 MiB). The app uploads to Storage, then inserts the `sources` row                 | Not built    |
+| UploadController        | **Mostly dropped.** The bucket enforces type (PDF, text, Markdown) and size (50 MiB). The app uploads to Storage, then inserts the `sources` row                 | Built        |
 | LinkIngestionController | Link sources — websites, YouTube                                                                                                                                 | Stretch goal |
 
 ### Processing — the worker

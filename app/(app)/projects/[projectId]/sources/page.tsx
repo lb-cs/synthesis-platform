@@ -1,15 +1,14 @@
 import type { Metadata } from 'next';
-import { CircleAlert, Link2, Upload } from 'lucide-react';
-import { notFound } from 'next/navigation';
+import { CircleAlert, Link2 } from 'lucide-react';
+import { notFound, redirect } from 'next/navigation';
 
 import { projectIdSchema } from '@/app/api/projects/schema';
 import { getProject } from '@/lib/projects';
 import { listSources } from '@/lib/sources';
-import { createClient } from '@/lib/supabase/server';
+import { createClient, getSupabaseUser } from '@/lib/supabase/server';
 import { PageHeader } from '@/components/page-header';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
 import {
   Empty,
   EmptyDescription,
@@ -18,6 +17,7 @@ import {
   EmptyTitle,
 } from '@/components/ui/empty';
 
+import { SourceUpload } from './source-upload';
 import { SourcesList } from './sources-list';
 
 export const metadata: Metadata = {
@@ -49,6 +49,13 @@ export default async function SourcesPage({
   }
 
   const supabase = await createClient();
+  const supabaseUser = await getSupabaseUser(supabase);
+
+  // The upload builds the Storage path from the user's id.
+  if (!supabaseUser) {
+    redirect('/login');
+  }
+
   const projectResult = await getProject(supabase, projectId);
 
   // RLS hides other users' projects, so theirs land here too.
@@ -77,23 +84,9 @@ export default async function SourcesPage({
         </Button>
       </PageHeader>
 
-      <Card className="border-dashed">
-        <CardContent className="flex flex-col items-center gap-3 py-10 text-center">
-          <Upload className="size-6 text-muted-foreground" />
-          <div className="flex flex-col gap-1">
-            <p className="font-medium">Drop PDF or text files here</p>
-            <p className="text-sm text-muted-foreground">
-              Files are stored, parsed, and queued for processing.
-            </p>
-          </div>
-          {/* Not wired up: upload lands with CECS491-10. */}
-          <Button variant="secondary" disabled>
-            Browse files
-          </Button>
-        </CardContent>
-      </Card>
+      <SourceUpload userId={supabaseUser.sub} projectId={projectId} />
 
-      <SourcesList sources={sourcesResult.sources} />
+      <SourcesList projectId={projectId} sources={sourcesResult.sources} />
     </>
   );
 }

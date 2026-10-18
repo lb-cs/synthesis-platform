@@ -45,7 +45,13 @@ function pickOption<Option extends string>(
   return options.find((option) => option === values[0]) ?? fallback;
 }
 
-export function SourcesList({ sources }: { sources: Source[] }) {
+export function SourcesList({
+  projectId,
+  sources,
+}: {
+  projectId: string;
+  sources: Source[];
+}) {
   const [query, setQuery] = useState('');
   const [status, setStatus] = useState<SourceFilters['status']>('all');
   const [kind, setKind] = useState<SourceFilters['kind']>('all');
@@ -155,6 +161,7 @@ export function SourcesList({ sources }: { sources: Source[] }) {
       )}
 
       <SourceDetailsSheet
+        projectId={projectId}
         source={selectedSource}
         open={isDetailsOpen}
         onOpenChange={setIsDetailsOpen}

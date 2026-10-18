@@ -20,7 +20,7 @@ Synthesis Platform — an AI-assisted research workspace. CECS 491, Team Quintes
 Algorithms. Built so far: Supabase auth (email one-time code, route guard in `proxy.ts`),
 the schema in `supabase/migrations/` (projects, sources, chunks, chat, citations), and
 the first features over it — projects (dashboard, create, REST API in
-`app/api/projects/`) and the sources list with remove. Upload, processing, and chat are
+`app/api/projects/`) and sources (upload, list, rename, remove). Processing and chat are
 not built; [architecture](docs/design/architecture.md) tracks status per screen.
 
 **Tech stack**: Next.js 16 (App Router) / React 19 / TypeScript, Tailwind CSS v4,
