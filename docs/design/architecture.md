@@ -69,12 +69,12 @@ build — something else already does it.
 
 ### Identity and security — handled by Supabase and Postgres
 
-| Spec controller    | Now                                                                                                                                                                                                                 | Status    |
-| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------- |
-| AuthController     | **Dropped.** Supabase Auth: `signInWithOtp` / `verifyOtp` / `signOut` in `app/login/actions.ts`. Sessions and JWTs are Supabase's; read with `getClaims()`                                                          | Built     |
-| OAuthController    | **Dropped.** Supabase's Google provider: `signInWithOAuth`, plus one callback route that calls `exchangeCodeForSession`                                                                                             | Not built |
-| UserController     | **Mostly dropped.** Email change is Supabase's `updateUser` (it emails a confirmation). Account deletion needs one server-side call with the service role (`auth.admin.deleteUser`); the database cascades the rest | Not built |
-| SecurityController | **Dropped.** RLS on every table and the storage bucket, `proxy.ts` for routes, zod for input, Next.js origin check on server actions                                                                                | Built     |
+| Spec controller    | Now                                                                                                                                                                                                                                                              | Status    |
+| ------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------- |
+| AuthController     | **Dropped.** Supabase Auth: `signInWithOtp` / `verifyOtp` / `signOut` in `app/login/actions.ts`. Sessions and JWTs are Supabase's; read with `getClaims()`                                                                                                       | Built     |
+| OAuthController    | **Dropped.** Supabase's Google provider: `signInWithOAuth`, plus one callback route that calls `exchangeCodeForSession`                                                                                                                                          | Not built |
+| UserController     | **Mostly dropped.** Email change is Supabase's `updateUser` (it emails a confirmation). Account deletion needs one server-side call with the service role (`auth.admin.deleteUser`); the database cascades the rest. Storage is cleared first (`lib/account.ts`) | Built     |
+| SecurityController | **Dropped.** RLS on every table and the storage bucket, `proxy.ts` for routes, zod for input, Next.js origin check on server actions                                                                                                                             | Built     |
 
 ### Projects and sources — thin routes over `lib/`
 
