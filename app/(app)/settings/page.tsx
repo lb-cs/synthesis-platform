@@ -18,6 +18,8 @@ import { Input } from '@/components/ui/input';
 
 import { signOut } from '@/app/login/actions';
 
+import { DeleteAccountButton } from './delete-account-button';
+
 export const metadata: Metadata = {
   title: 'Settings · Synthesis Platform',
 };
@@ -73,6 +75,19 @@ export default async function SettingsPage() {
             <Button variant="outline" disabled>
               Connect Google
             </Button>
+          </CardFooter>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Delete account</CardTitle>
+            <CardDescription>
+              Permanently delete your account and everything in it: projects, sources,
+              chat history and uploaded files. This cannot be undone.
+            </CardDescription>
+          </CardHeader>
+          <CardFooter>
+            <DeleteAccountButton />
           </CardFooter>
         </Card>
       </div>

@@ -37,7 +37,7 @@ a decision changes.
 | UC-03 Log in           | Same flow as UC-01                                                                                                                                                               |
 | UC-04 Log out          | `signOut` server action exists (`app/login/actions.ts`)                                                                                                                          |
 | UC-05 Edit account     | `/settings` page exists. Email change (Supabase `updateUser`) not wired                                                                                                          |
-| UC-06 Delete account   | Database side ready: deleting the auth user cascades. No UI flow, no Storage cleanup yet                                                                                         |
+| UC-06 Delete account   | Built: Settings > Delete account clears the user's Storage folder, deletes the auth user with the service role (`lib/account.ts`), and the database cascades the rest            |
 | UC-07 – UC-10 Projects | REST API built: `GET`/`POST /api/projects`, `GET`/`PATCH`/`DELETE /api/projects/[projectId]`. `/projects/new` form exists. Title 1–100 chars; blank description stored as `null` |
 | UC-11 Upload           | Schema and storage bucket ready; no upload UI yet. Kinds are `pdf` and `text` — Markdown and transcripts are `text`                                                              |
 | UC-12 Links            | **Stretch goal.** `sources.kind` doesn't allow links yet                                                                                                                         |
