@@ -5,7 +5,8 @@ Applies to: everything. Read this first.
 ## Layout
 
 One npm project at the repo root — a single `package.json`, a single lockfile, a single
-Prettier and ESLint config. Everything runs from the root.
+Prettier and ESLint config. Everything runs from the root, except `worker/`: a separate
+Python project (uv, ruff, pytest) with its own README.
 
 ```
 app/              App Router routes — layout.tsx, page.tsx, api/*/route.ts
@@ -17,6 +18,7 @@ lib/supabase/     Supabase clients (server, browser, proxy) and generated databa
 supabase/         local Supabase config, migrations, email template
 proxy.ts          route guard — Next 16's name for middleware
 public/           static assets
+worker/           Python worker that processes sources — see worker/README.md
 docs/             these rules, code style, ADRs
 .agents/skills/   agent skills (source); .claude/skills/ symlinks to them
 .cursor/rules/    thin glob-scoped stubs pointing at docs/rules/
@@ -48,6 +50,7 @@ imports from `@/lib/utils`.
 | A form in the app's own UI             | `actions.ts` beside the route — validate, call `lib/`           |
 | A table or column                      | `npx supabase migration new <name>` — never edit an applied one |
 | Logic a test should reach without HTTP | `lib/`                                                          |
+| Processing a source (parse, chunk, …)  | `worker/src/worker/pipeline.py`                                 |
 | A shared UI primitive                  | `components/ui/` via the shadcn CLI — see 03                    |
 | How something looks                    | Tailwind classes + tokens in `app/globals.css` — see 03         |
 | Anything about how code is _shaped_    | `docs/agents/code-style.md`                                     |

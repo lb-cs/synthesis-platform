@@ -20,8 +20,9 @@ Synthesis Platform — an AI-assisted research workspace. CECS 491, Team Quintes
 Algorithms. Built so far: Supabase auth (email one-time code, route guard in `proxy.ts`),
 the schema in `supabase/migrations/` (projects, sources, chunks, chat, citations), and
 the first features over it — projects (dashboard, create, REST API in
-`app/api/projects/`) and sources (upload, list, rename, remove). Processing and chat are
-not built; [architecture](docs/design/architecture.md) tracks status per screen.
+`app/api/projects/`) and sources (upload, list, rename, remove), and the Python worker in
+`worker/` that claims uploaded sources and moves their status. Parsing, embedding, and
+chat are not built; [architecture](docs/design/architecture.md) tracks status per screen.
 
 **Tech stack**: Next.js 16 (App Router) / React 19 / TypeScript, Tailwind CSS v4,
 shadcn/ui on Base UI, lucide-react, Supabase (`@supabase/ssr`), zod + react-hook-form.
@@ -46,7 +47,8 @@ npm run build          # production build — CI runs it last
 npx shadcn@latest add <name>   # add a UI primitive to components/ui
 ```
 
-There is **no test script yet** — see [05-testing](docs/rules/05-testing.md).
+There is **no test script yet** — see [05-testing](docs/rules/05-testing.md). The Python
+worker is the exception: `cd worker && uv run pytest` (see `worker/README.md`).
 
 ## Rules
 

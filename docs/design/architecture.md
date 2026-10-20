@@ -50,7 +50,7 @@ flowchart LR
 | Postgres + RLS | `supabase/migrations/`                                 | All data. RLS limits every query to the signed-in user's projects. Deletes cascade                                        |
 | pgvector       | `document_chunks.embedding`, `match_document_chunks()` | Semantic search, filtered to one project                                                                                  |
 | Storage        | bucket `sources`                                       | Uploaded files at `{user_id}/{project_id}/{file}`. Storage policies allow only your own folder                            |
-| Worker         | separate Python service (CECS491-11/12) — not built    | Parses, chunks, and embeds sources. Uses the service role, so it bypasses RLS                                             |
+| Worker         | `worker/` — separate Python service                    | Claims pending sources and moves their status. Parse, chunk, embed to come. Service role, so it bypasses RLS              |
 
 ### Two rules every backend change follows
 
@@ -89,7 +89,7 @@ build — something else already does it.
 
 | Spec controller         | Now                                                                                        | Status    |
 | ----------------------- | ------------------------------------------------------------------------------------------ | --------- |
-| ProcessingJobController | **Dropped.** `sources.status` is the queue: `pending → processing → ready \| failed`       | Schema    |
+| ProcessingJobController | **Dropped.** `sources.status` is the queue: `pending → processing → ready \| failed`       | Built     |
 | ParsingController       | Worker step. Writes extracted details to `sources.metadata`                                | Not built |
 | ChunkingController      | Worker step. Writes `document_chunks` with `chunk_index` and `page_number`                 | Not built |
 | IndexingController      | **Mostly dropped.** Worker writes the embedding; the HNSW index in Postgres updates itself | Not built |
@@ -145,7 +145,14 @@ sequenceDiagram
   App->>DB: read status to show progress
 ```
 
-How the worker finds new rows (polling, a database webhook, …) is not decided yet.
+### How the worker finds new rows
+
+It polls. Every few seconds `worker/` calls `claim_pending_sources()`, which takes the
+oldest `pending` rows `FOR UPDATE SKIP LOCKED` and sets them `processing` in one
+statement, so two workers never get the same source. Each worker runs up to
+`WORKER_CONCURRENCY` sources at once; more throughput is more worker processes. A source
+left in `processing` by a crashed worker is failed by `fail_stale_sources()`. Why polling
+and not a database webhook: [ADR 0001](../adr/0001-worker-polls-for-pending-sources.md).
 
 ## How a question gets answered (UC-16)
 

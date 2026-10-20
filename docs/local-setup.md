@@ -89,6 +89,20 @@ npm run dev
 Open http://localhost:3000. To sign in, enter your email, then open the local inbox
 (http://127.0.0.1:54324) to get the one-time code.
 
+## 7b. Run the worker (optional)
+
+Uploaded sources stay `pending` until the Python worker picks them up. To run it, install
+[uv](https://docs.astral.sh/uv/getting-started/installation/), then in a second terminal:
+
+```
+cd worker
+uv sync
+cp .env.example .env    # paste the secret key from `npx supabase status`
+uv run python -m worker
+```
+
+Details in [worker/README.md](../worker/README.md).
+
 ## 8. Before you open a PR
 
 ```
