@@ -99,8 +99,8 @@ build — something else already does it.
 | Spec controller              | Now                                                                                                                    | Status       |
 | ---------------------------- | ---------------------------------------------------------------------------------------------------------------------- | ------------ |
 | RetrievalController          | **Mostly dropped.** `match_document_chunks(project_id, query_embedding)` in Postgres. Runs as the user, so RLS applies | Schema       |
-| AIController                 | A `lib/` module that builds the prompt and calls the model. Keep the provider behind one function so it can be swapped | Not built    |
-| ChatController               | A route handler that streams the answer and writes `chat_messages`                                                     | Not built    |
+| AIController                 | `lib/answer.ts`: builds the prompt and calls the model through AI Gateway. The model id is one constant there          | Built, naive |
+| ChatController               | `POST /api/projects/[projectId]/chat`: streams the answer (AI SDK UI message stream) and writes `chat_messages`        | Built, naive |
 | CitationController           | Insert `citations` rows for the chunks the answer used. RLS rejects a chunk from another user's project                | Not built    |
 | Summary, Comparison, Insight | Same pattern as chat                                                                                                   | Stretch goal |
 | NotificationController       | **Dropped.** No use case needs it. Processing progress shows through `sources.status`                                  | —            |
@@ -113,7 +113,7 @@ build — something else already does it.
 | Sign in (and sign up) | `/login` — one form: email, then 6-digit code | UC-01, UC-03  | Built       |
 | Dashboard             | `/dashboard`                                  | UC-09         | Built       |
 | New project           | `/projects/new`                               | UC-07         | Built       |
-| Workspace             | `/projects/[projectId]` — sources + chat      | UC-09, UC-16  | Page exists |
+| Workspace             | `/projects/[projectId]` — sources + chat      | UC-09, UC-16  | Built       |
 | Sources               | `/projects/[projectId]/sources`               | UC-11 – UC-14 | Page exists |
 | Summaries             | `/projects/[projectId]/summaries`             | UC-17         | Placeholder |
 | Analysis              | `/projects/[projectId]/analysis`              | UC-18, UC-19  | Placeholder |
@@ -149,7 +149,13 @@ How the worker finds new rows (polling, a database webhook, …) is not decided 
 
 ## How a question gets answered (UC-16)
 
-The shape the schema is built for. None of this runs yet.
+**What runs today is a naive stand-in.** No chunks exist until the worker lands, so
+`lib/answer.ts` sends every non-failed source file whole (PDFs as documents), numbered
+oldest first, and the model cites `[n]`. No embedding, no `citations` rows. A citation
+opens the file through `GET …/sources/[sourceId]/file`. Removing a source renumbers the
+ones after it, so old answers can point at the wrong number.
+
+The shape the schema is built for, once chunks exist:
 
 ```mermaid
 sequenceDiagram

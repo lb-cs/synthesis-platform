@@ -1,18 +1,20 @@
 import type { Metadata } from 'next';
-import { CircleAlert, FileText, MessageSquare, Plus, Send } from 'lucide-react';
+import { CircleAlert, Plus } from 'lucide-react';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 
 import { projectIdSchema } from '@/app/api/projects/schema';
 import { PageHeader } from '@/components/page-header';
+import { listRecentChatMessages, toChatUIMessage } from '@/lib/chat';
+import { numberSources, toCitedSources } from '@/lib/citations';
 import { getProject } from '@/lib/projects';
+import { listSources } from '@/lib/sources';
 import { createClient } from '@/lib/supabase/server';
 import { Button } from '@/components/ui/button';
 import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
@@ -23,7 +25,26 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from '@/components/ui/empty';
-import { Textarea } from '@/components/ui/textarea';
+
+import { AskPanel } from './ask-panel';
+import { WorkspaceSources } from './workspace-sources';
+
+// How much of the conversation the page shows on load.
+const VISIBLE_MESSAGE_LIMIT = 50;
+
+function LoadError() {
+  return (
+    <Empty>
+      <EmptyHeader>
+        <EmptyMedia variant="icon">
+          <CircleAlert />
+        </EmptyMedia>
+        <EmptyTitle>Could not load this project</EmptyTitle>
+        <EmptyDescription>Refresh the page to try again.</EmptyDescription>
+      </EmptyHeader>
+    </Empty>
+  );
+}
 
 export const metadata: Metadata = {
   title: 'Workspace · Synthesis Platform',
@@ -49,20 +70,24 @@ export default async function WorkspacePage({
   }
 
   if (!result.ok) {
-    return (
-      <Empty>
-        <EmptyHeader>
-          <EmptyMedia variant="icon">
-            <CircleAlert />
-          </EmptyMedia>
-          <EmptyTitle>Could not load this project</EmptyTitle>
-          <EmptyDescription>Refresh the page to try again.</EmptyDescription>
-        </EmptyHeader>
-      </Empty>
-    );
+    return <LoadError />;
+  }
+
+  const [sourcesResult, messagesResult] = await Promise.all([
+    listSources(supabase, projectId),
+    listRecentChatMessages(supabase, projectId, VISIBLE_MESSAGE_LIMIT),
+  ]);
+
+  if (!sourcesResult.ok || !messagesResult.ok) {
+    return <LoadError />;
   }
 
   const { project } = result;
+  const numberedSources = numberSources(sourcesResult.sources);
+  const citedSources = toCitedSources(numberedSources);
+  const initialMessages = messagesResult.messages.map((message) => {
+    return toChatUIMessage(message, citedSources);
+  });
   const description =
     project.description ??
     "Ask questions and get answers grounded in this project's sources.";
@@ -87,50 +112,21 @@ export default async function WorkspacePage({
             <CardDescription>Everything the answers can cite.</CardDescription>
           </CardHeader>
           <CardContent className="flex flex-1 flex-col">
-            <Empty className="flex-1">
-              <EmptyHeader>
-                <EmptyMedia variant="icon">
-                  <FileText />
-                </EmptyMedia>
-                <EmptyTitle>No sources yet</EmptyTitle>
-                <EmptyDescription>
-                  Upload PDFs or text files to give the AI something to work with.
-                </EmptyDescription>
-              </EmptyHeader>
-            </Empty>
+            <WorkspaceSources projectId={projectId} sources={numberedSources} />
           </CardContent>
         </Card>
 
-        <Card className="flex flex-col">
+        {/* Capped so a long chat scrolls inside the card instead of pushing the input down. */}
+        <Card className="flex max-h-[70svh] min-h-96 flex-col lg:max-h-[calc(100svh-10rem)]">
           <CardHeader>
             <CardTitle>Ask</CardTitle>
             <CardDescription>Answers come with citations you can open.</CardDescription>
           </CardHeader>
-          <CardContent className="flex flex-1 flex-col">
-            <Empty className="flex-1">
-              <EmptyHeader>
-                <EmptyMedia variant="icon">
-                  <MessageSquare />
-                </EmptyMedia>
-                <EmptyTitle>Ask a question about your sources</EmptyTitle>
-                <EmptyDescription>
-                  The conversation will appear here once sources are processed.
-                </EmptyDescription>
-              </EmptyHeader>
-            </Empty>
-          </CardContent>
-          <CardFooter className="gap-2">
-            {/* Not wired up: streaming Q&A lands with CECS491-14. */}
-            <Textarea
-              aria-label="Question"
-              placeholder="What does the literature say about…"
-              className="min-h-10 flex-1 resize-none"
-              rows={1}
-            />
-            <Button size="icon" aria-label="Send" disabled>
-              <Send />
-            </Button>
-          </CardFooter>
+          <AskPanel
+            projectId={projectId}
+            initialMessages={initialMessages}
+            hasSources={numberedSources.length > 0}
+          />
         </Card>
       </div>
     </>

@@ -22,15 +22,14 @@ export type Source = {
   status: SourceStatus;
   processingError: string | null;
   metadata: Json;
+  storagePath: string;
   createdAt: string;
 };
 
 export type SourceListResult =
   { ok: true; sources: Source[] } | { ok: false; kind: 'database-error' };
 
-export type CreateSourceInput = Pick<Source, 'kind' | 'title'> & {
-  storagePath: string;
-};
+export type CreateSourceInput = Pick<Source, 'kind' | 'title' | 'storagePath'>;
 
 export type SourceResult =
   { ok: true; source: Source } | { ok: false; kind: 'not-found' | 'database-error' };
@@ -42,10 +41,18 @@ type Client = SupabaseClient<Database>;
 
 type SourceRow = Pick<
   Tables<'sources'>,
-  'id' | 'title' | 'kind' | 'status' | 'processing_error' | 'metadata' | 'created_at'
+  | 'id'
+  | 'title'
+  | 'kind'
+  | 'status'
+  | 'processing_error'
+  | 'metadata'
+  | 'storage_path'
+  | 'created_at'
 >;
 
-const SOURCE_COLUMNS = 'id, title, kind, status, processing_error, metadata, created_at';
+const SOURCE_COLUMNS =
+  'id, title, kind, status, processing_error, metadata, storage_path, created_at';
 
 function toSource(row: SourceRow): Source {
   return {
@@ -56,6 +63,7 @@ function toSource(row: SourceRow): Source {
     status: row.status as SourceStatus,
     processingError: row.processing_error,
     metadata: row.metadata,
+    storagePath: row.storage_path,
     createdAt: row.created_at,
   };
 }
@@ -75,6 +83,29 @@ export async function listSources(
   }
 
   return { ok: true, sources: data.map(toSource) };
+}
+
+export async function getSource(
+  supabase: Client,
+  projectId: string,
+  sourceId: string,
+): Promise<SourceResult> {
+  const { data, error } = await supabase
+    .from('sources')
+    .select(SOURCE_COLUMNS)
+    .eq('id', sourceId)
+    .eq('project_id', projectId)
+    .maybeSingle();
+
+  if (error) {
+    return { ok: false, kind: 'database-error' };
+  }
+
+  if (!data) {
+    return { ok: false, kind: 'not-found' };
+  }
+
+  return { ok: true, source: toSource(data) };
 }
 
 export async function createSource(
