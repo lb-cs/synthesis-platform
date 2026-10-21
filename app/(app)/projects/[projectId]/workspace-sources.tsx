@@ -1,5 +1,6 @@
 import { FileText } from 'lucide-react';
 
+import { getSourceFileHref } from '@/lib/citations';
 import type { Source } from '@/lib/sources';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -10,7 +11,6 @@ import {
   EmptyTitle,
 } from '@/components/ui/empty';
 
-import { getSourceFileHref } from './answer-text';
 import { SourceStatusBadge } from './sources/source-status-badge';
 
 // The workspace's left panel: each source under the number answers cite it by.

@@ -2,12 +2,21 @@
 
 import { useChat } from '@ai-sdk/react';
 import { DefaultChatTransport } from 'ai';
-import { Loader, MessageSquare, Send, Square } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { ArrowUp, MessageSquare, RotateCcw, Square } from 'lucide-react';
+import { useRef, useState } from 'react';
 
 import { getMessageText, type ChatUIMessage } from '@/lib/citations';
+import { cn } from '@/lib/utils';
+import {
+  Conversation,
+  ConversationContent,
+  ConversationScrollButton,
+} from '@/components/ai-elements/conversation';
+import { Message, MessageContent } from '@/components/ai-elements/message';
+import { Shimmer } from '@/components/ai-elements/shimmer';
+import { Suggestion, Suggestions } from '@/components/ai-elements/suggestion';
 import { Button } from '@/components/ui/button';
-import { CardContent, CardFooter } from '@/components/ui/card';
+import { CardFooter } from '@/components/ui/card';
 import {
   Empty,
   EmptyDescription,
@@ -15,17 +24,21 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from '@/components/ui/empty';
-import { Textarea } from '@/components/ui/textarea';
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupButton,
+  InputGroupText,
+  InputGroupTextarea,
+} from '@/components/ui/input-group';
 
-import { AnswerText } from './answer-text';
+import { ConversationMessage, ENTER_ANIMATION } from './conversation-message';
 
-function UserBubble({ text }: { text: string }) {
-  return (
-    <p className="ml-auto max-w-[85%] rounded-lg bg-primary px-3 py-2 text-sm whitespace-pre-wrap text-primary-foreground">
-      {text}
-    </p>
-  );
-}
+const STARTER_QUESTIONS = [
+  'Summarize the main findings',
+  'Where do my sources disagree?',
+  'What methods do the studies use?',
+];
 
 // The workspace chat: streams answers from /api/projects/[id]/chat via the AI SDK.
 export function AskPanel({
@@ -38,21 +51,28 @@ export function AskPanel({
   hasSources: boolean;
 }) {
   const [question, setQuestion] = useState('');
-  const bottomRef = useRef<HTMLDivElement>(null);
+  // Only messages sent in this visit animate in; the loaded history just appears.
+  const [loadedIds] = useState(
+    () => new Set(initialMessages.map((message) => message.id)),
+  );
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  const { messages, sendMessage, status, stop, error } = useChat<ChatUIMessage>({
-    id: projectId,
-    messages: initialMessages,
-    // The server keeps the history, so each request carries only the new question.
-    transport: new DefaultChatTransport({
-      api: `/api/projects/${projectId}/chat`,
-      prepareSendMessagesRequest: ({ messages: chatMessages }) => {
-        const lastMessage = chatMessages[chatMessages.length - 1];
+  const { messages, sendMessage, regenerate, status, stop, error } =
+    useChat<ChatUIMessage>({
+      id: projectId,
+      messages: initialMessages,
+      // Batches token updates so a long answer doesn't re-render on every chunk.
+      throttle: 50,
+      // The server keeps the history, so each request carries only the new question.
+      transport: new DefaultChatTransport({
+        api: `/api/projects/${projectId}/chat`,
+        prepareSendMessagesRequest: ({ messages: chatMessages }) => {
+          const lastMessage = chatMessages[chatMessages.length - 1];
 
-        return { body: { question: getMessageText(lastMessage) } };
-      },
-    }),
-  });
+          return { body: { question: getMessageText(lastMessage) } };
+        },
+      }),
+    });
 
   const isBusy = status === 'submitted' || status === 'streaming';
   const trimmedQuestion = question.trim();
@@ -61,9 +81,20 @@ export function AskPanel({
     ? 'What does the literature say about…'
     : 'Add a source to start asking';
 
-  useEffect(() => {
-    bottomRef.current?.scrollIntoView({ block: 'end' });
-  }, [messages, status]);
+  const lastMessage = messages.at(-1);
+  const streamingAnswer =
+    status === 'streaming' && lastMessage?.role === 'assistant' ? lastMessage : null;
+  // The answer message exists before its first word does; keep the shimmer up until then.
+  const isWaitingForAnswer =
+    status === 'submitted' ||
+    (streamingAnswer !== null && getMessageText(streamingAnswer) === '');
+  const hasConversation = messages.length > 0;
+
+  function sendQuestion(text: string) {
+    sendMessage({ text });
+    setQuestion('');
+    textareaRef.current?.focus();
+  }
 
   function handleSubmit(event: React.SubmitEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -72,12 +103,25 @@ export function AskPanel({
       return;
     }
 
-    sendMessage({ text: trimmedQuestion });
-    setQuestion('');
+    sendQuestion(trimmedQuestion);
   }
 
-  // Enter sends; Shift+Enter starts a new line.
+  function handleSuggestion(suggestion: string) {
+    if (!hasSources || isBusy) {
+      return;
+    }
+
+    sendQuestion(suggestion);
+  }
+
+  // Enter sends, Shift+Enter starts a new line, Escape stops an answer mid-stream.
   function handleKeyDown(event: React.KeyboardEvent<HTMLTextAreaElement>) {
+    if (event.key === 'Escape' && isBusy) {
+      event.preventDefault();
+      stop();
+      return;
+    }
+
     if (event.key !== 'Enter' || event.shiftKey || event.nativeEvent.isComposing) {
       return;
     }
@@ -88,76 +132,117 @@ export function AskPanel({
 
   return (
     <>
-      {/* min-h-0 lets this scroll inside the capped card, keeping the footer at the bottom. */}
-      <CardContent className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto">
-        {messages.length === 0 && (
-          <Empty className="flex-1">
-            <EmptyHeader>
-              <EmptyMedia variant="icon">
-                <MessageSquare />
-              </EmptyMedia>
-              <EmptyTitle>Ask a question about your sources</EmptyTitle>
-              <EmptyDescription>
-                Answers cite the numbered sources they draw on.
-              </EmptyDescription>
-            </EmptyHeader>
-          </Empty>
+      {!hasConversation && (
+        <Empty className="flex-1">
+          <EmptyHeader>
+            <EmptyMedia variant="icon">
+              <MessageSquare />
+            </EmptyMedia>
+            <EmptyTitle>Ask a question about your sources</EmptyTitle>
+            <EmptyDescription>
+              Answers cite the numbered sources they draw on.
+            </EmptyDescription>
+          </EmptyHeader>
+        </Empty>
+      )}
+
+      {hasConversation && (
+        // min-h-0 lets the log scroll inside the capped card, keeping the input at the bottom.
+        <Conversation className="min-h-0" aria-label="Conversation">
+          <ConversationContent className="pt-0">
+            {messages.map((message) => (
+              <ConversationMessage
+                key={message.id}
+                projectId={projectId}
+                message={message}
+                isNew={!loadedIds.has(message.id)}
+                isStreaming={message.id === streamingAnswer?.id}
+              />
+            ))}
+
+            {isWaitingForAnswer && (
+              <Message from="assistant" className={ENTER_ANIMATION}>
+                <MessageContent>
+                  <Shimmer>Reading your sources…</Shimmer>
+                </MessageContent>
+              </Message>
+            )}
+
+            {error && (
+              <div
+                role="alert"
+                className={cn(
+                  'flex flex-wrap items-center gap-3 text-sm',
+                  ENTER_ANIMATION,
+                )}
+              >
+                <p className="text-destructive">
+                  Could not get an answer. Check your connection and try again.
+                </p>
+                <Button variant="outline" size="sm" onClick={() => regenerate()}>
+                  <RotateCcw />
+                  Try again
+                </Button>
+              </div>
+            )}
+          </ConversationContent>
+          <ConversationScrollButton aria-label="Scroll to latest message" />
+        </Conversation>
+      )}
+
+      <CardFooter className="flex-col items-stretch gap-3">
+        {!hasConversation && hasSources && (
+          <Suggestions>
+            {STARTER_QUESTIONS.map((suggestion) => (
+              <Suggestion
+                key={suggestion}
+                suggestion={suggestion}
+                onClick={handleSuggestion}
+              />
+            ))}
+          </Suggestions>
         )}
 
-        {messages.map((message) => {
-          const text = getMessageText(message);
-
-          if (message.role === 'user') {
-            return <UserBubble key={message.id} text={text} />;
-          }
-
-          return (
-            <AnswerText
-              key={message.id}
-              projectId={projectId}
-              text={text}
-              sources={message.metadata?.sources ?? []}
+        <form onSubmit={handleSubmit}>
+          <InputGroup className="bg-background">
+            <InputGroupTextarea
+              ref={textareaRef}
+              aria-label="Question"
+              placeholder={placeholder}
+              className="max-h-40 min-h-12"
+              value={question}
+              disabled={!hasSources}
+              onChange={(event) => setQuestion(event.target.value)}
+              onKeyDown={handleKeyDown}
             />
-          );
-        })}
-
-        {status === 'submitted' && (
-          <p className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Loader className="size-4 animate-spin" />
-            Reading your sources…
-          </p>
-        )}
-
-        {error && (
-          <p role="alert" className="text-sm text-destructive">
-            Could not get an answer. Check your connection and try again.
-          </p>
-        )}
-
-        <div ref={bottomRef} />
-      </CardContent>
-
-      <CardFooter>
-        <form onSubmit={handleSubmit} className="flex w-full items-end gap-2">
-          <Textarea
-            aria-label="Question"
-            placeholder={placeholder}
-            className="max-h-40 min-h-10 flex-1 resize-none"
-            rows={1}
-            value={question}
-            disabled={!hasSources}
-            onChange={(event) => setQuestion(event.target.value)}
-            onKeyDown={handleKeyDown}
-          />
-          {isBusy ? (
-            <Button type="button" size="icon" aria-label="Stop" onClick={() => stop()}>
-              <Square />
-            </Button>
-          ) : (
-            <Button type="submit" size="icon" aria-label="Send" disabled={!canSend}>
-              <Send />
-            </Button>
-          )}
+            <InputGroupAddon align="block-end">
+              <InputGroupText className="hidden text-xs sm:flex">
+                {isBusy ? 'Esc to stop' : 'Enter to send · Shift+Enter for a new line'}
+              </InputGroupText>
+              {isBusy ? (
+                <InputGroupButton
+                  size="icon-sm"
+                  variant="default"
+                  className="ml-auto rounded-full"
+                  aria-label="Stop answering"
+                  onClick={() => stop()}
+                >
+                  <Square className="fill-current" />
+                </InputGroupButton>
+              ) : (
+                <InputGroupButton
+                  type="submit"
+                  size="icon-sm"
+                  variant="default"
+                  className="ml-auto rounded-full"
+                  aria-label="Send"
+                  disabled={!canSend}
+                >
+                  <ArrowUp />
+                </InputGroupButton>
+              )}
+            </InputGroupAddon>
+          </InputGroup>
         </form>
       </CardFooter>
     </>

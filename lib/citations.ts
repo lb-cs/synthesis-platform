@@ -24,6 +24,12 @@ export type AnswerSegment =
 
 const CITATION_PATTERN = /\[(\d+)\]/g;
 
+const CITATION_HREF_PREFIX = '#source-';
+
+export function getSourceFileHref(projectId: string, sourceId: string): string {
+  return `/api/projects/${projectId}/sources/${sourceId}/file`;
+}
+
 /** Oldest first, so adding a source never renumbers the ones already cited. */
 export function numberSources(sources: Source[]): (Source & { number: number })[] {
   const usable = sources.filter((source) => source.status !== 'failed');
@@ -57,6 +63,22 @@ export function splitCitations(text: string): AnswerSegment[] {
   }
 
   return segments;
+}
+
+/** Turns each `[n]` into a Markdown link, so a Markdown renderer hands it to our link component. */
+export function linkCitations(text: string): string {
+  return text.replace(CITATION_PATTERN, `[$1](${CITATION_HREF_PREFIX}$1)`);
+}
+
+/** The source number behind a link `linkCitations` wrote, or null for any other link. */
+export function getCitationNumber(href: string | undefined): number | null {
+  if (!href?.startsWith(CITATION_HREF_PREFIX)) {
+    return null;
+  }
+
+  const number = Number(href.slice(CITATION_HREF_PREFIX.length));
+
+  return Number.isInteger(number) ? number : null;
 }
 
 /** The sources an answer actually cites, in source-number order. */
