@@ -178,6 +178,7 @@ export type Database = {
           kind: string;
           metadata: Json;
           processing_error: string | null;
+          processing_started_at: string | null;
           project_id: string;
           status: string;
           storage_path: string;
@@ -189,6 +190,7 @@ export type Database = {
           kind: string;
           metadata?: Json;
           processing_error?: string | null;
+          processing_started_at?: string | null;
           project_id: string;
           status?: string;
           storage_path: string;
@@ -200,6 +202,7 @@ export type Database = {
           kind?: string;
           metadata?: Json;
           processing_error?: string | null;
+          processing_started_at?: string | null;
           project_id?: string;
           status?: string;
           storage_path?: string;
@@ -220,6 +223,19 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
+      claim_pending_sources: {
+        Args: { max_count?: number };
+        Returns: {
+          id: string;
+          kind: string;
+          project_id: string;
+          storage_path: string;
+        }[];
+      };
+      fail_stale_sources: {
+        Args: { stale_after_minutes?: number };
+        Returns: number;
+      };
       match_document_chunks: {
         Args: {
           match_count?: number;

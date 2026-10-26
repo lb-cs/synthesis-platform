@@ -43,7 +43,7 @@ a decision changes.
 | UC-12 Links            | **Stretch goal.** `sources.kind` doesn't allow links yet                                                                                                                         |
 | UC-13 View sources     | `/projects/[projectId]/sources` route exists                                                                                                                                     |
 | UC-14 Remove source    | Schema ready — deleting a source cascades to its chunks and their citations                                                                                                      |
-| UC-15 Processing       | Schema ready (status, `processing_error`, chunks with page numbers). Python worker not built (CECS491-11/12)                                                                     |
+| UC-15 Processing       | Schema ready (status, `processing_error`, chunks with page numbers). Python worker in `worker/` claims sources and moves status (CECS491-68); parse, chunk, embed not built      |
 | UC-16 Q&A              | Schema ready: `chat_messages` (one conversation per project), `citations`, `match_document_chunks()`                                                                             |
 | UC-17 Summaries        | **Stretch goal** (Jira `CECS491-15`). Placeholder page at `/projects/[projectId]/summaries`                                                                                      |
 | UC-18, UC-19 Analysis  | **Stretch goal** (Jira `CECS491-16`). Placeholder page at `/projects/[projectId]/analysis`                                                                                       |

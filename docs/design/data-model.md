@@ -69,19 +69,25 @@ Code: `lib/projects.ts` (list, get, create, update, delete). API: `/api/projects
 
 ### `sources`
 
-| Column             | Type        | Notes                                                              |
-| ------------------ | ----------- | ------------------------------------------------------------------ |
-| `id`               | uuid        |                                                                    |
-| `project_id`       | uuid        |                                                                    |
-| `kind`             | text        | `pdf` \| `text`. Links are a stretch goal                          |
-| `title`            | text        | 1–200 characters. The only column a user can change                |
-| `storage_path`     | text        | `{user_id}/{project_id}/{file}` in the `sources` bucket. Unique    |
-| `status`           | text        | `pending` → `processing` → `ready` \| `failed`. The worker's queue |
-| `processing_error` | text, null  | Why it failed                                                      |
-| `metadata`         | jsonb       | Whatever the parser finds: author, page count, …                   |
-| `created_at`       | timestamptz |                                                                    |
+| Column                  | Type              | Notes                                                              |
+| ----------------------- | ----------------- | ------------------------------------------------------------------ |
+| `id`                    | uuid              |                                                                    |
+| `project_id`            | uuid              |                                                                    |
+| `kind`                  | text              | `pdf` \| `text`. Links are a stretch goal                          |
+| `title`                 | text              | 1–200 characters. The only column a user can change                |
+| `storage_path`          | text              | `{user_id}/{project_id}/{file}` in the `sources` bucket. Unique    |
+| `status`                | text              | `pending` → `processing` → `ready` \| `failed`. The worker's queue |
+| `processing_error`      | text, null        | Why it failed                                                      |
+| `processing_started_at` | timestamptz, null | When the worker claimed it. A stale value means the worker died    |
+| `metadata`              | jsonb             | Whatever the parser finds: author, page count, …                   |
+| `created_at`            | timestamptz       |                                                                    |
 
 The bucket accepts PDF, plain text, and Markdown up to 50 MiB.
+
+The worker reads the queue through two functions only `service_role` can run:
+`claim_pending_sources(max_count)` takes the oldest `pending` rows with `SKIP LOCKED` and
+sets them `processing`; `fail_stale_sources(minutes)` fails rows stuck in `processing`.
+See [ADR 0001](../adr/0001-worker-polls-for-pending-sources.md).
 
 ### `document_chunks`
 

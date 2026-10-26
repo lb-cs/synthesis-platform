@@ -14,6 +14,9 @@ npm run type-check     # next typegen && tsc --noEmit
 npm run build          # what CI runs last
 ```
 
+The Python worker in `worker/` is separate: it has its own pytest suite, run in CI by
+the `worker` job (see `worker/README.md`).
+
 Until a runner lands, "tests pass" means those pass. When handing over a change, say
 plainly that it is unverified by tests — don't imply coverage that doesn't exist.
 

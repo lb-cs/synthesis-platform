@@ -79,6 +79,12 @@ Where a source is in the worker's pipeline: `'pending' | 'processing' | 'ready' 
 answerable once it is `ready`.
 _Avoid_: "state", "job" (there is no job table; the status column is the queue).
 
+**Claim**:
+The worker taking a `pending` source by setting it `processing`, through
+`claim_pending_sources()`. `SKIP LOCKED` makes a claim exclusive: no two workers hold the
+same source. A claim older than the stale limit is failed by `fail_stale_sources()`.
+_Avoid_: "lock" (the row lock lasts one statement), "lease", "checkout".
+
 **Document chunk**:
 One passage of a source's parsed text, with its page number and embedding
 (`public.document_chunks`). Retrieval returns chunks via `match_document_chunks`.

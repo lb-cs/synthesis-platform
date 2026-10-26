@@ -1,0 +1,40 @@
+[project]
+name = "synthesis-worker"
+version = "0.1.0"
+description = "Background worker that moves sources through pending → processing → ready | failed."
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "python-dotenv>=1.2.4",
+    "supabase>=2.33.0",
+]
+
+[dependency-groups]
+dev = [
+    "psycopg[binary]>=3.3.6",
+    "pytest>=9.1.1",
+    "ruff>=0.17.1",
+]
+
+[build-system]
+requires = ["uv_build>=0.11.32,<0.12.0"]
+build-backend = "uv_build"
+
+[tool.uv.build-backend]
+module-name = "worker"
+
+[tool.ruff]
+# Mirrors the root Prettier settings: 90 columns, single quotes.
+line-length = 90
+
+[tool.ruff.format]
+quote-style = "single"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "SIM", "RUF"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = [
+    "integration: needs the local Supabase database from `supabase start`",
+]

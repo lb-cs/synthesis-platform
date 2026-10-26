@@ -15,6 +15,8 @@ const eslintConfig = defineConfig([
     'out/**',
     'build/**',
     'next-env.d.ts',
+    // The Python worker has its own lint (ruff).
+    'worker/**',
   ]),
 ]);
 
