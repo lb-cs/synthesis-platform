@@ -77,6 +77,7 @@ Then fill in the values using the output of `supabase status`:
 - `NEXT_PUBLIC_SUPABASE_URL` = the API URL (looks like http://127.0.0.1:54321)
 - `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` = the publishable key (`sb_publishable_...`)
 - `SUPABASE_SERVICE_ROLE_KEY` = the secret (service role) key. Only needed to try Settings > Delete account. Never commit it
+- `AI_GATEWAY_API_KEY` = a Vercel AI Gateway key (Vercel dashboard → AI Gateway → API keys). Only needed to ask questions in the workspace chat. Never commit it
 
 Note: `.env.example` says to copy to `.env.local`; the README says `.env`. Either works with Next.js.
 

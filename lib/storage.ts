@@ -52,6 +52,9 @@ export type ListFilesResult =
 export type FileUrlResult =
   { ok: true; url: string } | { ok: false; kind: 'not-found' | 'storage-error' };
 
+export type DownloadFileResult =
+  { ok: true; file: Blob } | { ok: false; kind: 'not-found' | 'storage-error' };
+
 export type RemoveFilesResult = { ok: true } | { ok: false; kind: 'storage-error' };
 
 type Client = SupabaseClient<Database>;
@@ -181,6 +184,23 @@ export async function getFileUrl(
   }
 
   return { ok: true, url: data.signedUrl };
+}
+
+export async function downloadFile(
+  supabase: Client,
+  path: string,
+): Promise<DownloadFileResult> {
+  const { data, error } = await supabase.storage.from(SOURCES_BUCKET).download(path);
+
+  if (error?.statusCode === '404') {
+    return { ok: false, kind: 'not-found' };
+  }
+
+  if (error) {
+    return { ok: false, kind: 'storage-error' };
+  }
+
+  return { ok: true, file: data };
 }
 
 /** A path that is already gone, or not the caller's, is skipped without an error. */
