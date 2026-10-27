@@ -42,8 +42,9 @@ erDiagram
 - **Storage does not cascade.** Deleting a row leaves its file in the bucket. The app
   must delete the file through the Storage API
 - **Users can't fake processing.** Users can insert a source (`project_id`, `kind`,
-  `title`, `storage_path`) and rename it. Only the worker sets `status`,
-  `processing_error`, `metadata`, and writes chunks
+  `title`, `storage_path`) and rename it. Only the worker sets `processing_error`,
+  `metadata`, and writes chunks. A narrow `retry_failed_source()` function lets the owner
+  move a failed source back to `pending`
 
 ## Tables
 
@@ -87,7 +88,8 @@ The bucket accepts PDF, plain text, and Markdown up to 50 MiB.
 The worker reads the queue through two functions only `service_role` can run:
 `claim_pending_sources(max_count)` takes the oldest `pending` rows with `SKIP LOCKED` and
 sets them `processing`; `fail_stale_sources(minutes)` fails rows stuck in `processing`.
-See [ADR 0001](../adr/0001-worker-polls-for-pending-sources.md).
+A signed-in owner can retry a failed source through `retry_failed_source()`; the worker
+picks it up on its next poll. See [ADR 0001](../adr/0001-worker-polls-for-pending-sources.md).
 
 ### `document_chunks`
 

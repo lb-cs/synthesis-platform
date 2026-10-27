@@ -1,8 +1,11 @@
 import * as z from 'zod';
 
-export const removeSourceSchema = z.object({
+export const sourceIdsSchema = z.object({
   projectId: z.uuid(),
   sourceId: z.uuid(),
 });
 
-export type RemoveSourceInput = z.infer<typeof removeSourceSchema>;
+export const removeSourceSchema = sourceIdsSchema;
+
+export type SourceIdsInput = z.infer<typeof sourceIdsSchema>;
+export type RemoveSourceInput = SourceIdsInput;
