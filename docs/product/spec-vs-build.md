@@ -30,24 +30,24 @@ a decision changes.
 
 ## By use case
 
-| Use case               | Status in code                                                                                                                                                                   |
-| ---------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| UC-01 Create account   | Built as emailed-code sign-in (`/login`). The spec's password rules, password errors, and NFR-02 were dropped                                                                    |
-| UC-02 Google           | Not built. Needs a button and one callback route; Supabase does the rest                                                                                                         |
-| UC-03 Log in           | Same flow as UC-01                                                                                                                                                               |
-| UC-04 Log out          | `signOut` server action exists (`app/login/actions.ts`)                                                                                                                          |
-| UC-05 Edit account     | `/settings` page exists. Email change (Supabase `updateUser`) not wired                                                                                                          |
-| UC-06 Delete account   | Built: Settings > Delete account clears the user's Storage folder, deletes the auth user with the service role (`lib/account.ts`), and the database cascades the rest            |
-| UC-07 – UC-10 Projects | REST API built: `GET`/`POST /api/projects`, `GET`/`PATCH`/`DELETE /api/projects/[projectId]`. `/projects/new` form exists. Title 1–100 chars; blank description stored as `null` |
-| UC-11 Upload           | Schema and storage bucket ready; no upload UI yet. Kinds are `pdf` and `text` — Markdown and transcripts are `text`                                                              |
-| UC-12 Links            | **Stretch goal.** `sources.kind` doesn't allow links yet                                                                                                                         |
-| UC-13 View sources     | `/projects/[projectId]/sources` route exists                                                                                                                                     |
-| UC-14 Remove source    | Schema ready — deleting a source cascades to its chunks and their citations                                                                                                      |
-| UC-15 Processing       | Schema ready (status, `processing_error`, chunks with page numbers). Python worker in `worker/` claims sources and moves status (CECS491-68); parse, chunk, embed not built      |
-| UC-16 Q&A              | Schema ready: `chat_messages` (one conversation per project), `citations`, `match_document_chunks()`                                                                             |
-| UC-17 Summaries        | **Stretch goal** (Jira `CECS491-15`). Placeholder page at `/projects/[projectId]/summaries`                                                                                      |
-| UC-18, UC-19 Analysis  | **Stretch goal** (Jira `CECS491-16`). Placeholder page at `/projects/[projectId]/analysis`                                                                                       |
-| UC-20 Citations        | Schema ready. A citation points at a chunk; the chunk gives source and page                                                                                                      |
+| Use case               | Status in code                                                                                                                                                                              |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| UC-01 Create account   | Built as emailed-code sign-in (`/login`). The spec's password rules, password errors, and NFR-02 were dropped                                                                               |
+| UC-02 Google           | Not built. Needs a button and one callback route; Supabase does the rest                                                                                                                    |
+| UC-03 Log in           | Same flow as UC-01                                                                                                                                                                          |
+| UC-04 Log out          | `signOut` server action exists (`app/login/actions.ts`)                                                                                                                                     |
+| UC-05 Edit account     | `/settings` page exists. Email change (Supabase `updateUser`) not wired                                                                                                                     |
+| UC-06 Delete account   | Built: Settings > Delete account clears the user's Storage folder, deletes the auth user with the service role (`lib/account.ts`), and the database cascades the rest                       |
+| UC-07 – UC-10 Projects | REST API built: `GET`/`POST /api/projects`, `GET`/`PATCH`/`DELETE /api/projects/[projectId]`. `/projects/new` form exists. Title 1–100 chars; blank description stored as `null`            |
+| UC-11 Upload           | Schema and storage bucket ready; no upload UI yet. Kinds are `pdf` and `text` — Markdown and transcripts are `text`                                                                         |
+| UC-12 Links            | **Stretch goal.** `sources.kind` doesn't allow links yet                                                                                                                                    |
+| UC-13 View sources     | `/projects/[projectId]/sources` route exists                                                                                                                                                |
+| UC-14 Remove source    | Schema ready — deleting a source cascades to its chunks and their citations                                                                                                                 |
+| UC-15 Processing       | Schema ready (status, `processing_error`, chunks with page numbers). Python worker in `worker/` claims sources, parses and chunks them, and moves status (CECS491-68, -69); embed not built |
+| UC-16 Q&A              | Schema ready: `chat_messages` (one conversation per project), `citations`, `match_document_chunks()`                                                                                        |
+| UC-17 Summaries        | **Stretch goal** (Jira `CECS491-15`). Placeholder page at `/projects/[projectId]/summaries`                                                                                                 |
+| UC-18, UC-19 Analysis  | **Stretch goal** (Jira `CECS491-16`). Placeholder page at `/projects/[projectId]/analysis`                                                                                                  |
+| UC-20 Citations        | Schema ready. A citation points at a chunk; the chunk gives source and page                                                                                                                 |
 
 For the spec's entities mapped to tables, see
 [data-model.md](../design/data-model.md#not-stored-on-purpose). For screens mapped to

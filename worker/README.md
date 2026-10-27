@@ -4,8 +4,10 @@ The Python service that processes uploaded sources (UC-15). It runs outside the 
 app: the app inserts a `sources` row with status `pending`, and the worker moves it to
 `processing` and then `ready` or `failed` (with a `processing_error` the user sees).
 
-Parsing, chunking, and embedding are separate stories. Today the worker downloads the
-file and checks it isn't empty; those steps plug in to `src/worker/pipeline.py`.
+Today the worker downloads the file, parses it into pages, splits the pages into
+chunks, and saves the chunks and the file's details (see
+[Parsing and chunking](#parsing-and-chunking)). Embedding is a separate story; it plugs
+in to `src/worker/pipeline.py`. Until it lands, chunks are saved with no embedding.
 
 ## How it works
 
@@ -29,6 +31,31 @@ file and checks it isn't empty; those steps plug in to `src/worker/pipeline.py`.
 | `src/worker/storage.py`  | Downloads files from the `sources` bucket                    |
 | `src/worker/loop.py`     | Polling loop and thread pool; turns errors into `failed`     |
 | `src/worker/pipeline.py` | The processing steps — where parse, chunk, and embed will go |
+
+## Parsing and chunking
+
+`src/worker/parsing.py` turns a file into text, one entry per page. PDFs are read with
+PyMuPDF, the library picked in the
+[PDF extraction spike](../docs/research/pdf-extraction-spike.md). Plain text has no
+pages, so it is one entry with no page number. Page numbers start at 1, matching what a
+reader sees. A blank page keeps its number, so later pages stay correct.
+
+`src/worker/chunking.py` splits each page into chunks. A chunk never crosses a page, so
+every chunk's `page_number` is exact and a citation can open the right page.
+
+| Setting         | Value            | Why                                                                                                                                               |
+| --------------- | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `CHUNK_SIZE`    | 1,000 characters | About 250 tokens: big enough to hold a complete idea, small enough that a search returns a focused passage and several fit in the model's context |
+| `CHUNK_OVERLAP` | 200 characters   | A sentence cut at a boundary still appears whole in one of the two chunks. Kept under half the size so the split always moves forward             |
+
+Cuts prefer a paragraph break, then a line break, then a sentence end, then any space,
+and only in the back half of the window so a chunk is never tiny. A short page is one
+small chunk rather than being merged into its neighbour, because merging would make the
+page number wrong.
+
+A file the worker can't read fails with a message the user sees in `processing_error`:
+damaged or password-protected PDFs, PDFs with no text layer (scans made of images; OCR is
+a separate requirement), text that isn't UTF-8, and binary files with a text extension.
 
 ## Run it locally
 

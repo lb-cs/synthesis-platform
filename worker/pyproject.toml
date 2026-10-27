@@ -5,6 +5,7 @@ description = "Background worker that moves sources through pending → processi
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
+    "pymupdf>=1.26,<2",
     "python-dotenv>=1.2.4",
     "supabase>=2.33.0",
 ]

@@ -90,8 +90,8 @@ build — something else already does it.
 | Spec controller         | Now                                                                                        | Status    |
 | ----------------------- | ------------------------------------------------------------------------------------------ | --------- |
 | ProcessingJobController | **Dropped.** `sources.status` is the queue: `pending → processing → ready \| failed`       | Built     |
-| ParsingController       | Worker step. Writes extracted details to `sources.metadata`                                | Not built |
-| ChunkingController      | Worker step. Writes `document_chunks` with `chunk_index` and `page_number`                 | Not built |
+| ParsingController       | Worker step. Writes extracted details to `sources.metadata`                                | Built     |
+| ChunkingController      | Worker step. Writes `document_chunks` with `chunk_index` and `page_number`                 | Built     |
 | IndexingController      | **Mostly dropped.** Worker writes the embedding; the HNSW index in Postgres updates itself | Not built |
 
 ### AI — route handler + `lib/`

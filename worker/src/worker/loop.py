@@ -12,6 +12,7 @@ from typing import Protocol
 from supabase import StorageException
 
 from worker import pipeline
+from worker.chunking import Chunk
 from worker.config import Config
 from worker.db import ClaimedSource
 from worker.pipeline import ProcessingError
@@ -28,6 +29,9 @@ STALE_SWEEP_INTERVAL_SECONDS = 60
 class Queue(Protocol):
     def claim(self, max_count: int) -> list[ClaimedSource]: ...
     def fail_stale(self, stale_after_minutes: int) -> int: ...
+    def save_results(
+        self, source: ClaimedSource, metadata: dict[str, str | int], chunks: list[Chunk]
+    ) -> None: ...
     def mark_ready(self, source_id: str) -> bool: ...
     def mark_failed(self, source_id: str, message: str) -> bool: ...
 
@@ -38,7 +42,7 @@ class Files(Protocol):
 
 def process_source(source: ClaimedSource, queue: Queue, files: Files) -> None:
     """Runs one claimed source to `ready` or `failed`. Never raises for a bad file."""
-    failure = run_pipeline(source, files)
+    failure = run_pipeline(source, queue, files)
 
     if failure is not None:
         is_updated = queue.mark_failed(source.id, failure)
@@ -51,11 +55,12 @@ def process_source(source: ClaimedSource, queue: Queue, files: Files) -> None:
         log.info('source %s was deleted or timed out while processing', source.id)
 
 
-def run_pipeline(source: ClaimedSource, files: Files) -> str | None:
+def run_pipeline(source: ClaimedSource, queue: Queue, files: Files) -> str | None:
     """Returns the user-facing failure message, or None when the source is ready."""
     try:
         file_bytes = files.download(source.storage_path)
-        pipeline.process(source, file_bytes)
+        processed = pipeline.process(source, file_bytes)
+        queue.save_results(source, processed.metadata, processed.chunks)
     except ProcessingError as error:
         return str(error)
     except StorageException as error:
