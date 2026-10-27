@@ -1,7 +1,8 @@
 'use client';
 
 import { FileText, SearchX } from 'lucide-react';
-import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
 
 import type { Source } from '@/lib/sources';
 
@@ -52,6 +53,25 @@ export function SourcesList({
   projectId: string;
   sources: Source[];
 }) {
+  const router = useRouter();
+  const hasActiveSources = sources.some((source) => {
+    return source.status === 'pending' || source.status === 'processing';
+  });
+
+  useEffect(() => {
+    if (!hasActiveSources) {
+      return;
+    }
+
+    const interval = window.setInterval(() => {
+      router.refresh();
+    }, 3_000);
+
+    return () => {
+      window.clearInterval(interval);
+    };
+  }, [hasActiveSources, router]);
+
   const [query, setQuery] = useState('');
   const [status, setStatus] = useState<SourceFilters['status']>('all');
   const [kind, setKind] = useState<SourceFilters['kind']>('all');

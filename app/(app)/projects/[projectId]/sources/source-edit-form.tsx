@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Field, FieldError, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 
-import { removeSource } from './actions';
+import { removeSource, retryFailedSource } from './actions';
 
 const TITLE_MAX_LENGTH = 200;
 
@@ -24,10 +24,11 @@ export function SourceEditForm({
   const [title, setTitle] = useState(source.title);
   const [error, setError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
-  const [isRemoving, startTransition] = useTransition();
+  const [isRetrying, startRetryTransition] = useTransition();
+  const [isRemoving, startRemoveTransition] = useTransition();
 
   const trimmedTitle = title.trim();
-  const isBusy = isSaving || isRemoving;
+  const isBusy = isSaving || isRetrying || isRemoving;
   const canSave = trimmedTitle.length > 0 && trimmedTitle !== source.title && !isBusy;
 
   async function onSubmit(event: React.SubmitEvent<HTMLFormElement>) {
@@ -57,6 +58,20 @@ export function SourceEditForm({
     }
   }
 
+  function onRetry() {
+    setError(null);
+    startRetryTransition(async () => {
+      const result = await retryFailedSource({ projectId, sourceId: source.id });
+
+      if (result.error) {
+        setError(result.error);
+        return;
+      }
+
+      router.refresh();
+    });
+  }
+
   function onRemove() {
     const confirmed = window.confirm(
       `Remove "${source.title}"? Its file is deleted too. This cannot be undone.`,
@@ -67,7 +82,7 @@ export function SourceEditForm({
     }
 
     setError(null);
-    startTransition(async () => {
+    startRemoveTransition(async () => {
       const result = await removeSource({ projectId, sourceId: source.id });
 
       if (result.error) {
@@ -91,10 +106,17 @@ export function SourceEditForm({
         />
         {error && <FieldError errors={[{ message: error }]} />}
       </Field>
-      <div className="flex justify-between gap-2">
-        <Button type="button" variant="destructive" disabled={isBusy} onClick={onRemove}>
-          {isRemoving ? 'Removing…' : 'Remove source'}
-        </Button>
+      <div className="flex flex-wrap justify-between gap-2">
+        <div className="flex gap-2">
+          {source.status === 'failed' && (
+            <Button type="button" variant="outline" disabled={isBusy} onClick={onRetry}>
+              {isRetrying ? 'Retrying…' : 'Retry processing'}
+            </Button>
+          )}
+          <Button type="button" variant="destructive" disabled={isBusy} onClick={onRemove}>
+            {isRemoving ? 'Removing…' : 'Remove source'}
+          </Button>
+        </div>
         <Button type="submit" disabled={!canSave}>
           {isSaving ? 'Saving…' : 'Save title'}
         </Button>

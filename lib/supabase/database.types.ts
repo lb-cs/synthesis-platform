@@ -236,6 +236,10 @@ export type Database = {
         Args: { stale_after_minutes?: number };
         Returns: number;
       };
+      retry_failed_source: {
+        Args: { p_project_id: string; p_source_id: string };
+        Returns: boolean;
+      };
       match_document_chunks: {
         Args: {
           match_count?: number;
