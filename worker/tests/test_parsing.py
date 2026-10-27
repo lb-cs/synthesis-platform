@@ -1,34 +1,8 @@
-import pymupdf
 import pytest
 
+from tests.fakes import make_pdf
 from worker import parsing
 from worker.parsing import ParseError, parse
-
-
-def make_pdf(
-    page_texts: list[str],
-    metadata: dict[str, str] | None = None,
-    password: str | None = None,
-) -> bytes:
-    document = pymupdf.open()
-
-    for text in page_texts:
-        page = document.new_page()
-
-        if text:
-            page.insert_text((72, 72), text)
-
-    if metadata:
-        document.set_metadata(metadata)
-
-    if password:
-        return document.tobytes(
-            encryption=pymupdf.PDF_ENCRYPT_AES_256,
-            user_pw=password,
-            owner_pw=password + '-owner',
-        )
-
-    return document.tobytes()
 
 
 def test_a_pdf_gives_one_entry_per_page_numbered_from_one():

@@ -61,3 +61,38 @@ def test_a_source_deleted_mid_run_is_not_an_error():
     process_source(source, queue, FakeFiles())
 
     assert queue.ready == ['source-1']
+
+
+def test_chunks_are_saved_before_the_source_is_marked_ready():
+    source = make_source(1)
+    queue = FakeQueue([])
+
+    process_source(source, queue, FakeFiles(lambda _: b'Some notes.'))
+
+    assert queue.events == ['saved source-1', 'ready source-1']
+    metadata, chunks = queue.saved['source-1']
+    assert metadata == {'character_count': 11}
+    assert [chunk.content for chunk in chunks] == ['Some notes.']
+
+
+def test_an_unreadable_file_saves_nothing_and_fails_with_a_readable_reason():
+    source = make_source(1, kind='pdf')
+    queue = FakeQueue([])
+
+    process_source(source, queue, FakeFiles(lambda _: b'not a pdf'))
+
+    assert queue.saved == {}
+    assert queue.failed == {
+        'source-1': 'This file could not be read as a PDF. It may be damaged.'
+    }
+
+
+def test_a_failure_while_saving_fails_the_source_instead_of_marking_it_ready():
+    source = make_source(1)
+    queue = FakeQueue([])
+    queue.save_error = ConnectionError('database unreachable')
+
+    process_source(source, queue, FakeFiles())
+
+    assert queue.failed == {'source-1': UNEXPECTED_FAILURE}
+    assert queue.ready == []

@@ -22,8 +22,8 @@ the schema in `supabase/migrations/` (projects, sources, chunks, chat, citations
 the first features over it — projects (dashboard, create, REST API in
 `app/api/projects/`), sources (upload, list, rename, remove), a first workspace chat
 (AI SDK over Vercel AI Gateway, `lib/answer.ts`), and the Python worker in `worker/` that
-claims uploaded sources and moves their status. Parsing and embedding are not built, so
-chat sends whole source files; [architecture](docs/design/architecture.md) tracks status
+claims uploaded sources, parses and chunks them, and moves their status. Embedding is not
+built, so chat sends whole source files; [architecture](docs/design/architecture.md) tracks status
 per screen.
 
 **Tech stack**: Next.js 16 (App Router) / React 19 / TypeScript, Tailwind CSS v4,

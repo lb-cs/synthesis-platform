@@ -4,8 +4,10 @@ The Python service that processes uploaded sources (UC-15). It runs outside the 
 app: the app inserts a `sources` row with status `pending`, and the worker moves it to
 `processing` and then `ready` or `failed` (with a `processing_error` the user sees).
 
-Parsing, chunking, and embedding are separate stories. Today the worker downloads the
-file and checks it isn't empty; those steps plug in to `src/worker/pipeline.py`.
+Today the worker downloads the file, parses it into pages, splits the pages into
+chunks, and saves the chunks and the file's details (see
+[Parsing and chunking](#parsing-and-chunking)). Embedding is a separate story; it plugs
+in to `src/worker/pipeline.py`. Until it lands, chunks are saved with no embedding.
 
 ## How it works
 
