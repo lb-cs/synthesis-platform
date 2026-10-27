@@ -43,6 +43,20 @@ Generated files are project code: edit them when the design calls for it, but ke
 If two features style the same thing the same way twice, it is a primitive. Put it in
 `components/ui` rather than styling a one-off inline.
 
+### AI Elements
+
+Chat UI comes from [AI Elements](https://ai-sdk.dev/elements), a shadcn registry
+(`@ai-elements` in `components.json`) that lands in `components/ai-elements/`:
+
+```bash
+npx shadcn@latest add @ai-elements/<name>
+```
+
+Its source is written for Radix. After an `add`, fix what the CLI left behind — a
+`TooltipTrigger` wrapping a `Button` becomes `render={button}` — and drop Streamdown
+plugins we don't use. `prompt-input` leans on Radix heavily; compose the input from
+`input-group` instead.
+
 ## Base UI, not Radix
 
 - **Composition is `render`, not `asChild`.** A `Button` that navigates:

@@ -75,8 +75,9 @@ _Avoid_: "source" for the file itself, "blob", "attachment".
 
 **Processing status**:
 Where a source is in the worker's pipeline: `'pending' | 'processing' | 'ready' |
-'failed'` (`public.sources.status`). Only the worker (service role) moves it; a source is
-answerable once it is `ready`.
+'failed'` (`public.sources.status`). The worker moves it through the pipeline; the signed-in
+owner can retry a failed source to return it to `pending`. A source is answerable once it is
+`ready`.
 _Avoid_: "state", "job" (there is no job table; the status column is the queue).
 
 **Claim**:
@@ -99,6 +100,12 @@ _Avoid_: "conversation" or "thread" for a message; "chat" is the whole history.
 A link from an assistant message to a document chunk that supports it
 (`public.citations`). The chunk gives the source and page.
 _Avoid_: "reference", "footnote", "source" (a citation points into a source).
+
+**Source number**:
+The `[n]` an answer cites a whole source by until chunks exist — non-failed sources,
+oldest first (`numberSources` in `lib/citations.ts`). Shown in the workspace's Sources
+panel. Not stored; removing a source renumbers the ones after it.
+_Avoid_: "citation" for the number itself (a citation is the chunk link), "index".
 
 ## Shell
 

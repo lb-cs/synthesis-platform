@@ -20,12 +20,16 @@ Synthesis Platform — an AI-assisted research workspace. CECS 491, Team Quintes
 Algorithms. Built so far: Supabase auth (email one-time code, route guard in `proxy.ts`),
 the schema in `supabase/migrations/` (projects, sources, chunks, chat, citations), and
 the first features over it — projects (dashboard, create, REST API in
-`app/api/projects/`) and sources (upload, list, rename, remove), and the Python worker in
-`worker/` that claims uploaded sources and moves their status. Parsing, embedding, and
-chat are not built; [architecture](docs/design/architecture.md) tracks status per screen.
+`app/api/projects/`), sources (upload, list, rename, remove), a first workspace chat
+(AI SDK over Vercel AI Gateway, `lib/answer.ts`), and the Python worker in `worker/` that
+claims uploaded sources and moves their status. Parsing and embedding are not built, so
+chat sends whole source files; [architecture](docs/design/architecture.md) tracks status
+per screen.
 
 **Tech stack**: Next.js 16 (App Router) / React 19 / TypeScript, Tailwind CSS v4,
-shadcn/ui on Base UI, lucide-react, Supabase (`@supabase/ssr`), zod + react-hook-form.
+shadcn/ui on Base UI, lucide-react, Supabase (`@supabase/ssr`), zod + react-hook-form,
+AI SDK v7 (`ai`, `@ai-sdk/react`) with models through Vercel AI Gateway, AI Elements +
+Streamdown for the chat UI.
 Node 24, npm 11. One package at the repo root.
 
 **What the product must become** is specified in [`docs/product/`](docs/product/README.md)
