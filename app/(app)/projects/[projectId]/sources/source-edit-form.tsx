@@ -113,7 +113,12 @@ export function SourceEditForm({
               {isRetrying ? 'Retrying…' : 'Retry processing'}
             </Button>
           )}
-          <Button type="button" variant="destructive" disabled={isBusy} onClick={onRemove}>
+          <Button
+            type="button"
+            variant="destructive"
+            disabled={isBusy}
+            onClick={onRemove}
+          >
             {isRemoving ? 'Removing…' : 'Remove source'}
           </Button>
         </div>
