@@ -99,7 +99,7 @@ build — something else already does it.
 | Spec controller              | Now                                                                                                                    | Status       |
 | ---------------------------- | ---------------------------------------------------------------------------------------------------------------------- | ------------ |
 | RetrievalController          | **Mostly dropped.** `match_document_chunks(project_id, query_embedding)` in Postgres. Runs as the user, so RLS applies | Schema       |
-| AIController                 | `lib/answer.ts`: builds the prompt and calls the model through AI Gateway. The model id is one constant there          | Built, naive |
+| AIController                 | `lib/ai.ts`: closed-context prompt, question embedding, and the one streaming model call (AI Gateway). Swap it there   | Built        |
 | ChatController               | `POST /api/projects/[projectId]/chat`: streams the answer (AI SDK UI message stream) and writes `chat_messages`        | Built, naive |
 | CitationController           | Insert `citations` rows for the chunks the answer used. RLS rejects a chunk from another user's project                | Not built    |
 | Summary, Comparison, Insight | Same pattern as chat                                                                                                   | Stretch goal |
@@ -162,7 +162,10 @@ oldest first, and the model cites `[n]`. No embedding, no `citations` rows. A ci
 opens the file through `GET …/sources/[sourceId]/file`. Removing a source renumbers the
 ones after it, so old answers can point at the wrong number.
 
-The shape the schema is built for, once chunks exist:
+The shape the schema is built for, once chunks exist. `lib/ai.ts` already does the model
+side: `embedQuestion` (same model as the worker), `buildGroundedPrompt` (the chunks
+numbered `[1]…[n]` plus the last `HISTORY_LIMIT` turns, never the whole chat), and
+`streamGroundedAnswer`. The chunks' numbers map back to chunk ids for `citations`.
 
 ```mermaid
 sequenceDiagram

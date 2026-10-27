@@ -5,6 +5,7 @@ import {
   type ToolSet,
 } from 'ai';
 
+import { HISTORY_LIMIT } from '@/lib/ai';
 import { loadSourceDocuments, streamAnswer } from '@/lib/answer';
 import { createChatMessage, listRecentChatMessages } from '@/lib/chat';
 import {
@@ -20,9 +21,6 @@ import { createClient, getSupabaseUser } from '@/lib/supabase/server';
 import { projectIdSchema } from '@/app/api/projects/schema';
 
 import { askQuestionSchema } from './schema';
-
-// Turns the model sees on top of the sources: enough for follow-ups, not the whole chat.
-const HISTORY_LIMIT = 10;
 
 type Context = RouteContext<'/api/projects/[projectId]/chat'>;
 
