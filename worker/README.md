@@ -73,6 +73,11 @@ uv run python -m worker
 Upload a file in the app and watch its status change on the sources page. Stop the
 worker with Ctrl+C; it finishes the sources it already started before exiting.
 
+## Deploy it
+
+It runs as a container on its own host, not on Vercel: `Dockerfile` here, steps in
+[deployment](../docs/deployment.md).
+
 ## Checks
 
 CI runs the first three on every pull request.

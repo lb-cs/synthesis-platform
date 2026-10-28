@@ -15,6 +15,7 @@ markdown, no tool-specific format.
 | See the tables and their rules             | [design/data-model.md](design/data-model.md)                                     |
 | Know what changed from the original spec   | [product/spec-vs-build.md](product/spec-vs-build.md)                             |
 | Get the app running on your machine        | [local-setup.md](local-setup.md)                                                 |
+| Ship the worker, or see what runs where    | [deployment.md](deployment.md)                                                   |
 | Write code that fits the repo              | [rules/README.md](rules/README.md), [agents/code-style.md](agents/code-style.md) |
 | Record or read an architecture decision    | [adr/README.md](adr/README.md)                                                   |
 
@@ -24,6 +25,7 @@ markdown, no tool-specific format.
 docs/
   README.md                 This file — the map
   local-setup.md            Fresh machine → app running, with troubleshooting
+  deployment.md             What runs where; deploying the Python worker
   product/                  What the product must do (from the team's spec documents)
     README.md               Overview: purpose, users, core principle, team, timeline
     requirements.md         RFP + SRS requirements: features, constraints, interfaces
