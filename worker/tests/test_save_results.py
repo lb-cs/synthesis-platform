@@ -67,6 +67,7 @@ def test_each_chunk_is_stored_with_its_source_project_index_and_page():
                 'chunk_index': 0,
                 'content': 'on page three',
                 'page_number': 3,
+                'embedding': None,
             },
             {
                 'source_id': 'source-1',
@@ -74,6 +75,7 @@ def test_each_chunk_is_stored_with_its_source_project_index_and_page():
                 'chunk_index': 1,
                 'content': 'no page',
                 'page_number': None,
+                'embedding': None,
             },
         ]
     ]

@@ -3,21 +3,31 @@ import time
 
 from tests.fakes import FakeFiles, FakeQueue, make_source
 from worker.config import Config
+from worker.embeddings import EMBEDDING_DIMENSIONS
 from worker.loop import run
 
 CONFIG = Config(
     supabase_url='http://127.0.0.1:54321',
     service_role_key='test',
+    openai_api_key='sk-test',
     concurrency=3,
     poll_interval_seconds=1,
 )
+
+
+class FakeEmbedder:
+    def embed(self, texts):
+        vector = '[' + ','.join(['0.1'] * EMBEDDING_DIMENSIONS) + ']'
+        return [vector for _ in texts]
 
 
 def start_loop(
     queue: FakeQueue, files: FakeFiles
 ) -> tuple[threading.Thread, threading.Event]:
     stop = threading.Event()
-    thread = threading.Thread(target=run, args=(queue, files, CONFIG, stop), daemon=True)
+    thread = threading.Thread(
+        target=run, args=(queue, files, FakeEmbedder(), CONFIG, stop), daemon=True
+    )
     thread.start()
 
     return thread, stop

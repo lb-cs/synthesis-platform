@@ -59,6 +59,7 @@ class SourcesQueue:
                 'chunk_index': chunk.chunk_index,
                 'content': chunk.content,
                 'page_number': chunk.page_number,
+                'embedding': chunk.embedding,
             }
             for chunk in chunks
         ]

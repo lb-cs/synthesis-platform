@@ -95,7 +95,7 @@ Open http://localhost:3000. To sign in, enter your email, then open the local in
 Uploaded sources stay `pending` until the Python worker picks them up. Set it up once:
 
 1. Install [uv](https://docs.astral.sh/uv/getting-started/installation/) (`brew install uv` on a Mac)
-2. `cp worker/.env.example worker/.env`, then paste the secret key from `npx supabase status`
+2. `cp worker/.env.example worker/.env`, add the Supabase service-role key from `npx supabase status`, and set `OPENAI_API_KEY`
 
 Then run everything from one terminal, instead of `npm run dev`:
 
