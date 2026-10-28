@@ -9,8 +9,7 @@ COPY --from=ghcr.io/astral-sh/uv:0.13.6 /uv /bin/uv
 
 # The image's Python in both stages, so the virtual environment's links stay valid.
 ENV UV_PYTHON_DOWNLOADS=0 \
-    UV_COMPILE_BYTECODE=1 \
-    UV_LINK_MODE=copy
+    UV_COMPILE_BYTECODE=1
 
 WORKDIR /app
 

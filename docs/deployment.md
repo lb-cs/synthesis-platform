@@ -1,128 +1,94 @@
 # Deployment
 
-What runs where, and how to ship the Python worker. The worker is the one piece that
-can't go on Vercel; everything else is hosted already.
+What runs where, and how the Python worker is set up on Railway.
 
-| Piece                   | Runs on                                                          | Ships when                                                      |
-| ----------------------- | ---------------------------------------------------------------- | --------------------------------------------------------------- |
-| Next.js app             | Vercel                                                           | Vercel's Git integration deploys `main`                         |
-| Database, Auth, Storage | Supabase (hosted project)                                        | Migrations: `npx supabase db push` from a linked checkout       |
-| Worker (`worker/`)      | A container host. Railway recommended, see [below](#pick-a-host) | The host deploys `main` once it is connected to the GitHub repo |
+| Piece                   | Runs on                                 | Ships when                                                |
+| ----------------------- | --------------------------------------- | --------------------------------------------------------- |
+| Next.js app             | Vercel                                  | Vercel deploys `main`                                     |
+| Database, Auth, Storage | Supabase (hosted project)               | Migrations: `npx supabase db push` from a linked checkout |
+| Worker (`worker/`)      | Railway, built from `worker/Dockerfile` | Railway deploys `main` when `worker/**` changes           |
 
-Without a running worker, every upload stays `pending` forever: nothing else parses or
-chunks sources.
+Without a running worker, every upload stays `pending`: nothing else parses or chunks
+sources.
 
-## Why not Vercel
+## Why the worker isn't on Vercel
 
-- **The worker is a long-running process.** It polls every 5 seconds, keeps a thread pool,
-  and finishes its work when it gets SIGTERM. Vercel runs functions per request or per
-  schedule, then stops them
-- **The only way to run it on a timer is a cron job.** On Hobby, crons run once a day. On
-  Pro, once a minute at best. That is up to 60 s before a source is picked up, against
-  UC-15's 30 s target. And the worker would need rewriting as a function that drains
-  the queue on each call
-- **Vercel Queues could replace polling.** But that replaces
-  [ADR 0001](adr/0001-worker-polls-for-pending-sources.md) (the database is the queue)
-  for no gain at our size
+It is a long-running process: it polls every 5 seconds, keeps a thread pool, and finishes
+its work when it gets SIGTERM. Vercel runs functions per request or on a cron job, at
+best once a minute. That would mean rewriting the worker as a function and missing
+UC-15's 30-second target. Railway runs the Dockerfile as an always-on service with no
+port or domain.
 
-## Pick a host
+## Railway service
 
-Any host that runs a Docker container works. `worker/Dockerfile` is portable.
+| Setting                   | Value                              | Why                                                      |
+| ------------------------- | ---------------------------------- | -------------------------------------------------------- |
+| Source                    | `lb-cs/synthesis-platform`, `main` | Railway builds the branch it is connected to             |
+| Settings → Root Directory | `/worker`                          | Railway builds only this folder and finds the Dockerfile |
+| Settings → Watch Paths    | `/worker/**`                       | Commits that only touch the app don't redeploy it        |
+| Domain                    | None                               | The worker serves nothing                                |
 
-| Host                      | Why                                                                                                           | Cost (check before you sign up) |
-| ------------------------- | ------------------------------------------------------------------------------------------------------------- | ------------------------------- |
-| **Railway** (recommended) | Deploys a monorepo folder from GitHub, builds the Dockerfile, no port needed. Billed by use, so idle is cheap | Hobby: $5/month incl. $5 usage  |
-| Render                    | Has a "Background Worker" service type made for this                                                          | Starter: $7/month flat          |
-| Fly.io, Cloud Run, a VPS  | Fine too. More setup                                                                                          | Varies                          |
+| Variable                              | Value                                                                                                                |
+| ------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| `SUPABASE_URL`                        | The hosted project URL, same as `NEXT_PUBLIC_SUPABASE_URL` in Vercel                                                 |
+| `SUPABASE_SERVICE_ROLE_KEY`           | The secret key, same as in Vercel. It bypasses RLS: it lives only in Railway and Vercel                              |
+| `RAILWAY_DEPLOYMENT_DRAINING_SECONDS` | `60`: time between SIGTERM and SIGKILL on a redeploy. Railway's default is 0, which kills the worker mid-file        |
+| `WORKER_CONCURRENCY`, …               | Optional. `WORKER_POLL_INTERVAL_SECONDS` and `WORKER_STALE_AFTER_MINUTES` too; defaults are in `worker/.env.example` |
 
-What the worker needs from any host:
+### Setting it up from scratch
 
-- Builds `worker/Dockerfile` with `worker/` as the build context
-- **No inbound traffic.** No port, no public domain, no HTTP health check
-- Outbound HTTPS to Supabase (and to the embedding API once CECS491-70 lands)
-- Restart on crash
-- One instance is enough. More are safe: `claim_pending_sources()` uses `SKIP LOCKED`
-
-## Before the first deploy
-
-1. **Apply every migration** in `supabase/migrations/` to the hosted project. On start,
-   the worker calls `fail_stale_sources()` and exits if it isn't there
+1. **Apply every migration** in `supabase/migrations/` to the hosted project. On start, the
+   worker calls `fail_stale_sources()` and exits if it isn't there
 
    ```bash
    npx supabase link --project-ref <project-ref>
    npx supabase db push
    ```
 
-2. **Collect two values.** Both already exist in the Vercel project's environment
-   variables:
-   - `SUPABASE_URL`: the hosted project URL, same as `NEXT_PUBLIC_SUPABASE_URL`
-   - `SUPABASE_SERVICE_ROLE_KEY`: the secret key, same value the app uses for account
-     deletion. It bypasses RLS: paste it into the host's secret variables only
+2. **New Project → Deploy from GitHub repo** → `lb-cs/synthesis-platform`
+3. Set the settings and variables above
+4. **Check the deploy logs** for `worker started: concurrency=4, poll every 5s`, then upload
+   a file in the production app. It goes `pending → processing → ready` in about 10
+   seconds
 
-## Deploy on Railway
+## Shipping changes
 
-Railway builds the branch the service is connected to, `main` unless you change it under
-**Settings → Source**. `worker/Dockerfile` must be on that branch. Without it Railway
-guesses how to build the worker and fails (see [Troubleshooting](#troubleshooting)).
+- **Merging to `main` deploys the worker** when `worker/**` changed. If the new code needs
+  a migration, apply it to the hosted project before merging, or the new worker exits at
+  start
+- **Redeploys are graceful.** On SIGTERM the worker stops claiming and finishes the
+  sources it started. If Railway kills it first, those sources stay `processing` until the
+  stale sweep fails them (`WORKER_STALE_AFTER_MINUTES`, default 15). The user then retries
+- **Logs are the only output.** Look for `failed`, `could not`, and stack traces
+- **More throughput:** raise `WORKER_CONCURRENCY`, or add replicas. Two workers never take
+  the same source: `claim_pending_sources()` uses `SKIP LOCKED`
 
-1. **New Project → Deploy from GitHub repo** → `lb-cs/synthesis-platform`
-2. **Service → Settings → Source → Root Directory:** `/worker`. Railway then finds
-   `worker/Dockerfile` and builds it
-3. **Settings → Watch Paths:** `/worker/**`, so commits that only touch the app don't
-   redeploy the worker
-4. **Variables:** `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, and
-   `RAILWAY_DEPLOYMENT_DRAINING_SECONDS=60`. The last one is how long Railway waits
-   between SIGTERM and SIGKILL on a redeploy. Its default is 0, which kills the worker
-   before it can finish the sources it started. Optional: `WORKER_CONCURRENCY`,
-   `WORKER_POLL_INTERVAL_SECONDS`, `WORKER_STALE_AFTER_MINUTES` (see
-   `worker/.env.example`)
-5. **Don't generate a domain.** The worker serves nothing
-6. **Deploy, then check the logs** for `worker started: concurrency=4, poll every 5s`.
-   Upload a file in the production app. It should go `pending → processing → ready`
-   within about 10 seconds
+## Checking the image locally
 
-On Render instead: **New → Background Worker** → the repo → Language **Docker**, Root
-Directory `worker` → instance **Starter** → the same two variables → Create.
-
-## Run the image locally
-
-To check the image before a host builds it:
+With `supabase start` running and `worker/.env` filled in:
 
 ```bash
 docker build -t synthesis-worker worker
-docker run --rm --env-file worker/.env --network host synthesis-worker
+docker run --rm --env-file worker/.env -e SUPABASE_URL=http://host.docker.internal:54321 synthesis-worker
 ```
 
-`--network host` lets the container reach `supabase start` on `127.0.0.1`. That works on
-Linux. On Docker Desktop, set `SUPABASE_URL=http://host.docker.internal:54321` instead.
+`host.docker.internal` is how a container on Docker Desktop reaches your machine's
+`127.0.0.1`.
 
-## Living with it
+## Embedding (CECS491-70)
 
-- **Merging to `main` deploys the worker.** A PR that adds a migration the worker needs
-  must have that migration applied before it merges, or the new worker exits at start
-- **Redeploys are graceful.** On SIGTERM the worker stops claiming and finishes the
-  sources it started. If the host kills it first, those sources stay `processing` until
-  the stale sweep fails them (`WORKER_STALE_AFTER_MINUTES`, default 15). The user then
-  retries
-- **Logs are the only output.** Look for `failed`, `could not`, and stack traces
-- **More throughput:** raise `WORKER_CONCURRENCY`, or add instances
-
-## When embedding lands (CECS491-70)
-
-- **The worker must embed with the app's model.** That is `openai/text-embedding-3-small`
-  (1536 dimensions) in `lib/ai.ts`, or questions and chunks won't match. AI Gateway serves
-  it through an OpenAI-compatible API (`https://ai-gateway.vercel.sh/v1`). So the worker
-  can use the same gateway with its own `AI_GATEWAY_API_KEY`. Off Vercel there is no
-  OIDC token, so it needs a key
-- Add that key to the host's variables
+- The worker must embed with the app's model, `openai/text-embedding-3-small` (1536
+  dimensions) in `lib/ai.ts`, or questions and chunks won't match. AI Gateway serves it
+  through an OpenAI-compatible API (`https://ai-gateway.vercel.sh/v1`)
+- Railway has no Vercel OIDC token, so add an `AI_GATEWAY_API_KEY` to its variables
 - Recheck `WORKER_STALE_AFTER_MINUTES` against a large PDF, as ADR 0001 says
 
 ## Troubleshooting
 
-| Symptom                                                 | Cause                                                                                                                                                                                                          |
-| ------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Exits at start: `could not reach Supabase at …`         | Wrong URL or key, or migrations not applied. The stack trace under it names the missing function if it's the latter                                                                                            |
-| Exits at start: `SUPABASE_URL and … must be set`        | A variable is missing on the host                                                                                                                                                                              |
-| Sources stay `pending`                                  | The worker isn't running, or it points at a different Supabase project than the app                                                                                                                            |
-| Railway build: `Railpack` … `No start command detected` | Railway found no `Dockerfile` and fell back to Railpack. The branch it builds doesn't have `worker/Dockerfile` yet (merge it, or switch the branch under Settings → Source), or Root Directory isn't `/worker` |
-| Railway build: `Cache mount ID is not prefixed with …`  | Someone added a `--mount=type=cache` to the Dockerfile. Railway needs its service id in it. Remove the mount                                                                                                   |
+| Symptom                                                 | Cause                                                                                                                            |
+| ------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| Exits at start: `could not reach Supabase at …`         | Wrong URL or key, or migrations not applied. The stack trace under it names the missing function if it's the latter              |
+| Exits at start: `SUPABASE_URL and … must be set`        | A variable is missing in Railway                                                                                                 |
+| Sources stay `pending`                                  | The worker isn't running, or it points at a different Supabase project than the app                                              |
+| Railway build: `Railpack` … `No start command detected` | Railway found no `Dockerfile`, so it guessed. The branch it builds has no `worker/Dockerfile`, or Root Directory isn't `/worker` |
+| Railway build: `Cache mount ID is not prefixed with …`  | Someone added a `--mount=type=cache` to the Dockerfile. Railway needs its service id in it. Remove the mount                     |

@@ -45,8 +45,8 @@ Open <http://localhost:3000>.
 
 Uploads stay `pending` with only the app running: the Python worker processes them. To
 run Supabase, the worker, and the app from one terminal, use `npm run dev:all` instead.
-It needs [uv](https://docs.astral.sh/uv/getting-started/installation/) for the worker.
-Details in [local setup](docs/local-setup.md#7b-run-the-worker-optional).
+The worker needs [uv](https://docs.astral.sh/uv/getting-started/installation/) and a
+`worker/.env`. Details in [local setup](docs/local-setup.md#7b-run-the-worker-optional).
 
 **5. Sign in**
 

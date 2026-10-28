@@ -25,7 +25,7 @@ markdown, no tool-specific format.
 docs/
   README.md                 This file — the map
   local-setup.md            Fresh machine → app running, with troubleshooting
-  deployment.md             What runs where; deploying the Python worker
+  deployment.md             What runs where; the worker on Railway
   product/                  What the product must do (from the team's spec documents)
     README.md               Overview: purpose, users, core principle, team, timeline
     requirements.md         RFP + SRS requirements: features, constraints, interfaces
