@@ -1,3 +1,4 @@
+import html
 import threading
 from collections.abc import Callable
 
@@ -101,5 +102,16 @@ def make_pdf(
             user_pw=password,
             owner_pw=password + '-owner',
         )
+
+    return document.tobytes()
+
+
+def make_paragraph_pdf(paragraphs: list[str]) -> bytes:
+    """One page laid out like a real document: a narrow column, so every paragraph
+    wraps over several lines."""
+    document = pymupdf.open()
+    page = document.new_page()
+    body = ''.join(f'<p>{html.escape(paragraph)}</p>' for paragraph in paragraphs)
+    page.insert_htmlbox(pymupdf.Rect(50, 50, 300, 800), body)
 
     return document.tobytes()

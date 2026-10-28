@@ -40,6 +40,10 @@ PyMuPDF, the library picked in the
 pages, so it is one entry with no page number. Page numbers start at 1, matching what a
 reader sees. A blank page keeps its number, so later pages stay correct.
 
+PDF text is read block by block (a block is PyMuPDF's paragraph). Each paragraph is
+unwrapped onto one line, with a blank line between paragraphs. PDFs end every visual line
+with a newline, so without this every cut would land on a line wrap, often mid-sentence.
+
 `src/worker/chunking.py` splits each page into chunks. A chunk never crosses a page, so
 every chunk's `page_number` is exact and a citation can open the right page.
 
@@ -86,3 +90,5 @@ uv run pytest              # unit tests; integration tests skip without a databa
 `tests/test_claim_sql.py` runs the claim functions against the real local database —
 eight concurrent claimers, checking none get the same row. It runs when `supabase start`
 is up and skips otherwise. It rolls back its claims and deletes the test user it creates.
+`tests/test_match_sql.py` checks the same way that chat search skips sources that are not
+`ready`.

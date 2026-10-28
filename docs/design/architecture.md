@@ -96,14 +96,14 @@ build — something else already does it.
 
 ### AI — route handler + `lib/`
 
-| Spec controller              | Now                                                                                                                    | Status       |
-| ---------------------------- | ---------------------------------------------------------------------------------------------------------------------- | ------------ |
-| RetrievalController          | **Mostly dropped.** `match_document_chunks(project_id, query_embedding)` in Postgres. Runs as the user, so RLS applies | Schema       |
-| AIController                 | `lib/ai.ts`: closed-context prompt, question embedding, and the one streaming model call (AI Gateway). Swap it there   | Built        |
-| ChatController               | `POST /api/projects/[projectId]/chat`: streams the answer (AI SDK UI message stream) and writes `chat_messages`        | Built, naive |
-| CitationController           | Insert `citations` rows for the chunks the answer used. RLS rejects a chunk from another user's project                | Not built    |
-| Summary, Comparison, Insight | Same pattern as chat                                                                                                   | Stretch goal |
-| NotificationController       | **Dropped.** No use case needs it. Processing progress shows through `sources.status`                                  | —            |
+| Spec controller              | Now                                                                                                                                                   | Status       |
+| ---------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| RetrievalController          | **Mostly dropped.** `match_document_chunks(project_id, query_embedding)` in Postgres. Runs as the user, so RLS applies. Searches `ready` sources only | Schema       |
+| AIController                 | `lib/ai.ts`: closed-context prompt, question embedding, and the one streaming model call (AI Gateway). Swap it there                                  | Built        |
+| ChatController               | `POST /api/projects/[projectId]/chat`: streams the answer (AI SDK UI message stream) and writes `chat_messages`                                       | Built, naive |
+| CitationController           | Insert `citations` rows for the chunks the answer used. RLS rejects a chunk from another user's project                                               | Not built    |
+| Summary, Comparison, Insight | Same pattern as chat                                                                                                                                  | Stretch goal |
+| NotificationController       | **Dropped.** No use case needs it. Processing progress shows through `sources.status`                                                                 | —            |
 
 ## Screens and routes
 

@@ -47,5 +47,5 @@ jobs:
 
       - run: uv run ruff format --check
 
-      # No database in CI, so tests/test_claim_sql.py skips; run it locally.
+      # No database in CI, so the tests/test_*_sql.py files skip; run them locally.
       - run: uv run pytest

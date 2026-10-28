@@ -22,6 +22,9 @@ NOT_UTF8 = 'This text file is not UTF-8. Save it as UTF-8 and upload it again.'
 NOT_TEXT = 'This file does not look like a text file.'
 NO_TEXT = 'The file has no text in it.'
 
+# block_type in a get_text('blocks') tuple; 1 is an image.
+TEXT_BLOCK = 0
+
 # The PDF fields worth keeping, as PyMuPDF names them, and the key each is stored under
 # in sources.metadata.
 PDF_METADATA_FIELDS = {
@@ -74,7 +77,7 @@ def parse_pdf(file_bytes: bytes) -> ParsedDocument:
 
         try:
             pages = [
-                Page(number=number, text=clean(page.get_text('text')))
+                Page(number=number, text=clean(pdf_page_text(page)))
                 for number, page in enumerate(document, start=1)
             ]
         except RuntimeError as error:
@@ -87,6 +90,20 @@ def parse_pdf(file_bytes: bytes) -> ParsedDocument:
         raise ParseError(NO_PDF_TEXT)
 
     return ParsedDocument(pages=pages, metadata=metadata)
+
+
+def pdf_page_text(page: pymupdf.Page) -> str:
+    # get_text('text') ends every visual line with a newline and drops the blank line
+    # between paragraphs, so the chunker could only ever cut at a line wrap, often
+    # mid-sentence. A block is PyMuPDF's paragraph: unwrap each one onto a single line
+    # and separate them with a blank line, the paragraph break the chunker looks for.
+    paragraphs = [
+        ' '.join(text.split())
+        for *_, text, _, block_type in page.get_text('blocks')
+        if block_type == TEXT_BLOCK
+    ]
+
+    return '\n\n'.join(paragraph for paragraph in paragraphs if paragraph)
 
 
 def pdf_metadata(document: pymupdf.Document, page_count: int) -> dict[str, str | int]:
