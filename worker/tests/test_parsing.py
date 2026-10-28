@@ -1,6 +1,6 @@
 import pytest
 
-from tests.fakes import make_pdf
+from tests.fakes import make_paragraph_pdf, make_pdf
 from worker import parsing
 from worker.parsing import ParseError, parse
 
@@ -27,6 +27,16 @@ def test_a_blank_page_keeps_its_place_so_later_page_numbers_stay_right():
         (2, ''),
         (3, 'Page three'),
     ]
+
+
+def test_a_wrapped_pdf_paragraph_comes_back_as_one_line_with_paragraphs_kept_apart():
+    first = 'Retrieval grounds a model in documents. ' * 4
+    second = 'Each answer cites the passages it used. ' * 4
+    pdf = make_paragraph_pdf([first, second])
+
+    parsed = parse('pdf', pdf)
+
+    assert parsed.pages[0].text == f'{first.strip()}\n\n{second.strip()}'
 
 
 def test_pdf_details_go_to_metadata_with_the_page_count():

@@ -106,7 +106,9 @@ picks it up on its next poll. See [ADR 0001](../adr/0001-worker-polls-for-pendin
 
 Search: `match_document_chunks(project_id, query_embedding, match_count = 8)` returns the
 nearest chunks in one project with a `similarity` score. It runs as the caller, so RLS
-applies. The query must be embedded with the same model.
+applies. The query must be embedded with the same model. Only `ready` sources are
+searched: the worker writes chunks before it marks a source ready, so a source that
+failed part-way can still have some.
 
 ### `chat_messages`
 

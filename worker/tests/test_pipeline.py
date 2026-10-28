@@ -1,6 +1,6 @@
 import pytest
 
-from tests.fakes import make_pdf, make_source
+from tests.fakes import make_paragraph_pdf, make_pdf, make_source
 from worker.pipeline import ProcessingError, process
 
 
@@ -14,6 +14,19 @@ def test_a_pdf_becomes_page_numbered_chunks_and_metadata():
         (1, 2, 'Second page.'),
     ]
     assert processed.metadata == {'page_count': 2, 'author': 'Ada'}
+
+
+def test_pdf_chunks_end_at_a_sentence_not_wherever_a_line_wraps():
+    paragraph = (
+        'Retrieval augmented generation grounds a model in documents. It splits each '
+        'document into passages and searches them by meaning. '
+    ) * 3
+    pdf = make_paragraph_pdf([paragraph, paragraph, paragraph])
+
+    processed = process(make_source(1, kind='pdf'), pdf)
+
+    assert len(processed.chunks) > 1
+    assert all(chunk.content.endswith('.') for chunk in processed.chunks)
 
 
 def test_a_text_file_becomes_chunks_with_no_page_number():
