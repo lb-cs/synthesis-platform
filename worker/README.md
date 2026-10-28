@@ -1,5 +1,7 @@
 # Worker
 
+TEST DEPLOYMENT
+
 The Python service that processes uploaded sources (UC-15). It runs outside the Next.js
 app: the app inserts a `sources` row with status `pending`, and the worker moves it to
 `processing` and then `ready` or `failed` (with a `processing_error` the user sees).
