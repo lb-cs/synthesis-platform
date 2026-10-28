@@ -26,15 +26,15 @@ chunks, and saves the chunks and the file's details (see
 - **Service role.** The worker uses the secret key, which bypasses RLS. Only the
   `service_role` can run the queue functions
 
-| File                     | Does                                                         |
-| ------------------------ | ------------------------------------------------------------ |
-| `src/worker/__main__.py` | Entry point: reads config, connects, handles Ctrl+C          |
-| `src/worker/config.py`   | Environment variables and their defaults                     |
-| `src/worker/db.py`       | Every query against `public.sources`                         |
-| `src/worker/storage.py`  | Downloads files from the `sources` bucket                    |
-| `src/worker/loop.py`     | Polling loop and thread pool; turns errors into `failed`     |
-| `src/worker/pipeline.py` | Parses, chunks, and embeds each source |
-| `src/worker/embeddings.py` | OpenAI embedding requests and response validation |
+| File                       | Does                                                     |
+| -------------------------- | -------------------------------------------------------- |
+| `src/worker/__main__.py`   | Entry point: reads config, connects, handles Ctrl+C      |
+| `src/worker/config.py`     | Environment variables and their defaults                 |
+| `src/worker/db.py`         | Every query against `public.sources`                     |
+| `src/worker/storage.py`    | Downloads files from the `sources` bucket                |
+| `src/worker/loop.py`       | Polling loop and thread pool; turns errors into `failed` |
+| `src/worker/pipeline.py`   | Parses, chunks, and embeds each source                   |
+| `src/worker/embeddings.py` | OpenAI embedding requests and response validation        |
 
 ## Parsing and chunking
 
