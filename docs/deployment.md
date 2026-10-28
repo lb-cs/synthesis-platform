@@ -32,6 +32,7 @@ port or domain.
 | ------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
 | `SUPABASE_URL`                        | The hosted project URL, same as `NEXT_PUBLIC_SUPABASE_URL` in Vercel                                                 |
 | `SUPABASE_SERVICE_ROLE_KEY`           | The secret key, same as in Vercel. It bypasses RLS: it lives only in Railway and Vercel                              |
+| `OPENAI_API_KEY`                      | OpenAI secret key used by the worker for embeddings. Keep it in Railway only; never expose it in the browser         |
 | `RAILWAY_DEPLOYMENT_DRAINING_SECONDS` | `60`: time between SIGTERM and SIGKILL on a redeploy. Railway's default is 0, which kills the worker mid-file        |
 | `WORKER_CONCURRENCY`, …               | Optional. `WORKER_POLL_INTERVAL_SECONDS` and `WORKER_STALE_AFTER_MINUTES` too; defaults are in `worker/.env.example` |
 

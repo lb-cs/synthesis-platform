@@ -15,6 +15,7 @@ from worker import pipeline
 from worker.chunking import Chunk
 from worker.config import Config
 from worker.db import ClaimedSource
+from worker.embeddings import Embedder
 from worker.pipeline import ProcessingError
 
 log = logging.getLogger(__name__)
@@ -40,9 +41,11 @@ class Files(Protocol):
     def download(self, storage_path: str) -> bytes: ...
 
 
-def process_source(source: ClaimedSource, queue: Queue, files: Files) -> None:
+def process_source(
+    source: ClaimedSource, queue: Queue, files: Files, embedder: Embedder
+) -> None:
     """Runs one claimed source to `ready` or `failed`. Never raises for a bad file."""
-    failure = run_pipeline(source, queue, files)
+    failure = run_pipeline(source, queue, files, embedder)
 
     if failure is not None:
         is_updated = queue.mark_failed(source.id, failure)
@@ -55,11 +58,13 @@ def process_source(source: ClaimedSource, queue: Queue, files: Files) -> None:
         log.info('source %s was deleted or timed out while processing', source.id)
 
 
-def run_pipeline(source: ClaimedSource, queue: Queue, files: Files) -> str | None:
+def run_pipeline(
+    source: ClaimedSource, queue: Queue, files: Files, embedder: Embedder
+) -> str | None:
     """Returns the user-facing failure message, or None when the source is ready."""
     try:
         file_bytes = files.download(source.storage_path)
-        processed = pipeline.process(source, file_bytes)
+        processed = pipeline.process(source, file_bytes, embedder)
         queue.save_results(source, processed.metadata, processed.chunks)
     except ProcessingError as error:
         return str(error)
@@ -73,7 +78,13 @@ def run_pipeline(source: ClaimedSource, queue: Queue, files: Files) -> str | Non
     return None
 
 
-def run(queue: Queue, files: Files, config: Config, stop: threading.Event) -> None:
+def run(
+    queue: Queue,
+    files: Files,
+    embedder: Embedder,
+    config: Config,
+    stop: threading.Event,
+) -> None:
     """Polls until `stop` is set, then lets in-flight sources finish."""
     in_flight: set[Future[None]] = set()
     last_sweep = 0.0
@@ -99,7 +110,7 @@ def run(queue: Queue, files: Files, config: Config, stop: threading.Event) -> No
             claimed = claim(queue, free_slots)
 
             for source in claimed:
-                future = pool.submit(process_source, source, queue, files)
+                future = pool.submit(process_source, source, queue, files, embedder)
                 future.add_done_callback(log_crash)
                 in_flight.add(future)
 

@@ -954,6 +954,7 @@ name = "synthesis-worker"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [
+    { name = "httpx" },
     { name = "pymupdf" },
     { name = "python-dotenv" },
     { name = "supabase" },
@@ -968,6 +969,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
+    { name = "httpx", specifier = ">=0.28.1,<1" },
     { name = "pymupdf", specifier = ">=1.26,<2" },
     { name = "python-dotenv", specifier = ">=1.2.4" },
     { name = "supabase", specifier = ">=2.33.0" },

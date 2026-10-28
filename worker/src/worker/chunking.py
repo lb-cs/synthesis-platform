@@ -32,6 +32,8 @@ class Chunk:
     chunk_index: int
     page_number: int | None
     content: str
+    # Null only when the pipeline is used in isolation without an embedder.
+    embedding: str | None = None
 
 
 def chunk_pages(

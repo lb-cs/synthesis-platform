@@ -10,6 +10,7 @@ from supabase import create_client
 
 from worker.config import ConfigError, load_config
 from worker.db import SourcesQueue
+from worker.embeddings import OpenAIEmbedder
 from worker.loop import run
 from worker.storage import SourceFiles
 
@@ -34,6 +35,7 @@ def main() -> int:
 
     client = create_client(config.supabase_url, config.service_role_key)
     queue = SourcesQueue(client)
+    embedder = OpenAIEmbedder(config.openai_api_key)
 
     # One harmless call up front, so a wrong URL or key fails here, not on every poll.
     try:
@@ -51,7 +53,7 @@ def main() -> int:
         config.concurrency,
         config.poll_interval_seconds,
     )
-    run(queue, SourceFiles(client), config, stop)
+    run(queue, SourceFiles(client), embedder, config, stop)
     log.info('worker stopped')
 
     return 0

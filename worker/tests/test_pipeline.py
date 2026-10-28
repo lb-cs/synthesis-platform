@@ -1,7 +1,14 @@
 import pytest
 
 from tests.fakes import make_paragraph_pdf, make_pdf, make_source
+from worker.embeddings import EMBEDDING_DIMENSIONS
 from worker.pipeline import ProcessingError, process
+
+
+class FakeEmbedder:
+    def embed(self, texts):
+        vector = '[' + ','.join(['0.1'] * EMBEDDING_DIMENSIONS) + ']'
+        return [vector for _ in texts]
 
 
 def test_a_pdf_becomes_page_numbered_chunks_and_metadata():
@@ -36,6 +43,26 @@ def test_a_text_file_becomes_chunks_with_no_page_number():
         (0, None, 'Just some notes.')
     ]
     assert processed.metadata == {'character_count': 16}
+
+
+def test_each_chunk_is_embedded_when_an_embedder_is_provided():
+    processed = process(make_source(1), b'First passage. Second passage.', FakeEmbedder())
+
+    assert processed.chunks
+    assert all(chunk.embedding is not None for chunk in processed.chunks)
+    assert all(
+        len(chunk.embedding.strip('[]').split(',')) == EMBEDDING_DIMENSIONS
+        for chunk in processed.chunks
+    )
+
+
+def test_a_mismatched_embedding_count_is_rejected():
+    class BadEmbedder:
+        def embed(self, texts):
+            return []
+
+    with pytest.raises(ProcessingError, match='invalid response'):
+        process(make_source(1), b'Notes.', BadEmbedder())
 
 
 def test_an_empty_file_is_rejected_before_parsing():

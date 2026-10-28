@@ -1,13 +1,13 @@
 """
-What happens to a source between `processing` and `ready`: parse the file into pages,
-then chunk the pages. Embedding is a separate story; it plugs in to process() and
-nothing else changes.
+What happens to a source between `processing` and `ready`: parse it, chunk each page,
+and embed each chunk before saving the results.
 """
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 
 from worker.chunking import Chunk, chunk_pages
 from worker.db import ClaimedSource
+from worker.embeddings import Embedder
 from worker.parsing import ParseError, parse
 
 
@@ -23,7 +23,11 @@ class ProcessedSource:
     chunks: list[Chunk]
 
 
-def process(source: ClaimedSource, file_bytes: bytes) -> ProcessedSource:
+def process(
+    source: ClaimedSource,
+    file_bytes: bytes,
+    embedder: Embedder | None = None,
+) -> ProcessedSource:
     if not file_bytes:
         raise ProcessingError('The file is empty.')
 
@@ -32,7 +36,17 @@ def process(source: ClaimedSource, file_bytes: bytes) -> ProcessedSource:
     except ParseError as error:
         raise ProcessingError(str(error)) from error
 
-    return ProcessedSource(
-        metadata=document.metadata,
-        chunks=chunk_pages(document.pages),
-    )
+    chunks = chunk_pages(document.pages)
+
+    if embedder is not None:
+        vectors = embedder.embed([chunk.content for chunk in chunks])
+
+        if len(vectors) != len(chunks):
+            raise ProcessingError('The embedding service returned an invalid response.')
+
+        chunks = [
+            replace(chunk, embedding=vector)
+            for chunk, vector in zip(chunks, vectors, strict=True)
+        ]
+
+    return ProcessedSource(metadata=document.metadata, chunks=chunks)
