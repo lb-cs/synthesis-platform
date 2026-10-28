@@ -44,6 +44,7 @@ code and `CONTEXT.md` win on names and decisions.
 ```bash
 npm ci                 # install — use ci, not install, to respect the lockfile
 npm run dev            # dev server on :3000 — you run this, not an agent
+npm run dev:all        # Supabase + worker + dev server (scripts/dev.sh) — you run this, not an agent
 npm run lint           # ESLint (lint:fix to autofix)
 npm run format:check   # Prettier (format to write)
 npm run type-check     # next typegen && tsc --noEmit — the only correct typecheck

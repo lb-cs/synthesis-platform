@@ -92,16 +92,22 @@ Open http://localhost:3000. To sign in, enter your email, then open the local in
 
 ## 7b. Run the worker (optional)
 
-Uploaded sources stay `pending` until the Python worker picks them up. To run it, install
-[uv](https://docs.astral.sh/uv/getting-started/installation/), then in a second terminal:
+Uploaded sources stay `pending` until the Python worker picks them up. Set it up once:
+
+1. Install [uv](https://docs.astral.sh/uv/getting-started/installation/) (`brew install uv` on a Mac)
+2. `cp worker/.env.example worker/.env`, then paste the secret key from `npx supabase status`
+
+Then run everything from one terminal, instead of `npm run dev`:
 
 ```
-cd worker
-uv sync
-cp .env.example .env    # paste the secret key from `npx supabase status`
-uv run python -m worker
+npm run dev:all
 ```
 
+It starts Supabase if it isn't running, applies new migrations, runs the worker in the
+background, then runs `npm run dev` (`scripts/dev.sh`). Ctrl+C stops the app and the
+worker; Supabase keeps running until `npx supabase stop`.
+
+Or run the worker by hand in a second terminal: `cd worker && uv run python -m worker`.
 Details in [worker/README.md](../worker/README.md).
 
 ## 8. Before you open a PR

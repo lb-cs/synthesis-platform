@@ -77,6 +77,14 @@ uv run python -m worker
 Upload a file in the app and watch its status change on the sources page. Stop the
 worker with Ctrl+C; it finishes the sources it already started before exiting.
 
+Once `.env` is set up, `npm run dev:all` from the repo root runs Supabase, the worker,
+and the app in one terminal (`scripts/dev.sh`).
+
+## Deploy it
+
+It runs on Railway, built from the `Dockerfile` here. Setup:
+[deployment](../docs/deployment.md).
+
 ## Checks
 
 CI runs the first three on every pull request.
