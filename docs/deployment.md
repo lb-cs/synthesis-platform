@@ -61,6 +61,10 @@ What the worker needs from any host:
 
 ## Deploy on Railway
 
+Railway builds the branch the service is connected to, `main` unless you change it under
+**Settings → Source**. `worker/Dockerfile` must be on that branch. Without it Railway
+guesses how to build the worker and fails (see [Troubleshooting](#troubleshooting)).
+
 1. **New Project → Deploy from GitHub repo** → `lb-cs/synthesis-platform`
 2. **Service → Settings → Source → Root Directory:** `/worker`. Railway then finds
    `worker/Dockerfile` and builds it
@@ -68,8 +72,8 @@ What the worker needs from any host:
    redeploy the worker
 4. **Variables:** `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, and
    `RAILWAY_DEPLOYMENT_DRAINING_SECONDS=60`. The last one is how long Railway waits
-   between SIGTERM and SIGKILL. That name comes from Railway staff replies on their
-   forum, so check their docs. Optional: `WORKER_CONCURRENCY`,
+   between SIGTERM and SIGKILL on a redeploy. Its default is 0, which kills the worker
+   before it can finish the sources it started. Optional: `WORKER_CONCURRENCY`,
    `WORKER_POLL_INTERVAL_SECONDS`, `WORKER_STALE_AFTER_MINUTES` (see
    `worker/.env.example`)
 5. **Don't generate a domain.** The worker serves nothing
@@ -115,9 +119,10 @@ Linux. On Docker Desktop, set `SUPABASE_URL=http://host.docker.internal:54321` i
 
 ## Troubleshooting
 
-| Symptom                                                | Cause                                                                                                               |
-| ------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------- |
-| Exits at start: `could not reach Supabase at …`        | Wrong URL or key, or migrations not applied. The stack trace under it names the missing function if it's the latter |
-| Exits at start: `SUPABASE_URL and … must be set`       | A variable is missing on the host                                                                                   |
-| Sources stay `pending`                                 | The worker isn't running, or it points at a different Supabase project than the app                                 |
-| Railway build: `Cache mount ID is not prefixed with …` | Someone added a `--mount=type=cache` to the Dockerfile. Railway needs its service id in it. Remove the mount        |
+| Symptom                                                 | Cause                                                                                                                                                                                                          |
+| ------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Exits at start: `could not reach Supabase at …`         | Wrong URL or key, or migrations not applied. The stack trace under it names the missing function if it's the latter                                                                                            |
+| Exits at start: `SUPABASE_URL and … must be set`        | A variable is missing on the host                                                                                                                                                                              |
+| Sources stay `pending`                                  | The worker isn't running, or it points at a different Supabase project than the app                                                                                                                            |
+| Railway build: `Railpack` … `No start command detected` | Railway found no `Dockerfile` and fell back to Railpack. The branch it builds doesn't have `worker/Dockerfile` yet (merge it, or switch the branch under Settings → Source), or Root Directory isn't `/worker` |
+| Railway build: `Cache mount ID is not prefixed with …`  | Someone added a `--mount=type=cache` to the Dockerfile. Railway needs its service id in it. Remove the mount                                                                                                   |
