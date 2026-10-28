@@ -19,6 +19,7 @@ supabase/         local Supabase config, migrations, email template
 proxy.ts          route guard — Next 16's name for middleware
 public/           static assets
 worker/           Python worker that processes sources — see worker/README.md
+scripts/          dev.sh: `npm run dev:all` runs Supabase, the worker, and the app together
 docs/             these rules, code style, ADRs
 .agents/skills/   agent skills (source); .claude/skills/ symlinks to them
 .cursor/rules/    thin glob-scoped stubs pointing at docs/rules/

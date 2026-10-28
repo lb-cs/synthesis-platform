@@ -43,6 +43,11 @@ npm run dev
 
 Open <http://localhost:3000>.
 
+Uploads stay `pending` with only the app running: the Python worker processes them. To
+run Supabase, the worker, and the app from one terminal, use `npm run dev:all` instead.
+It needs [uv](https://docs.astral.sh/uv/getting-started/installation/) for the worker.
+Details in [local setup](docs/local-setup.md#7b-run-the-worker-optional).
+
 **5. Sign in**
 
 Go to <http://localhost:3000/login> and enter any email. No real email is sent — the
@@ -92,6 +97,7 @@ to use local for development.
 | Script               | What it does                              |
 | -------------------- | ----------------------------------------- |
 | `npm run dev`        | Start the dev server                      |
+| `npm run dev:all`    | Supabase, the worker, and the dev server  |
 | `npm run build`      | Production build                          |
 | `npm run start`      | Serve the production build                |
 | `npm run lint`       | ESLint (`lint:fix` to auto-fix)           |
@@ -115,6 +121,8 @@ components/           App components; components/ui/ is shadcn (npx shadcn@lates
 lib/                  Queries behind the routes: projects.ts, sources.ts
 lib/supabase/         Supabase clients from the docs (client.ts, server.ts, proxy.ts) + DB types
 supabase/             Local Supabase config, migrations, email template
+worker/               Python worker that parses and chunks uploads (worker/README.md)
+scripts/dev.sh        What `npm run dev:all` runs
 proxy.ts              Calls lib/supabase/proxy.ts on every request (Next 16's "middleware")
 public/               Static assets
 ```

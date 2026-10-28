@@ -73,6 +73,10 @@ uv run python -m worker
 Upload a file in the app and watch its status change on the sources page. Stop the
 worker with Ctrl+C; it finishes the sources it already started before exiting.
 
+Or skip the steps above: `npm run dev:all` from the repo root starts Supabase and runs
+the worker next to the app, with the local keys filled in for you, so `worker/.env` isn't
+needed. It still needs uv. See `scripts/dev.sh`.
+
 ## Deploy it
 
 It runs as a container on its own host, not on Vercel: `Dockerfile` here, steps in

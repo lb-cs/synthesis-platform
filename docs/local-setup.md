@@ -92,8 +92,28 @@ Open http://localhost:3000. To sign in, enter your email, then open the local in
 
 ## 7b. Run the worker (optional)
 
-Uploaded sources stay `pending` until the Python worker picks them up. To run it, install
-[uv](https://docs.astral.sh/uv/getting-started/installation/), then in a second terminal:
+Uploaded sources stay `pending` until the Python worker picks them up. It needs
+[uv](https://docs.astral.sh/uv/getting-started/installation/) (`brew install uv` on a Mac).
+
+The easy way runs everything from one terminal, instead of `npm run dev`:
+
+```
+npm run dev:all
+```
+
+It does this, in order (`scripts/dev.sh`):
+
+1. Starts Supabase if it isn't running
+2. Applies any new migrations to the local database
+3. Runs the worker in the background
+4. Runs `npm run dev`
+
+Both the app and the worker get the local Supabase URL and keys straight from
+`supabase status`. So uploads always reach the worker, even if `.env` points somewhere
+else, and `worker/.env` isn't needed. `AI_GATEWAY_API_KEY` still comes from `.env`. Ctrl+C
+stops the app and the worker; Supabase keeps running until `npx supabase stop`.
+
+To run the worker by hand instead, in a second terminal:
 
 ```
 cd worker
