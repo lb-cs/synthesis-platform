@@ -150,9 +150,9 @@ access control versus organisation.
 ### Data and transport
 
 **Row**:
-A table's shape as Postgres returns it, snake_case — `Tables<'projects'>` from the
+A table's shape as Postgres returns it, snake*case — `Tables<'projects'>` from the
 generated `lib/supabase/database.types.ts`. Never leaves `lib/`.
-_Avoid_: "record", "model".
+\_Avoid*: "record", "model".
 
 **Domain type**:
 What `lib/` hands to route handlers and the API returns, camelCase — `Project` in
