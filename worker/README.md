@@ -8,8 +8,9 @@ app: the app inserts a `sources` row with status `pending`, and the worker moves
 
 Today the worker downloads the file, parses it into pages, splits the pages into
 chunks, and saves the chunks and the file's details (see
-[Parsing and chunking](#parsing-and-chunking)). The worker embeds every chunk with OpenAI
-`text-embedding-3-small` before saving it. Chunks are saved before the source is marked
+[Parsing and chunking](#parsing-and-chunking)). The worker embeds every chunk with
+`openai/text-embedding-3-small` through Vercel AI Gateway before saving it, the same
+model the app embeds questions with. Chunks are saved before the source is marked
 `ready`, so retrieval only sees complete sources.
 
 ## How it works
@@ -34,7 +35,7 @@ chunks, and saves the chunks and the file's details (see
 | `src/worker/storage.py`    | Downloads files from the `sources` bucket                |
 | `src/worker/loop.py`       | Polling loop and thread pool; turns errors into `failed` |
 | `src/worker/pipeline.py`   | Parses, chunks, and embeds each source                   |
-| `src/worker/embeddings.py` | OpenAI embedding requests and response validation        |
+| `src/worker/embeddings.py` | AI Gateway embedding requests and response validation    |
 
 ## Parsing and chunking
 
@@ -74,14 +75,14 @@ which installs the right Python for you.
 ```bash
 cd worker
 uv sync                    # creates .venv with the dependencies
-cp .env.example .env       # fill in Supabase keys and OPENAI_API_KEY
+cp .env.example .env       # fill in Supabase keys and AI_GATEWAY_API_KEY
 uv run python -m worker
 ```
 
 Upload a file in the app and watch its status change on the sources page. Stop the
 worker with Ctrl+C; it finishes the sources it already started before exiting.
-The OpenAI key is read only by this worker and must not be committed or exposed to the
-browser.
+The Gateway key in `worker/.env` must not be committed. The same key as in the root
+`.env` works.
 
 Once `.env` is set up, `npm run dev:all` from the repo root runs Supabase, the worker,
 and the app in one terminal (`scripts/dev.sh`).

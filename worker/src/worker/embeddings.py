@@ -1,11 +1,14 @@
-"""Create OpenAI embeddings for document chunks."""
+"""Create embeddings for document chunks through Vercel AI Gateway."""
 
 from collections.abc import Sequence
 from typing import Protocol
 
 import httpx
 
-EMBEDDING_MODEL = 'text-embedding-3-small'
+# AI Gateway's OpenAI-compatible endpoint. It works outside Vercel with an API key.
+EMBEDDINGS_URL = 'https://ai-gateway.vercel.sh/v1/embeddings'
+# Must match EMBEDDING_MODEL in lib/ai.ts, or questions and chunks won't match.
+EMBEDDING_MODEL = 'openai/text-embedding-3-small'
 EMBEDDING_DIMENSIONS = 1536
 EMBEDDING_BATCH_SIZE = 128
 
@@ -14,7 +17,7 @@ class Embedder(Protocol):
     def embed(self, texts: Sequence[str]) -> list[str]: ...
 
 
-class OpenAIEmbedder:
+class GatewayEmbedder:
     """Calls the embeddings API and returns pgvector-compatible vector strings."""
 
     def __init__(self, api_key: str, client: httpx.Client | None = None) -> None:
@@ -27,7 +30,7 @@ class OpenAIEmbedder:
         for start in range(0, len(texts), EMBEDDING_BATCH_SIZE):
             batch = texts[start : start + EMBEDDING_BATCH_SIZE]
             response = self._client.post(
-                'https://api.openai.com/v1/embeddings',
+                EMBEDDINGS_URL,
                 headers={'Authorization': f'Bearer {self._api_key}'},
                 json={
                     'model': EMBEDDING_MODEL,

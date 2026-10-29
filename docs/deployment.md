@@ -32,7 +32,7 @@ port or domain.
 | ------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
 | `SUPABASE_URL`                        | The hosted project URL, same as `NEXT_PUBLIC_SUPABASE_URL` in Vercel                                                 |
 | `SUPABASE_SERVICE_ROLE_KEY`           | The secret key, same as in Vercel. It bypasses RLS: it lives only in Railway and Vercel                              |
-| `OPENAI_API_KEY`                      | OpenAI secret key used by the worker for embeddings. Keep it in Railway only; never expose it in the browser         |
+| `AI_GATEWAY_API_KEY`                  | A Vercel AI Gateway key for embeddings. Railway has no Vercel OIDC token, so the worker needs its own key            |
 | `RAILWAY_DEPLOYMENT_DRAINING_SECONDS` | `60`: time between SIGTERM and SIGKILL on a redeploy. Railway's default is 0, which kills the worker mid-file        |
 | `WORKER_CONCURRENCY`, …               | Optional. `WORKER_POLL_INTERVAL_SECONDS` and `WORKER_STALE_AFTER_MINUTES` too; defaults are in `worker/.env.example` |
 
@@ -76,12 +76,19 @@ docker run --rm --env-file worker/.env -e SUPABASE_URL=http://host.docker.intern
 `host.docker.internal` is how a container on Docker Desktop reaches your machine's
 `127.0.0.1`.
 
-## Embedding (CECS491-70)
+## Embedding
 
-- The worker must embed with the app's model, `openai/text-embedding-3-small` (1536
-  dimensions) in `lib/ai.ts`, or questions and chunks won't match. AI Gateway serves it
-  through an OpenAI-compatible API (`https://ai-gateway.vercel.sh/v1`)
-- Railway has no Vercel OIDC token, so add an `AI_GATEWAY_API_KEY` to its variables
+- **Same model as the app.** The worker embeds chunks with
+  `openai/text-embedding-3-small` (1536 dimensions), the model `lib/ai.ts` embeds questions
+  with, or questions and chunks won't match. A worker test fails if the two drift apart
+- **Through AI Gateway, like the app.** The worker calls Gateway's OpenAI-compatible
+  endpoint, `https://ai-gateway.vercel.sh/v1/embeddings`. Usage shows up in the same
+  Vercel dashboard as chat
+- **Its own key.** Vercel signs the app in to Gateway automatically; Railway can't, so
+  create a key for the worker (Vercel dashboard → AI Gateway → API keys) and set it as
+  `AI_GATEWAY_API_KEY`. A key of its own can be revoked or capped without touching the app
+- **Gateway down means `failed`, not stuck.** A failed embedding call marks the source
+  `failed`, and the user uploads it again. Nothing retries it automatically yet
 - Recheck `WORKER_STALE_AFTER_MINUTES` against a large PDF, as ADR 0001 says
 
 ## Troubleshooting
@@ -91,5 +98,6 @@ docker run --rm --env-file worker/.env -e SUPABASE_URL=http://host.docker.intern
 | Exits at start: `could not reach Supabase at …`         | Wrong URL or key, or migrations not applied. The stack trace under it names the missing function if it's the latter              |
 | Exits at start: `SUPABASE_URL and … must be set`        | A variable is missing in Railway                                                                                                 |
 | Sources stay `pending`                                  | The worker isn't running, or it points at a different Supabase project than the app                                              |
+| Every source fails: `Processing failed unexpectedly`    | Check the logs for an `ai-gateway.vercel.sh` error. A 401 means `AI_GATEWAY_API_KEY` is wrong or revoked                         |
 | Railway build: `Railpack` … `No start command detected` | Railway found no `Dockerfile`, so it guessed. The branch it builds has no `worker/Dockerfile`, or Root Directory isn't `/worker` |
 | Railway build: `Cache mount ID is not prefixed with …`  | Someone added a `--mount=type=cache` to the Dockerfile. Railway needs its service id in it. Remove the mount                     |

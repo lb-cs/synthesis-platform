@@ -5,7 +5,7 @@ from worker.config import ConfigError, load_config
 REQUIRED = {
     'SUPABASE_URL': 'http://127.0.0.1:54321',
     'SUPABASE_SERVICE_ROLE_KEY': 'sb_secret_test',
-    'OPENAI_API_KEY': 'sk-test',
+    'AI_GATEWAY_API_KEY': 'gateway-test',
 }
 
 
@@ -22,11 +22,11 @@ def test_refuses_to_start_without_the_service_role_key():
         load_config({'SUPABASE_URL': 'http://127.0.0.1:54321'})
 
 
-def test_refuses_to_start_without_the_openai_key():
+def test_refuses_to_start_without_the_ai_gateway_key():
     values = dict(REQUIRED)
-    values.pop('OPENAI_API_KEY')
+    values.pop('AI_GATEWAY_API_KEY')
 
-    with pytest.raises(ConfigError, match='OPENAI_API_KEY'):
+    with pytest.raises(ConfigError, match='AI_GATEWAY_API_KEY'):
         load_config(values)
 
 

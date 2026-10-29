@@ -9,7 +9,7 @@ from worker.loop import run
 CONFIG = Config(
     supabase_url='http://127.0.0.1:54321',
     service_role_key='test',
-    openai_api_key='sk-test',
+    ai_gateway_api_key='gateway-test',
     concurrency=3,
     poll_interval_seconds=1,
 )
