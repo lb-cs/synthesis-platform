@@ -36,7 +36,7 @@ flowchart LR
   Browser -. file upload .-> Storage[("Supabase Storage<br/>bucket: sources")]
   Worker["Python worker<br/>service role"] --> DB
   Worker --> Storage
-  Worker --> Embed["OpenAI embeddings"]
+  Worker --> Embed["AI Gateway<br/>embeddings"]
 ```
 
 | Piece          | Where                                                  | Does                                                                                                                      |

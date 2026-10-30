@@ -1,11 +1,16 @@
+from pathlib import Path
+
 import pytest
 
 from worker.embeddings import (
     EMBEDDING_BATCH_SIZE,
     EMBEDDING_DIMENSIONS,
     EMBEDDING_MODEL,
-    OpenAIEmbedder,
+    GatewayEmbedder,
 )
+
+# The app embeds questions here. Chunks and questions must use the same model to match.
+APP_AI_MODULE = Path(__file__).parents[2] / 'lib' / 'ai.ts'
 
 
 class FakeResponse:
@@ -36,14 +41,14 @@ class FakeHTTPClient:
 
 def test_requests_small_model_and_restores_response_order():
     client = FakeHTTPClient()
-    vectors = OpenAIEmbedder('sk-test', client).embed(['first', 'second'])
+    vectors = GatewayEmbedder('gateway-test', client).embed(['first', 'second'])
 
     assert client.calls == [
         (
-            'https://api.openai.com/v1/embeddings',
-            {'Authorization': 'Bearer sk-test'},
+            'https://ai-gateway.vercel.sh/v1/embeddings',
+            {'Authorization': 'Bearer gateway-test'},
             {
-                'model': EMBEDDING_MODEL,
+                'model': 'openai/text-embedding-3-small',
                 'input': ['first', 'second'],
                 'dimensions': EMBEDDING_DIMENSIONS,
             },
@@ -57,7 +62,7 @@ def test_requests_small_model_and_restores_response_order():
 def test_empty_input_does_not_call_api():
     client = FakeHTTPClient()
 
-    assert OpenAIEmbedder('sk-test', client).embed([]) == []
+    assert GatewayEmbedder('gateway-test', client).embed([]) == []
     assert client.calls == []
 
 
@@ -65,7 +70,7 @@ def test_splits_large_input_into_bounded_requests():
     client = FakeHTTPClient()
     inputs = [f'chunk {i}' for i in range(EMBEDDING_BATCH_SIZE + 1)]
 
-    vectors = OpenAIEmbedder('sk-test', client).embed(inputs)
+    vectors = GatewayEmbedder('gateway-test', client).embed(inputs)
 
     assert [len(call[2]['input']) for call in client.calls] == [EMBEDDING_BATCH_SIZE, 1]
     assert len(vectors) == len(inputs)
@@ -75,4 +80,11 @@ def test_rejects_wrong_vector_dimension():
     client = FakeHTTPClient(dimensions=3)
 
     with pytest.raises(ValueError, match='wrong size'):
-        OpenAIEmbedder('sk-test', client).embed(['one chunk'])
+        GatewayEmbedder('gateway-test', client).embed(['one chunk'])
+
+
+def test_uses_the_same_model_and_dimensions_as_the_app():
+    app_source = APP_AI_MODULE.read_text()
+
+    assert f"const EMBEDDING_MODEL = '{EMBEDDING_MODEL}';" in app_source
+    assert f'export const EMBEDDING_DIMENSIONS = {EMBEDDING_DIMENSIONS};' in app_source
