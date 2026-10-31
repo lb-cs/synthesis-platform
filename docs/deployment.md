@@ -87,8 +87,12 @@ docker run --rm --env-file worker/.env -e SUPABASE_URL=http://host.docker.intern
 - **Its own key.** Vercel signs the app in to Gateway automatically; Railway can't, so
   create a key for the worker (Vercel dashboard → AI Gateway → API keys) and set it as
   `AI_GATEWAY_API_KEY`. A key of its own can be revoked or capped without touching the app
-- **Gateway down means `failed`, not stuck.** A failed embedding call marks the source
-  `failed`, and the user uploads it again. Nothing retries it automatically yet
+- **Rate limits are retried.** A 429, a 5xx, or a dropped connection gets up to 5 tries
+  per batch, with exponential backoff (1, 2, 4, 8 s) or the `Retry-After` the Gateway
+  sends, capped at 30 s
+- **Gateway down means `failed`, not stuck.** When the tries run out, the source is
+  `failed` with "busy or unavailable", and the user clicks **Retry processing**. Any other
+  error (a bad key, a bad request) fails at once
 - Recheck `WORKER_STALE_AFTER_MINUTES` against a large PDF, as ADR 0001 says
 
 ## Troubleshooting

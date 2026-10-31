@@ -13,11 +13,10 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { Field, FieldDescription, FieldLabel } from '@/components/ui/field';
-import { Input } from '@/components/ui/input';
 
 import { signOut } from '@/app/login/actions';
 
+import { ChangeEmailForm } from './change-email-form';
 import { DeleteAccountButton } from './delete-account-button';
 
 export const metadata: Metadata = {
@@ -43,13 +42,7 @@ export default async function SettingsPage() {
             <CardDescription>The email you sign in with.</CardDescription>
           </CardHeader>
           <CardContent>
-            <Field>
-              <FieldLabel htmlFor="email">Email</FieldLabel>
-              <Input id="email" value={data.claims.email} readOnly />
-              <FieldDescription>
-                Changing your email is not supported yet.
-              </FieldDescription>
-            </Field>
+            <ChangeEmailForm currentEmail={data.claims.email ?? ''} />
           </CardContent>
           <CardFooter>
             <form action={signOut}>

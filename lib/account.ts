@@ -1,7 +1,14 @@
 /**
- * Permanent account deletion. Needs the service-role client: Storage files do not
- * cascade, and deleting an auth user is an admin call. The database cascade then removes
- * projects, sources, chunks, chat and citations.
+ * The user's account: changing the sign-in email and permanent deletion.
+ *
+ * Email change runs as the user. Supabase emails a 6-digit code to the new address and
+ * switches the email once that code is verified. It needs Secure email change off
+ * (`double_confirm_changes = false`), or Supabase also mails a second code to the old
+ * address that this flow never asks for.
+ *
+ * Deletion needs the service-role client: Storage files do not cascade, and deleting an
+ * auth user is an admin call. The database cascade then removes projects, sources,
+ * chunks, chat and citations.
  */
 import type { SupabaseClient } from '@supabase/supabase-js';
 
@@ -13,12 +20,79 @@ const LIST_PAGE_SIZE = 100;
 const REMOVE_BATCH_SIZE = 100;
 const NOT_FOUND = 404;
 
+export type EmailChangeErrorKind = 'email-taken' | 'rate-limited' | 'auth-error';
+
+export type EmailChangeResult = { ok: true } | { ok: false; kind: EmailChangeErrorKind };
+
+export type ConfirmEmailChangeResult = { ok: true } | { ok: false; kind: 'invalid-code' };
+
 export type DeleteAccountErrorKind = 'storage-error' | 'auth-error';
 
 export type DeleteAccountResult =
   { ok: true } | { ok: false; kind: DeleteAccountErrorKind };
 
+type Client = SupabaseClient<Database>;
+
 type AdminClient = SupabaseClient<Database>;
+
+function toEmailChangeError(code: string | undefined): EmailChangeErrorKind {
+  if (code === 'email_exists') {
+    return 'email-taken';
+  }
+
+  if (code === 'over_email_send_rate_limit' || code === 'over_request_rate_limit') {
+    return 'rate-limited';
+  }
+
+  return 'auth-error';
+}
+
+/** Emails a code to the new address. The email stays the same until the code is verified. */
+export async function requestEmailChange(
+  supabase: Client,
+  newEmail: string,
+): Promise<EmailChangeResult> {
+  const { error } = await supabase.auth.updateUser({ email: newEmail });
+
+  if (error) {
+    return { ok: false, kind: toEmailChangeError(error.code) };
+  }
+
+  return { ok: true };
+}
+
+/** Sends the code to the new address again, for a change already requested. */
+export async function resendEmailChangeCode(
+  supabase: Client,
+  newEmail: string,
+): Promise<EmailChangeResult> {
+  const { error } = await supabase.auth.resend({ type: 'email_change', email: newEmail });
+
+  if (error) {
+    return { ok: false, kind: toEmailChangeError(error.code) };
+  }
+
+  return { ok: true };
+}
+
+/** Verifies the code from the new inbox, which switches the email and refreshes the session. */
+export async function confirmEmailChange(
+  supabase: Client,
+  newEmail: string,
+  token: string,
+): Promise<ConfirmEmailChangeResult> {
+  const { error } = await supabase.auth.verifyOtp({
+    email: newEmail,
+    token,
+    type: 'email_change',
+  });
+
+  if (error) {
+    return { ok: false, kind: 'invalid-code' };
+  }
+
+  return { ok: true };
+}
 
 // Storage lists one folder level at a time. Entries with no id are subfolders.
 async function listFolder(

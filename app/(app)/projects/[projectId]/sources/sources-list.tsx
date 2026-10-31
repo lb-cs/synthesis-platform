@@ -1,12 +1,11 @@
 'use client';
 
 import { FileText, SearchX } from 'lucide-react';
-import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 
 import type { Source } from '@/lib/sources';
 
-import { SOURCE_KINDS, SOURCE_STATUSES } from '@/lib/sources';
+import { isSourceInProgress, SOURCE_KINDS, SOURCE_STATUSES } from '@/lib/sources';
 import { Button } from '@/components/ui/button';
 import {
   Empty,
@@ -20,6 +19,7 @@ import { Input } from '@/components/ui/input';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 
 import { filterSources, type SourceFilters } from './filter-sources';
+import { RefreshWhileProcessing } from './refresh-while-processing';
 import { SourceDetailsSheet } from './source-details-sheet';
 import { SourceRow } from './source-row';
 import { KIND_LABELS, STATUS_LABELS } from './source-types';
@@ -53,25 +53,7 @@ export function SourcesList({
   projectId: string;
   sources: Source[];
 }) {
-  const router = useRouter();
-  const hasActiveSources = sources.some((source) => {
-    return source.status === 'pending' || source.status === 'processing';
-  });
-
-  useEffect(() => {
-    if (!hasActiveSources) {
-      return;
-    }
-
-    const interval = window.setInterval(() => {
-      router.refresh();
-    }, 3_000);
-
-    return () => {
-      window.clearInterval(interval);
-    };
-  }, [hasActiveSources, router]);
-
+  const isProcessing = sources.some(isSourceInProgress);
   const [query, setQuery] = useState('');
   const [status, setStatus] = useState<SourceFilters['status']>('all');
   const [kind, setKind] = useState<SourceFilters['kind']>('all');
@@ -110,6 +92,7 @@ export function SourcesList({
 
   return (
     <div className="flex flex-col gap-4">
+      <RefreshWhileProcessing isProcessing={isProcessing} />
       <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
         <Input
           type="search"

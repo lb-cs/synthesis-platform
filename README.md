@@ -70,7 +70,8 @@ Done for the day? `npx supabase stop`.
 This repo is the project foundation: Next.js (App Router), Tailwind CSS v4,
 shadcn/ui, Supabase (auth + Postgres), ESLint, Prettier, and CI. Email OTP login,
 projects (dashboard, create, edit, delete, REST API), sources (upload, list, remove,
-live status, retry), account deletion, and a first workspace chat work. The Python
+live status, retry), account settings (change email, delete account), and a first
+workspace chat work. The Python
 worker parses, chunks, and embeds uploads. The schema is in `supabase/migrations/`.
 What's built per screen:
 [`docs/design/architecture.md`](docs/design/architecture.md).
@@ -79,7 +80,7 @@ What's built per screen:
 
 Local is the default for day-to-day work — no rate limits, no shared state, emails
 land in a local inbox. `supabase/config.toml` already wires the one-time-code email
-template (`supabase/templates/magic-link.html`).
+templates (`supabase/templates/`) and the email-change setting.
 
 If you need a cloud project instead, create one at <https://supabase.com/dashboard>,
 then:
@@ -89,6 +90,11 @@ then:
 2. **Authentication → Email Templates → Magic Link.** Paste in the body of
    `supabase/templates/magic-link.html` — it must include `{{ .Token }}`, or Supabase
    emails a link instead of a code and the login form won't work.
+3. **Authentication → Email Templates → Change Email Address.** Paste in the body of
+   `supabase/templates/email-change.html`. Same reason: Settings asks for a code.
+4. **Authentication → Sign In / Providers → Email → Secure email change: off.** Settings
+   asks for one code, from the new address (UC-05). Left on, Supabase also mails a code
+   to the old address, and the change never finishes.
 
 Gotcha: without custom SMTP, a cloud project's built-in mailer allows only a
 handful of emails per hour. Fine for one person, tight for five — another reason

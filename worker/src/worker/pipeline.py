@@ -7,7 +7,7 @@ from dataclasses import dataclass, replace
 
 from worker.chunking import Chunk, chunk_pages
 from worker.db import ClaimedSource
-from worker.embeddings import Embedder
+from worker.embeddings import Embedder, EmbeddingUnavailableError
 from worker.parsing import ParseError, parse
 
 
@@ -39,7 +39,13 @@ def process(
     chunks = chunk_pages(document.pages)
 
     if embedder is not None:
-        vectors = embedder.embed([chunk.content for chunk in chunks])
+        try:
+            vectors = embedder.embed([chunk.content for chunk in chunks])
+        except EmbeddingUnavailableError as error:
+            raise ProcessingError(
+                'The embedding service is busy or unavailable. Retry processing in a few '
+                'minutes.'
+            ) from error
 
         if len(vectors) != len(chunks):
             raise ProcessingError('The embedding service returned an invalid response.')
