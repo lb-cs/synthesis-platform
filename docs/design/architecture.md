@@ -50,7 +50,7 @@ flowchart LR
 | Postgres + RLS | `supabase/migrations/`                                 | All data. RLS limits every query to the signed-in user's projects. Deletes cascade                                        |
 | pgvector       | `document_chunks.embedding`, `match_document_chunks()` | Semantic search, filtered to one project                                                                                  |
 | Storage        | bucket `sources`                                       | Uploaded files at `{user_id}/{project_id}/{file}`. Storage policies allow only your own folder                            |
-| Worker         | `worker/` — separate Python service                    | Claims pending sources and moves their status. Parse, chunk, embed to come. Service role, so it bypasses RLS              |
+| Worker         | `worker/` — separate Python service, on Railway        | Claims pending sources; parses, chunks, and embeds them; moves their status. Service role, so it bypasses RLS             |
 
 ### Two rules every backend change follows
 
@@ -69,12 +69,12 @@ build — something else already does it.
 
 ### Identity and security — handled by Supabase and Postgres
 
-| Spec controller    | Now                                                                                                                                                                                                                                                              | Status    |
-| ------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------- |
-| AuthController     | **Dropped.** Supabase Auth: `signInWithOtp` / `verifyOtp` / `signOut` in `app/login/actions.ts`. Sessions and JWTs are Supabase's; read with `getClaims()`                                                                                                       | Built     |
-| OAuthController    | **Dropped.** Supabase's Google provider: `signInWithOAuth`, plus one callback route that calls `exchangeCodeForSession`                                                                                                                                          | Not built |
-| UserController     | **Mostly dropped.** Email change is Supabase's `updateUser` (it emails a confirmation). Account deletion needs one server-side call with the service role (`auth.admin.deleteUser`); the database cascades the rest. Storage is cleared first (`lib/account.ts`) | Built     |
-| SecurityController | **Dropped.** RLS on every table and the storage bucket, `proxy.ts` for routes, zod for input, Next.js origin check on server actions                                                                                                                             | Built     |
+| Spec controller    | Now                                                                                                                                                                                                                                                                              | Status                         |
+| ------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------ |
+| AuthController     | **Dropped.** Supabase Auth: `signInWithOtp` / `verifyOtp` / `signOut` in `app/login/actions.ts`. Sessions and JWTs are Supabase's; read with `getClaims()`                                                                                                                       | Built                          |
+| OAuthController    | **Dropped.** Supabase's Google provider: `signInWithOAuth`, plus one callback route that calls `exchangeCodeForSession`                                                                                                                                                          | Not built                      |
+| UserController     | **Mostly dropped.** Email change is Supabase's `updateUser` (it emails a confirmation) — not wired yet. Account deletion needs one server-side call with the service role (`auth.admin.deleteUser`); the database cascades the rest. Storage is cleared first (`lib/account.ts`) | Delete built; email change not |
+| SecurityController | **Dropped.** RLS on every table and the storage bucket, `proxy.ts` for routes, zod for input, Next.js origin check on server actions                                                                                                                                             | Built                          |
 
 ### Projects and sources — thin routes over `lib/`
 
@@ -87,39 +87,39 @@ build — something else already does it.
 
 ### Processing — the worker
 
-| Spec controller         | Now                                                                                        | Status    |
-| ----------------------- | ------------------------------------------------------------------------------------------ | --------- |
-| ProcessingJobController | **Dropped.** `sources.status` is the queue: `pending → processing → ready \| failed`       | Built     |
-| ParsingController       | Worker step. Writes extracted details to `sources.metadata`                                | Built     |
-| ChunkingController      | Worker step. Writes `document_chunks` with `chunk_index` and `page_number`                 | Built     |
-| IndexingController      | **Mostly dropped.** Worker writes the embedding; the HNSW index in Postgres updates itself | Not built |
+| Spec controller         | Now                                                                                        | Status |
+| ----------------------- | ------------------------------------------------------------------------------------------ | ------ |
+| ProcessingJobController | **Dropped.** `sources.status` is the queue: `pending → processing → ready \| failed`       | Built  |
+| ParsingController       | Worker step. Writes extracted details to `sources.metadata`                                | Built  |
+| ChunkingController      | Worker step. Writes `document_chunks` with `chunk_index` and `page_number`                 | Built  |
+| IndexingController      | **Mostly dropped.** Worker writes the embedding; the HNSW index in Postgres updates itself | Built  |
 
 ### AI — route handler + `lib/`
 
-| Spec controller              | Now                                                                                                                                                   | Status       |
-| ---------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| RetrievalController          | **Mostly dropped.** `match_document_chunks(project_id, query_embedding)` in Postgres. Runs as the user, so RLS applies. Searches `ready` sources only | Schema       |
-| AIController                 | `lib/ai.ts`: closed-context prompt, question embedding, and the one streaming model call (AI Gateway). Swap it there                                  | Built        |
-| ChatController               | `POST /api/projects/[projectId]/chat`: streams the answer (AI SDK UI message stream) and writes `chat_messages`                                       | Built, naive |
-| CitationController           | Insert `citations` rows for the chunks the answer used. RLS rejects a chunk from another user's project                                               | Not built    |
-| Summary, Comparison, Insight | Same pattern as chat                                                                                                                                  | Stretch goal |
-| NotificationController       | **Dropped.** No use case needs it. Processing progress shows through `sources.status`                                                                 | —            |
+| Spec controller              | Now                                                                                                                                                                                          | Status           |
+| ---------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------- |
+| RetrievalController          | **Mostly dropped.** `match_document_chunks(project_id, query_embedding)` in Postgres. Runs as the user, so RLS applies. Searches `ready` sources only. Chat doesn't call it yet (CECS491-73) | Built, not wired |
+| AIController                 | `lib/ai.ts`: closed-context prompt, question embedding, and the one streaming model call (AI Gateway). Swap it there                                                                         | Built            |
+| ChatController               | `POST /api/projects/[projectId]/chat`: streams the answer (AI SDK UI message stream) and writes `chat_messages`                                                                              | Built, naive     |
+| CitationController           | Insert `citations` rows for the chunks the answer used. RLS rejects a chunk from another user's project. Comes with retrieval (CECS491-73)                                                   | Not built        |
+| Summary, Comparison, Insight | Same pattern as chat                                                                                                                                                                         | Stretch goal     |
+| NotificationController       | **Dropped.** No use case needs it. Processing progress shows through `sources.status`                                                                                                        | —                |
 
 ## Screens and routes
 
-| Screen                | Route                                         | Use cases     | Status      |
-| --------------------- | --------------------------------------------- | ------------- | ----------- |
-| Landing page          | `/home` (`/` redirects by sign-in state)      | —             | Built       |
-| Sign in (and sign up) | `/login` — one form: email, then 6-digit code | UC-01, UC-03  | Built       |
-| Dashboard             | `/dashboard`                                  | UC-09         | Built       |
-| New project           | `/projects/new`                               | UC-07         | Built       |
-| Workspace             | `/projects/[projectId]` — sources + chat      | UC-09, UC-16  | Built       |
-| Sources               | `/projects/[projectId]/sources`               | UC-11 – UC-14 | Page exists |
-| Summaries             | `/projects/[projectId]/summaries`             | UC-17         | Placeholder |
-| Analysis              | `/projects/[projectId]/analysis`              | UC-18, UC-19  | Placeholder |
-| Settings              | `/settings`                                   | UC-04 – UC-06 | Page exists |
-| Edit project          | `/projects/[projectId]/edit`                  | UC-08         | Built       |
-| Citation viewer       | —                                             | UC-20         | Not built   |
+| Screen                | Route                                         | Use cases     | Status          |
+| --------------------- | --------------------------------------------- | ------------- | --------------- |
+| Landing page          | `/home` (`/` redirects by sign-in state)      | —             | Built           |
+| Sign in (and sign up) | `/login` — one form: email, then 6-digit code | UC-01, UC-03  | Built           |
+| Dashboard             | `/dashboard`                                  | UC-09         | Built           |
+| New project           | `/projects/new`                               | UC-07         | Built           |
+| Workspace             | `/projects/[projectId]` — sources + chat      | UC-09, UC-16  | Built           |
+| Sources               | `/projects/[projectId]/sources`               | UC-11 – UC-14 | Built           |
+| Summaries             | `/projects/[projectId]/summaries`             | UC-17         | Placeholder     |
+| Analysis              | `/projects/[projectId]/analysis`              | UC-18, UC-19  | Placeholder     |
+| Settings              | `/settings` — sign out, delete account        | UC-04 – UC-06 | No email change |
+| Edit project          | `/projects/[projectId]/edit`                  | UC-08         | Built           |
+| Citation viewer       | —                                             | UC-20         | Not built       |
 
 ## How a source gets processed (UC-11, UC-15)
 
@@ -154,15 +154,25 @@ statement, so two workers never get the same source. Each worker runs up to
 left in `processing` by a crashed worker is failed by `fail_stale_sources()`. Why polling
 and not a database webhook: [ADR 0001](../adr/0001-worker-polls-for-pending-sources.md).
 
+### How the user sees progress
+
+The Sources page polls too: while any source is `pending` or `processing`, it calls
+`router.refresh()` every 3 s (`sources-list.tsx`). A `failed` source shows its
+`processing_error` and a **Retry processing** button, which calls
+`retry_failed_source()` to set it back to `pending`. The workspace's Sources panel does
+not poll; it shows the status as of the last page load.
+
 ## How a question gets answered (UC-16)
 
-**What runs today is a naive stand-in.** No chunks exist until the worker lands, so
+**What runs today is a naive stand-in.** The worker now writes embedded chunks, but the
+chat route does not retrieve them yet (CECS491-73; whether to switch is CECS491-75).
 `lib/answer.ts` sends every non-failed source file whole (PDFs as documents), numbered
-oldest first, and the model cites `[n]`. No embedding, no `citations` rows. A citation
+oldest first, and the model cites `[n]`. No question embedding, no `citations` rows, no
+page numbers. A citation
 opens the file through `GET …/sources/[sourceId]/file`. Removing a source renumbers the
 ones after it, so old answers can point at the wrong number.
 
-The shape the schema is built for, once chunks exist. `lib/ai.ts` already does the model
+The shape the schema is built for, once the route retrieves. `lib/ai.ts` already does the model
 side: `embedQuestion` (same model as the worker), `buildGroundedPrompt` (the chunks
 numbered `[1]…[n]` plus the last `HISTORY_LIMIT` turns, never the whole chat), and
 `streamGroundedAnswer`. The chunks' numbers map back to chunk ids for `citations`.

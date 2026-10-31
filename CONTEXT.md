@@ -102,7 +102,7 @@ A link from an assistant message to a document chunk that supports it
 _Avoid_: "reference", "footnote", "source" (a citation points into a source).
 
 **Source number**:
-The `[n]` an answer cites a whole source by until chunks exist — non-failed sources,
+The `[n]` an answer cites a whole source by until chat retrieves chunks — non-failed sources,
 oldest first (`numberSources` in `lib/citations.ts`). Shown in the workspace's Sources
 panel. Not stored; removing a source renumbers the ones after it.
 _Avoid_: "citation" for the number itself (a citation is the chunk link), "index".

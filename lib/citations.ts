@@ -1,5 +1,5 @@
 /**
- * Source numbers: until the worker writes chunks, an answer cites whole sources as [1],
+ * Source numbers: until chat retrieves chunks, an answer cites whole sources as [1],
  * [2], … Pure and client-safe, so the route and the Ask panel number sources the same way.
  */
 import type { UIMessage } from 'ai';
