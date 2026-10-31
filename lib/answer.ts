@@ -1,7 +1,8 @@
 /**
- * Answers a question from a project's sources. The naive version: no chunks exist yet, so
- * every usable source goes to the model whole, numbered for citation. Once the worker
- * writes chunks, the route switches to `streamGroundedAnswer` in `lib/ai.ts`.
+ * Answers a question from a project's sources. The naive version: every usable source
+ * goes to the model whole, numbered for citation. The worker already writes embedded
+ * chunks; when the route retrieves them (CECS491-73), it switches to
+ * `streamGroundedAnswer` in `lib/ai.ts`.
  */
 import type { ModelMessage, UserContent } from 'ai';
 import type { SupabaseClient } from '@supabase/supabase-js';

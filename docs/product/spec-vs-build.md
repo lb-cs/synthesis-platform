@@ -5,7 +5,7 @@ actually build — and why. The rest of `docs/product/` and `docs/design/` is al
 updated to match; this page is the record of **what** was changed, so nobody "fixes" the
 code back to the old spec.
 
-_Last checked against the code: 2026-09-29 (`main` at `1cdc16c`)._ Update this page when
+_Last checked against the code: 2026-10-30 (`main` at `f97774e`, end of Sprint 3)._ Update this page when
 a decision changes.
 
 ## Big decisions
@@ -23,31 +23,31 @@ a decision changes.
 | Processing jobs     | `ProcessingJob` entity with its own states                  | **No job table.** `sources.status` is the queue. A separate **Python worker** does the work                                                      |
 | Account deletion    | `AccountDeletionRequest` with an approval step              | Immediate: delete the auth user and the database cascades. The app deletes Storage files                                                         |
 | Notifications       | `Notification` entity                                       | Dropped — no use case needs it                                                                                                                   |
-| Embeddings          | —                                                           | OpenAI `text-embedding-3-small`                                                                                                                  |
-| LLM provider        | OpenAI or Anthropic                                         | Not chosen yet                                                                                                                                   |
+| Embeddings          | —                                                           | OpenAI `text-embedding-3-small` through Vercel AI Gateway, in the worker and `lib/ai.ts`                                                         |
+| LLM provider        | OpenAI or Anthropic                                         | **Vercel AI Gateway** in front of the model. The model id lives in `lib/ai.ts` only                                                              |
 | API versioning      | `/api/v1/…` (SRS §6.5)                                      | Unversioned: `/api/projects`                                                                                                                     |
 | Stretch goals       | Everything in the RFP                                       | Links (UC-12), summaries (UC-17, `CECS491-15`), analysis (UC-18, UC-19, `CECS491-16`)                                                            |
 
 ## By use case
 
-| Use case               | Status in code                                                                                                                                                                              |
-| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| UC-01 Create account   | Built as emailed-code sign-in (`/login`). The spec's password rules, password errors, and NFR-02 were dropped                                                                               |
-| UC-02 Google           | Not built. Needs a button and one callback route; Supabase does the rest                                                                                                                    |
-| UC-03 Log in           | Same flow as UC-01                                                                                                                                                                          |
-| UC-04 Log out          | `signOut` server action exists (`app/login/actions.ts`)                                                                                                                                     |
-| UC-05 Edit account     | `/settings` page exists. Email change (Supabase `updateUser`) not wired                                                                                                                     |
-| UC-06 Delete account   | Built: Settings > Delete account clears the user's Storage folder, deletes the auth user with the service role (`lib/account.ts`), and the database cascades the rest                       |
-| UC-07 – UC-10 Projects | REST API built: `GET`/`POST /api/projects`, `GET`/`PATCH`/`DELETE /api/projects/[projectId]`. `/projects/new` form exists. Title 1–100 chars; blank description stored as `null`            |
-| UC-11 Upload           | Schema and storage bucket ready; no upload UI yet. Kinds are `pdf` and `text` — Markdown and transcripts are `text`                                                                         |
-| UC-12 Links            | **Stretch goal.** `sources.kind` doesn't allow links yet                                                                                                                                    |
-| UC-13 View sources     | `/projects/[projectId]/sources` route exists                                                                                                                                                |
-| UC-14 Remove source    | Schema ready — deleting a source cascades to its chunks and their citations                                                                                                                 |
-| UC-15 Processing       | Schema ready (status, `processing_error`, chunks with page numbers). Python worker in `worker/` claims sources, parses and chunks them, and moves status (CECS491-68, -69); embed not built |
-| UC-16 Q&A              | Schema ready: `chat_messages` (one conversation per project), `citations`, `match_document_chunks()`                                                                                        |
-| UC-17 Summaries        | **Stretch goal** (Jira `CECS491-15`). Placeholder page at `/projects/[projectId]/summaries`                                                                                                 |
-| UC-18, UC-19 Analysis  | **Stretch goal** (Jira `CECS491-16`). Placeholder page at `/projects/[projectId]/analysis`                                                                                                  |
-| UC-20 Citations        | Schema ready. A citation points at a chunk; the chunk gives source and page                                                                                                                 |
+| Use case               | Status in code                                                                                                                                                                                     |
+| ---------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| UC-01 Create account   | Built as emailed-code sign-in (`/login`). The spec's password rules, password errors, and NFR-02 were dropped                                                                                      |
+| UC-02 Google           | Not built. Needs a button and one callback route; Supabase does the rest                                                                                                                           |
+| UC-03 Log in           | Same flow as UC-01                                                                                                                                                                                 |
+| UC-04 Log out          | Built: Sign out in Settings and the sidebar user menu (`signOut` in `app/login/actions.ts`)                                                                                                        |
+| UC-05 Edit account     | **Not built.** `/settings` shows the email read-only. Email change (Supabase `updateUser`) is not wired, though CECS491-65 was closed in Sprint 3                                                  |
+| UC-06 Delete account   | Built: Settings > Delete account clears the user's Storage folder, deletes the auth user with the service role (`lib/account.ts`), and the database cascades the rest                              |
+| UC-07 – UC-10 Projects | Built: dashboard, `/projects/new`, `/projects/[projectId]/edit` (edit and delete), and the REST API (`/api/projects`, `/api/projects/[projectId]`). Title 1–100 chars; blank description is `null` |
+| UC-11 Upload           | Built on the Sources page: PDF, text, and Markdown up to 50 MiB. Kinds are `pdf` and `text` — Markdown and transcripts are `text`                                                                  |
+| UC-12 Links            | **Stretch goal.** `sources.kind` doesn't allow links yet                                                                                                                                           |
+| UC-13 View sources     | Built: list, search, filter by status and kind, details sheet. Status refreshes every 3 s while a source is `pending` or `processing` (Sources page only, not the workspace panel)                 |
+| UC-14 Remove source    | Built: deletes the row (cascading to its chunks and their citations) and the Storage file                                                                                                          |
+| UC-15 Processing       | Built: the worker claims, parses, chunks, and embeds sources (CECS491-68, -69, -70) and runs on Railway (CECS491-77). A failed source shows why and can be retried (CECS491-71)                    |
+| UC-16 Q&A              | Built, naive: the workspace chat streams answers that cite whole sources as `[n]` (CECS491-72, -74). Retrieval over chunks and `citations` rows are not wired (CECS491-73)                         |
+| UC-17 Summaries        | **Stretch goal** (Jira `CECS491-15`). Placeholder page at `/projects/[projectId]/summaries`                                                                                                        |
+| UC-18, UC-19 Analysis  | **Stretch goal** (Jira `CECS491-16`). Placeholder page at `/projects/[projectId]/analysis`                                                                                                         |
+| UC-20 Citations        | Partly built: a `[n]` chip opens the whole source file, with no page. Jumping to the cited page is CECS491-78. In the schema a citation points at a chunk, which gives source and page             |
 
 For the spec's entities mapped to tables, see
 [data-model.md](../design/data-model.md#not-stored-on-purpose). For screens mapped to

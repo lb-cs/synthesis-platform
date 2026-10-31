@@ -69,8 +69,10 @@ Done for the day? `npx supabase stop`.
 
 This repo is the project foundation: Next.js (App Router), Tailwind CSS v4,
 shadcn/ui, Supabase (auth + Postgres), ESLint, Prettier, and CI. Email OTP login,
-projects (dashboard, create, REST API), and the sources list work. The schema is in
-`supabase/migrations/`. What's built per screen:
+projects (dashboard, create, edit, delete, REST API), sources (upload, list, remove,
+live status, retry), account deletion, and a first workspace chat work. The Python
+worker parses, chunks, and embeds uploads. The schema is in `supabase/migrations/`.
+What's built per screen:
 [`docs/design/architecture.md`](docs/design/architecture.md).
 
 ## Supabase: cloud instead of local
@@ -118,10 +120,10 @@ app/                  App Router routes
   api/health/route.ts GET /api/health → { "status": "ok" } (public)
   api/projects/       Project REST API (protected)
 components/           App components; components/ui/ is shadcn (npx shadcn@latest add <name>)
-lib/                  Queries behind the routes: projects.ts, sources.ts
+lib/                  Logic behind the routes: projects.ts, sources.ts, chat.ts, ai.ts, account.ts
 lib/supabase/         Supabase clients from the docs (client.ts, server.ts, proxy.ts) + DB types
 supabase/             Local Supabase config, migrations, email template
-worker/               Python worker that parses and chunks uploads (worker/README.md)
+worker/               Python worker that parses, chunks, and embeds uploads (worker/README.md)
 scripts/dev.sh        What `npm run dev:all` runs
 proxy.ts              Calls lib/supabase/proxy.ts on every request (Next 16's "middleware")
 public/               Static assets
