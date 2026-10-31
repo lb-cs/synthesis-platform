@@ -1,7 +1,7 @@
 import pytest
 
 from tests.fakes import make_paragraph_pdf, make_pdf, make_source
-from worker.embeddings import EMBEDDING_DIMENSIONS
+from worker.embeddings import EMBEDDING_DIMENSIONS, EmbeddingUnavailableError
 from worker.pipeline import ProcessingError, process
 
 
@@ -63,6 +63,15 @@ def test_a_mismatched_embedding_count_is_rejected():
 
     with pytest.raises(ProcessingError, match='invalid response'):
         process(make_source(1), b'Notes.', BadEmbedder())
+
+
+def test_an_unavailable_embedding_service_fails_with_a_retry_hint():
+    class UnavailableEmbedder:
+        def embed(self, texts):
+            raise EmbeddingUnavailableError('Embedding API failed 5 times')
+
+    with pytest.raises(ProcessingError, match='Retry processing in a few minutes'):
+        process(make_source(1), b'Notes.', UnavailableEmbedder())
 
 
 def test_an_empty_file_is_rejected_before_parsing():
