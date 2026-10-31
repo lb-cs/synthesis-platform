@@ -141,7 +141,7 @@ class.
 | `CreateAccount`, `Login`, `CreateSession`     | `signInWithOtp` + `verifyOtp` — first sign-in creates the user       |
 | `ValidateSession`                             | `getClaims()` — verifies the JWT                                     |
 | `TerminateSession`                            | `signOut()`                                                          |
-| `UpdateAccount`                               | `updateUser({ email })` — Supabase emails a confirmation             |
+| `UpdateAccount`                               | `updateUser({ email })` + `verifyOtp` with the code sent to it       |
 | `RequestAccountDeletion`                      | `auth.admin.deleteUser` (service role) — the database cascades       |
 | `CreateProject` … `DeleteProject`             | `lib/projects.ts`                                                    |
 | `AddUploadedSource`                           | Storage upload, then insert a `sources` row                          |
