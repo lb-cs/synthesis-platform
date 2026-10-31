@@ -26,6 +26,11 @@ export type Source = {
   createdAt: string;
 };
 
+/** Still waiting on the worker: `pending` or `processing`. */
+export function isSourceInProgress(source: Source): boolean {
+  return source.status === 'pending' || source.status === 'processing';
+}
+
 export type SourceListResult =
   { ok: true; sources: Source[] } | { ok: false; kind: 'database-error' };
 
