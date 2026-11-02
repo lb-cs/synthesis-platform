@@ -10,12 +10,14 @@ from worker.db import ClaimedSource
 
 def make_source(number: int, kind: str = 'text') -> ClaimedSource:
     extension = 'pdf' if kind == 'pdf' else 'txt'
+    path = f'user-1/project-1/file-{number}.{extension}'
 
     return ClaimedSource(
         id=f'source-{number}',
         project_id='project-1',
         kind=kind,
-        storage_path=f'user-1/project-1/file-{number}.{extension}',
+        # A link has no file in the bucket.
+        storage_path=None if kind == 'link' else path,
     )
 
 

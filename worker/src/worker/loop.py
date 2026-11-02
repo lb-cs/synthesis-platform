@@ -23,6 +23,8 @@ log = logging.getLogger(__name__)
 # Written to sources.processing_error, which the sources page shows the user.
 DOWNLOAD_FAILED = 'The file could not be read from storage. Try uploading it again.'
 UNEXPECTED_FAILURE = 'Processing failed unexpectedly. Try uploading the file again.'
+# Links have no file to read yet. The worker will fetch the page (CECS491-85).
+LINK_NOT_SUPPORTED = 'Web links cannot be processed yet.'
 
 STALE_SWEEP_INTERVAL_SECONDS = 60
 
@@ -62,6 +64,9 @@ def run_pipeline(
     source: ClaimedSource, queue: Queue, files: Files, embedder: Embedder
 ) -> str | None:
     """Returns the user-facing failure message, or None when the source is ready."""
+    if source.storage_path is None:
+        return LINK_NOT_SUPPORTED
+
     try:
         file_bytes = files.download(source.storage_path)
         processed = pipeline.process(source, file_bytes, embedder)
