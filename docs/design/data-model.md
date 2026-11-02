@@ -42,7 +42,7 @@ erDiagram
 - **Storage does not cascade.** Deleting a row leaves its file in the bucket. The app
   must delete the file through the Storage API
 - **Users can't fake processing.** Users can insert a source (`project_id`, `kind`,
-  `title`, `storage_path`) and rename it. Only the worker sets `processing_error`,
+  `title`, and `storage_path` for a file or `url` for a link) and rename it. Only the worker sets `processing_error`,
   `metadata`, and writes chunks. A narrow `retry_failed_source()` function lets the owner
   move a failed source back to `pending`
 
@@ -70,18 +70,19 @@ Code: `lib/projects.ts` (list, get, create, update, delete). API: `/api/projects
 
 ### `sources`
 
-| Column                  | Type              | Notes                                                              |
-| ----------------------- | ----------------- | ------------------------------------------------------------------ |
-| `id`                    | uuid              |                                                                    |
-| `project_id`            | uuid              |                                                                    |
-| `kind`                  | text              | `pdf` \| `text`. Links are a stretch goal                          |
-| `title`                 | text              | 1–200 characters. The only column a user can change                |
-| `storage_path`          | text              | `{user_id}/{project_id}/{file}` in the `sources` bucket. Unique    |
-| `status`                | text              | `pending` → `processing` → `ready` \| `failed`. The worker's queue |
-| `processing_error`      | text, null        | Why it failed                                                      |
-| `processing_started_at` | timestamptz, null | When the worker claimed it. A stale value means the worker died    |
-| `metadata`              | jsonb             | Whatever the parser finds: author, page count, …                   |
-| `created_at`            | timestamptz       |                                                                    |
+| Column                  | Type              | Notes                                                                                                                     |
+| ----------------------- | ----------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| `id`                    | uuid              |                                                                                                                           |
+| `project_id`            | uuid              |                                                                                                                           |
+| `kind`                  | text              | `pdf` \| `text` \| `link`. YouTube is a stretch goal                                                                      |
+| `title`                 | text              | 1–200 characters. The only column a user can change                                                                       |
+| `storage_path`          | text, null        | `{user_id}/{project_id}/{file}` in the `sources` bucket. Unique. Null for a link                                          |
+| `url`                   | text, null        | A link's `http(s)` address, up to 2,048 characters. Null for a file. A source has a `storage_path` or a `url`, never both |
+| `status`                | text              | `pending` → `processing` → `ready` \| `failed`. The worker's queue                                                        |
+| `processing_error`      | text, null        | Why it failed                                                                                                             |
+| `processing_started_at` | timestamptz, null | When the worker claimed it. A stale value means the worker died                                                           |
+| `metadata`              | jsonb             | Whatever the parser finds: author, page count, …                                                                          |
+| `created_at`            | timestamptz       |                                                                                                                           |
 
 The bucket accepts PDF, plain text, and Markdown up to 50 MiB.
 
@@ -185,6 +186,7 @@ insights need citations too — either a nullable link per output type, or one s
 
 ## Still open from the spec
 
-- **Link sources** need `kind` values for web and YouTube, a `url` column, and a
-  location that isn't a page (the spec's `timestampRange`)
+- **YouTube sources** need a `kind` value, and a location that isn't a page (the spec's
+  `timestampRange`). Web links exist (`kind = 'link'`, `url`) but the worker does not
+  fetch them yet (CECS491-85)
 - **"Typical" and "moderate-size"** — the spec never gives numbers
