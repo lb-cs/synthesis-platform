@@ -257,6 +257,21 @@ export type Database = {
           source_id: string;
         }[];
       };
+      match_source_chunks: {
+        Args: {
+          match_count_per_source?: number;
+          project_id: string;
+          query_embedding: string;
+          source_ids: string[];
+        };
+        Returns: {
+          content: string;
+          id: string;
+          page_number: number;
+          similarity: number;
+          source_id: string;
+        }[];
+      };
     };
     Enums: {
       [_ in never]: never;
