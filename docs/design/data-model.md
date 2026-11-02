@@ -111,6 +111,10 @@ applies. The query must be embedded with the same model. Only `ready` sources ar
 searched: the worker writes chunks before it marks a source ready, so a source that
 failed part-way can still have some.
 
+`match_source_chunks(project_id, source_ids, query_embedding, match_count_per_source = 6)`
+returns the best few chunks from each chosen source instead, so a long source can't
+crowd a short one out of a comparison. Same rules: runs as the caller, `ready` only.
+
 ### `chat_messages`
 
 | Column       | Type        | Notes                                                     |

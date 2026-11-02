@@ -46,7 +46,7 @@ a decision changes.
 | UC-15 Processing       | Built: the worker claims, parses, chunks, and embeds sources (CECS491-68, -69, -70) and runs on Railway (CECS491-77). Rate limits and Gateway errors are retried with backoff. A failed source shows why and can be retried (CECS491-71) |
 | UC-16 Q&A              | Built, naive: the workspace chat streams answers that cite whole sources as `[n]` (CECS491-72, -74). Retrieval over chunks and `citations` rows are not wired (CECS491-73)                                                               |
 | UC-17 Summaries        | **Stretch goal** (Jira `CECS491-15`). Placeholder page at `/projects/[projectId]/summaries`                                                                                                                                              |
-| UC-18, UC-19 Analysis  | **Stretch goal** (Jira `CECS491-16`). Placeholder page at `/projects/[projectId]/analysis`                                                                                                                                               |
+| UC-18, UC-19 Analysis  | UC-18 built: the Analysis page's Compare tab streams a cited comparison of 2–5 ready sources on a topic (CECS491-88). Not saved. UC-19 themes is still a stretch goal (`CECS491-16`)                                                     |
 | UC-20 Citations        | Partly built: a `[n]` chip opens the whole source file, with no page. Jumping to the cited page is CECS491-78. In the schema a citation points at a chunk, which gives source and page                                                   |
 
 For the spec's entities mapped to tables, see
