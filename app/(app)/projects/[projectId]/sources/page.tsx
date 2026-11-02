@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { CircleAlert, Link2 } from 'lucide-react';
+import { CircleAlert } from 'lucide-react';
 import { notFound, redirect } from 'next/navigation';
 
 import { projectIdSchema } from '@/app/api/projects/schema';
@@ -7,8 +7,6 @@ import { getProject } from '@/lib/projects';
 import { listSources } from '@/lib/sources';
 import { createClient, getSupabaseUser } from '@/lib/supabase/server';
 import { PageHeader } from '@/components/page-header';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import {
   Empty,
   EmptyDescription,
@@ -17,6 +15,7 @@ import {
   EmptyTitle,
 } from '@/components/ui/empty';
 
+import { AddLinkSheet } from './add-link-sheet';
 import { SourceUpload } from './source-upload';
 import { SourcesList } from './sources-list';
 
@@ -76,12 +75,7 @@ export default async function SourcesPage({
   return (
     <>
       <PageHeader title="Sources" description="Files and links the AI can draw on.">
-        {/* Not wired up: web and YouTube links are a stretch goal (CECS491-18). */}
-        <Button variant="outline" disabled>
-          <Link2 />
-          Add link
-          <Badge variant="secondary">Stretch</Badge>
-        </Button>
+        <AddLinkSheet projectId={projectId} />
       </PageHeader>
 
       <SourceUpload userId={supabaseUser.sub} projectId={projectId} />

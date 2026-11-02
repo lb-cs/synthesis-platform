@@ -2,15 +2,53 @@
 
 import { revalidatePath } from 'next/cache';
 
-import { deleteSource } from '@/lib/sources';
+import { getLinkTitle } from '@/lib/link-url';
+import { createLinkSource, deleteSource } from '@/lib/sources';
 import { createClient, getSupabaseUser } from '@/lib/supabase/server';
 
 import {
+  addLinkSchema,
   removeSourceSchema,
   sourceIdsSchema,
+  type AddLinkInput,
   type RemoveSourceInput,
   type SourceIdsInput,
 } from './schema';
+
+/** UC-12: adds a web link as a source. It starts `pending` and the worker takes it from there. */
+export async function addLinkSource(input: AddLinkInput): Promise<{ error?: string }> {
+  const parsed = addLinkSchema.safeParse(input);
+
+  if (!parsed.success) {
+    const urlIssue = parsed.error.issues.find((issue) => issue.path[0] === 'url');
+
+    return {
+      error: urlIssue?.message ?? 'This project no longer exists. Refresh the page.',
+    };
+  }
+
+  const supabase = await createClient();
+  const supabaseUser = await getSupabaseUser(supabase);
+
+  if (!supabaseUser) {
+    return { error: 'Your session expired. Sign in again.' };
+  }
+
+  const { projectId, url } = parsed.data;
+  const result = await createLinkSource(supabase, projectId, {
+    title: getLinkTitle(url),
+    url,
+  });
+
+  // RLS rejects a project that is not theirs, so "not allowed" lands here too.
+  if (!result.ok) {
+    return { error: 'Could not add the link. Try again.' };
+  }
+
+  revalidatePath(`/projects/${projectId}`, 'layout');
+
+  return {};
+}
 
 // Server actions are public endpoints, so check sign-in and the ids even behind the UI.
 export async function removeSource(
