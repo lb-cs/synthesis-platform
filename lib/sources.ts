@@ -10,10 +10,14 @@ import type { Database, Json, Tables } from '@/lib/supabase/database.types';
 
 // Mirror the check constraints on public.sources.status and public.sources.kind.
 export const SOURCE_STATUSES = ['pending', 'processing', 'ready', 'failed'] as const;
-export const SOURCE_KINDS = ['pdf', 'text'] as const;
+export const SOURCE_KINDS = ['pdf', 'text', 'link'] as const;
+
+/** Kinds that are an uploaded file. A `link` points at a web page and has no file. */
+export const FILE_SOURCE_KINDS = ['pdf', 'text'] as const;
 
 export type SourceStatus = (typeof SOURCE_STATUSES)[number];
 export type SourceKind = (typeof SOURCE_KINDS)[number];
+export type FileSourceKind = (typeof FILE_SOURCE_KINDS)[number];
 
 export type Source = {
   id: string;
@@ -22,7 +26,10 @@ export type Source = {
   status: SourceStatus;
   processingError: string | null;
   metadata: Json;
-  storagePath: string;
+  /** The file in the `sources` bucket. Null for a link. */
+  storagePath: string | null;
+  /** Where a link points. Null for a file. */
+  url: string | null;
   createdAt: string;
 };
 
@@ -34,7 +41,13 @@ export function isSourceInProgress(source: Source): boolean {
 export type SourceListResult =
   { ok: true; sources: Source[] } | { ok: false; kind: 'database-error' };
 
-export type CreateSourceInput = Pick<Source, 'kind' | 'title' | 'storagePath'>;
+export type CreateFileSourceInput = {
+  kind: FileSourceKind;
+  title: string;
+  storagePath: string;
+};
+
+export type CreateLinkSourceInput = { title: string; url: string };
 
 export type SourceResult =
   { ok: true; source: Source } | { ok: false; kind: 'not-found' | 'database-error' };
@@ -53,11 +66,12 @@ type SourceRow = Pick<
   | 'processing_error'
   | 'metadata'
   | 'storage_path'
+  | 'url'
   | 'created_at'
 >;
 
 const SOURCE_COLUMNS =
-  'id, title, kind, status, processing_error, metadata, storage_path, created_at';
+  'id, title, kind, status, processing_error, metadata, storage_path, url, created_at';
 
 function toSource(row: SourceRow): Source {
   return {
@@ -69,6 +83,7 @@ function toSource(row: SourceRow): Source {
     processingError: row.processing_error,
     metadata: row.metadata,
     storagePath: row.storage_path,
+    url: row.url,
     createdAt: row.created_at,
   };
 }
@@ -116,7 +131,7 @@ export async function getSource(
 export async function createSource(
   supabase: Client,
   projectId: string,
-  input: CreateSourceInput,
+  input: CreateFileSourceInput,
 ): Promise<SourceResult> {
   const { data, error } = await supabase
     .from('sources')
@@ -125,6 +140,30 @@ export async function createSource(
       kind: input.kind,
       title: input.title,
       storage_path: input.storagePath,
+    })
+    .select(SOURCE_COLUMNS)
+    .single();
+
+  if (error) {
+    return { ok: false, kind: 'database-error' };
+  }
+
+  return { ok: true, source: toSource(data) };
+}
+
+/** A link starts `pending` like a file: the worker picks it up from there. */
+export async function createLinkSource(
+  supabase: Client,
+  projectId: string,
+  input: CreateLinkSourceInput,
+): Promise<SourceResult> {
+  const { data, error } = await supabase
+    .from('sources')
+    .insert({
+      project_id: projectId,
+      kind: 'link',
+      title: input.title,
+      url: input.url,
     })
     .select(SOURCE_COLUMNS)
     .single();
@@ -182,6 +221,11 @@ export async function deleteSource(
 
   if (!data) {
     return { ok: false, kind: 'not-found' };
+  }
+
+  // A link has no file to remove.
+  if (data.storage_path === null) {
+    return { ok: true };
   }
 
   const removeResult = await removeFiles(supabase, [data.storage_path]);

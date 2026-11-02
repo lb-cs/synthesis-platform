@@ -1,5 +1,11 @@
+import { getLinkTitle } from '@/lib/link-url';
 import { getProject } from '@/lib/projects';
-import { createSource, listSources } from '@/lib/sources';
+import {
+  createLinkSource,
+  createSource,
+  listSources,
+  type SourceResult,
+} from '@/lib/sources';
 import { createClient, getSupabaseUser } from '@/lib/supabase/server';
 
 import { projectIdSchema } from '@/app/api/projects/schema';
@@ -52,6 +58,19 @@ export async function GET(_request: Request, context: Context) {
   return Response.json({ sources: result.sources });
 }
 
+function respondWithSource(projectId: string, result: SourceResult) {
+  if (!result.ok) {
+    return Response.json({ error: 'Could not create the source.' }, { status: 500 });
+  }
+
+  const location = `/api/projects/${projectId}/sources/${result.source.id}`;
+
+  return Response.json(
+    { source: result.source },
+    { status: 201, headers: { Location: location } },
+  );
+}
+
 export async function POST(request: Request, context: Context) {
   const supabase = await createClient();
   const supabaseUser = await getSupabaseUser(supabase);
@@ -81,30 +100,36 @@ export async function POST(request: Request, context: Context) {
 
   if (!parsed.success) {
     return Response.json(
-      { error: 'Send a title (1–200 characters), source type, and uploaded file path.' },
+      {
+        error:
+          'Send a file (type, title, and uploaded file path) or a link (its web address, and an optional title).',
+      },
       { status: 400 },
     );
   }
 
+  const input = parsed.data;
+
+  if (input.kind === 'link') {
+    const title = input.title ?? getLinkTitle(input.url);
+    const linkResult = await createLinkSource(supabase, projectId, {
+      title,
+      url: input.url,
+    });
+
+    return respondWithSource(projectId, linkResult);
+  }
+
   const expectedPathPrefix = `${supabaseUser.sub}/${projectId}/`;
 
-  if (!parsed.data.storagePath.startsWith(expectedPathPrefix)) {
+  if (!input.storagePath.startsWith(expectedPathPrefix)) {
     return Response.json(
       { error: 'The file must belong to this project.' },
       { status: 400 },
     );
   }
 
-  const result = await createSource(supabase, projectId, parsed.data);
+  const result = await createSource(supabase, projectId, input);
 
-  if (!result.ok) {
-    return Response.json({ error: 'Could not create the source.' }, { status: 500 });
-  }
-
-  const location = `/api/projects/${projectId}/sources/${result.source.id}`;
-
-  return Response.json(
-    { source: result.source },
-    { status: 201, headers: { Location: location } },
-  );
+  return respondWithSource(projectId, result);
 }
