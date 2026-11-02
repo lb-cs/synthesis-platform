@@ -37,7 +37,14 @@ export async function GET(_request: Request, context: Context) {
     return Response.json({ error: 'Could not load the source.' }, { status: 500 });
   }
 
-  const urlResult = await getFileUrl(supabase, sourceResult.source.storagePath);
+  const { storagePath } = sourceResult.source;
+
+  // A link has no file to open.
+  if (storagePath === null) {
+    return Response.json({ error: 'This source has no file.' }, { status: 404 });
+  }
+
+  const urlResult = await getFileUrl(supabase, storagePath);
 
   if (!urlResult.ok && urlResult.kind === 'not-found') {
     return Response.json({ error: 'The source file is missing.' }, { status: 404 });

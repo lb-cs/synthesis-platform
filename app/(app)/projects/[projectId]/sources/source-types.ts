@@ -10,4 +10,5 @@ export const STATUS_LABELS: Record<SourceStatus, string> = {
 export const KIND_LABELS: Record<SourceKind, string> = {
   pdf: 'PDF',
   text: 'Text',
+  link: 'Link',
 };

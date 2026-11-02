@@ -19,7 +19,8 @@ class ClaimedSource:
     id: str
     project_id: str
     kind: str
-    storage_path: str
+    # Null for a link: it points at a web page and has no file in the bucket.
+    storage_path: str | None
 
 
 class SourcesQueue:

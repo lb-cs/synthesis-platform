@@ -30,9 +30,18 @@ export function getSourceFileHref(projectId: string, sourceId: string): string {
   return `/api/projects/${projectId}/sources/${sourceId}/file`;
 }
 
-/** Oldest first, so adding a source never renumbers the ones already cited. */
-export function numberSources(sources: Source[]): (Source & { number: number })[] {
-  const usable = sources.filter((source) => source.status !== 'failed');
+export type NumberedFileSource = Source & { storagePath: string; number: number };
+
+function hasFile(source: Source): source is Source & { storagePath: string } {
+  return source.storagePath !== null;
+}
+
+/**
+ * Oldest first, so adding a source never renumbers the ones already cited. Only files:
+ * chat sends whole files until it retrieves chunks (CECS491-73), and a link has none.
+ */
+export function numberSources(sources: Source[]): NumberedFileSource[] {
+  const usable = sources.filter((source) => source.status !== 'failed').filter(hasFile);
   const oldestFirst = usable.toSorted((a, b) => a.createdAt.localeCompare(b.createdAt));
 
   return oldestFirst.map((source, index) => {

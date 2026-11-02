@@ -156,7 +156,10 @@ export async function deleteProject(
     return { ok: false, kind: 'not-found' };
   }
 
-  const paths = sources.map((source) => source.storage_path);
+  // A link has no file in Storage.
+  const paths = sources.flatMap((source) => {
+    return source.storage_path === null ? [] : [source.storage_path];
+  });
 
   if (paths.length > 0) {
     const removeResult = await removeFiles(supabase, paths);

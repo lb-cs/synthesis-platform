@@ -4,7 +4,12 @@ from supabase import StorageException
 from tests.fakes import FakeFiles, FakeQueue, make_source
 from worker import pipeline
 from worker.embeddings import EMBEDDING_DIMENSIONS
-from worker.loop import DOWNLOAD_FAILED, UNEXPECTED_FAILURE, process_source
+from worker.loop import (
+    DOWNLOAD_FAILED,
+    LINK_NOT_SUPPORTED,
+    UNEXPECTED_FAILURE,
+    process_source,
+)
 
 
 class FakeEmbedder:
@@ -34,6 +39,20 @@ def test_an_empty_file_fails_with_a_reason_the_user_can_read():
 
     assert queue.failed == {'source-1': 'The file is empty.'}
     assert queue.ready == []
+
+
+def test_a_link_fails_with_a_clear_reason_until_the_worker_can_fetch_pages():
+    source = make_source(1, kind='link')
+    queue = FakeQueue([])
+
+    def never_called(_: str) -> bytes:
+        raise AssertionError('a link has no file to download')
+
+    process_source(source, queue, FakeFiles(never_called), FakeEmbedder())
+
+    assert queue.failed == {'source-1': LINK_NOT_SUPPORTED}
+    assert queue.ready == []
+    assert queue.saved == {}
 
 
 def test_a_missing_file_in_storage_fails_the_source():

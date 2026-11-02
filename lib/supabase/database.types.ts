@@ -181,8 +181,9 @@ export type Database = {
           processing_started_at: string | null;
           project_id: string;
           status: string;
-          storage_path: string;
+          storage_path: string | null;
           title: string;
+          url: string | null;
         };
         Insert: {
           created_at?: string;
@@ -193,8 +194,9 @@ export type Database = {
           processing_started_at?: string | null;
           project_id: string;
           status?: string;
-          storage_path: string;
+          storage_path?: string | null;
           title: string;
+          url?: string | null;
         };
         Update: {
           created_at?: string;
@@ -205,8 +207,9 @@ export type Database = {
           processing_started_at?: string | null;
           project_id?: string;
           status?: string;
-          storage_path?: string;
+          storage_path?: string | null;
           title?: string;
+          url?: string | null;
         };
         Relationships: [
           {

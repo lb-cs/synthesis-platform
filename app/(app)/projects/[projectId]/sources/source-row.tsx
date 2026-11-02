@@ -1,4 +1,4 @@
-import { FileText } from 'lucide-react';
+import { FileText, Link2 } from 'lucide-react';
 
 import type { Source } from '@/lib/sources';
 
@@ -14,6 +14,7 @@ export function SourceRow({
   onSelect: (sourceId: string) => void;
 }) {
   const failureReason = source.processingError ?? 'Processing failed.';
+  const Icon = source.kind === 'link' ? Link2 : FileText;
 
   return (
     <li>
@@ -24,7 +25,7 @@ export function SourceRow({
       >
         <span className="flex items-center justify-between gap-3">
           <span className="flex min-w-0 items-center gap-2">
-            <FileText className="size-4 shrink-0 text-muted-foreground" />
+            <Icon className="size-4 shrink-0 text-muted-foreground" />
             <span className="truncate font-medium">{source.title}</span>
           </span>
           <SourceStatusBadge status={source.status} />

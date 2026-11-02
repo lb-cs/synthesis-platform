@@ -64,6 +64,18 @@ export function SourceDetailsSheet({
             </DetailRow>
           )}
           <DetailRow label="Type">{KIND_LABELS[source.kind]}</DetailRow>
+          {source.url && (
+            <DetailRow label="Link">
+              <a
+                href={source.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="break-all underline underline-offset-4"
+              >
+                {source.url}
+              </a>
+            </DetailRow>
+          )}
           <DetailRow label="Added">{formatAddedDate(source.createdAt)}</DetailRow>
           {metadataEntries.map((entry) => (
             <DetailRow key={entry.label} label={entry.label}>

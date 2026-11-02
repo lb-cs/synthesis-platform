@@ -73,8 +73,9 @@ export function SourceEditForm({
   }
 
   function onRemove() {
+    const consequence = source.storagePath ? 'Its file is deleted too. ' : '';
     const confirmed = window.confirm(
-      `Remove "${source.title}"? Its file is deleted too. This cannot be undone.`,
+      `Remove "${source.title}"? ${consequence}This cannot be undone.`,
     );
 
     if (!confirmed) {

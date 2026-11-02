@@ -9,7 +9,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 
 import { NO_MATCH_ANSWER, streamModel, toRecentHistory } from '@/lib/ai';
 import type { ChatMessage } from '@/lib/chat';
-import type { Source } from '@/lib/sources';
+import type { NumberedFileSource } from '@/lib/citations';
 import { downloadFile } from '@/lib/storage';
 import type { Database } from '@/lib/supabase/database.types';
 
@@ -29,13 +29,11 @@ export type SourceDocumentsResult =
 
 type Client = SupabaseClient<Database>;
 
-type NumberedSource = Source & { number: number };
-
 type UserPart = Exclude<UserContent, string>[number];
 
 async function loadSourceDocument(
   supabase: Client,
-  source: NumberedSource,
+  source: NumberedFileSource,
 ): Promise<SourceDocument | null> {
   const result = await downloadFile(supabase, source.storagePath);
 
@@ -57,7 +55,7 @@ async function loadSourceDocument(
 /** Downloads every numbered source. One missing file fails the lot, so numbers never drift. */
 export async function loadSourceDocuments(
   supabase: Client,
-  sources: NumberedSource[],
+  sources: NumberedFileSource[],
 ): Promise<SourceDocumentsResult> {
   const documents = await Promise.all(
     sources.map((source) => loadSourceDocument(supabase, source)),
