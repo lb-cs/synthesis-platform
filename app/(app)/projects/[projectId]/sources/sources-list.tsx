@@ -83,7 +83,8 @@ export function SourcesList({
           </EmptyMedia>
           <EmptyTitle>No sources yet</EmptyTitle>
           <EmptyDescription>
-            Uploaded sources will be listed here with their processing status.
+            Uploaded files and added links will be listed here with their processing
+            status.
           </EmptyDescription>
         </EmptyHeader>
       </Empty>
