@@ -27,6 +27,7 @@ import {
 import { Input } from '@/components/ui/input';
 
 import { AnswerText } from '../answer-text';
+import { getRequestErrorMessage } from './request-error';
 
 const DEFAULT_ERROR =
   'Could not compare your sources. Check your connection and try again.';
@@ -35,17 +36,6 @@ type CompareRequest = {
   topic: string;
   sourceIds: string[];
 };
-
-// The route answers errors as { error } JSON; the transport hands that text over as-is.
-function getErrorMessage(error: Error): string {
-  try {
-    const body: { error?: unknown } = JSON.parse(error.message);
-
-    return typeof body.error === 'string' ? body.error : DEFAULT_ERROR;
-  } catch {
-    return DEFAULT_ERROR;
-  }
-}
 
 function joinTitles(titles: string[]): string {
   if (titles.length <= 2) {
@@ -212,7 +202,9 @@ export function ComparePanel({
 
             {error && (
               <div role="alert" className="flex flex-wrap items-center gap-3">
-                <p className="text-destructive">{getErrorMessage(error)}</p>
+                <p className="text-destructive">
+                  {getRequestErrorMessage(error, DEFAULT_ERROR)}
+                </p>
                 <Button
                   variant="outline"
                   size="sm"
