@@ -272,6 +272,19 @@ export type Database = {
           source_id: string;
         }[];
       };
+      sample_source_chunks: {
+        Args: {
+          chunks_per_source?: number;
+          project_id: string;
+        };
+        Returns: {
+          chunk_index: number;
+          content: string;
+          id: string;
+          page_number: number;
+          source_id: string;
+        }[];
+      };
     };
     Enums: {
       [_ in never]: never;
