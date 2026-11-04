@@ -13,8 +13,8 @@ import {
   MAX_COMPARED_SOURCES,
   MAX_TOPIC_LENGTH,
   MIN_COMPARED_SOURCES,
-  toPassageCitations,
 } from '@/lib/comparison';
+import { toPassageCitations } from '@/lib/passages';
 import { getProject } from '@/lib/projects';
 import { listSources } from '@/lib/sources';
 import { createClient, getSupabaseUser } from '@/lib/supabase/server';
