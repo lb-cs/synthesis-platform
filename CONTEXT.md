@@ -114,6 +114,12 @@ into one prompt (`PassageNumber` in `lib/ai.ts`), mapped back to chunk ids to wr
 citations. Only meaningful within that one answer.
 _Avoid_: "chunk id" for the number (the model never sees ids), "reference".
 
+**Comparison**:
+A streamed, cited answer on how 2–5 ready sources treat one topic, from the Analysis
+page's Compare tab (`lib/comparison.ts`, `streamComparison` in `lib/ai.ts`). Passages are
+retrieved per source and cited by passage number. Not stored: each run stands alone.
+_Avoid_: "diff" (it compares claims, not text), "analysis" for this one feature.
+
 ## Shell
 
 **Dashboard**:

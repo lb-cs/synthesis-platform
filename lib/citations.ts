@@ -10,6 +10,8 @@ export type CitedSource = {
   number: number;
   id: string;
   title: string;
+  /** Set when `[number]` is one passage of the source rather than all of it. */
+  pageNumber?: number | null;
 };
 
 export type ChatMessageMetadata = {
@@ -28,6 +30,26 @@ const CITATION_HREF_PREFIX = '#source-';
 
 export function getSourceFileHref(projectId: string, sourceId: string): string {
   return `/api/projects/${projectId}/sources/${sourceId}/file`;
+}
+
+/** Opens the cited file; PDF viewers jump to `#page=` and other files ignore it. */
+export function getCitationHref(projectId: string, source: CitedSource): string {
+  const href = getSourceFileHref(projectId, source.id);
+
+  if (!source.pageNumber) {
+    return href;
+  }
+
+  return `${href}#page=${source.pageNumber}`;
+}
+
+/** "Report.pdf" or "Report.pdf, p. 3": how a citation names what it points at. */
+export function getCitationLabel(source: CitedSource): string {
+  if (!source.pageNumber) {
+    return source.title;
+  }
+
+  return `${source.title}, p. ${source.pageNumber}`;
 }
 
 export type NumberedFileSource = Source & { storagePath: string; number: number };

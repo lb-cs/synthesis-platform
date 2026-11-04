@@ -4,9 +4,10 @@ import { createContext, use, useMemo, type ComponentProps } from 'react';
 import type { AnimateOptions, Components } from 'streamdown';
 
 import {
+  getCitationHref,
+  getCitationLabel,
   getCitationNumber,
   getCitedSources,
-  getSourceFileHref,
   linkCitations,
   type CitedSource,
 } from '@/lib/citations';
@@ -70,16 +71,16 @@ function CitationAnchor({ href, children }: ComponentProps<'a'>) {
         })}
         render={
           <a
-            href={getSourceFileHref(citations.projectId, source.id)}
+            href={getCitationHref(citations.projectId, source)}
             target="_blank"
             rel="noreferrer"
-            aria-label={`Open source ${source.number}: ${source.title}`}
+            aria-label={`Open source ${source.number}: ${getCitationLabel(source)}`}
           />
         }
       >
         {children}
       </TooltipTrigger>
-      <TooltipContent>{source.title}</TooltipContent>
+      <TooltipContent>{getCitationLabel(source)}</TooltipContent>
     </Tooltip>
   );
 }
@@ -91,7 +92,7 @@ const MARKDOWN_COMPONENTS: Components = {
   },
 };
 
-// An assistant answer: [n] markers become links to the source, cited sources listed below.
+// An AI answer: [n] markers become links to the source (and page), cited ones listed below.
 export function AnswerText({
   projectId,
   text,
@@ -127,14 +128,15 @@ export function AnswerText({
       {showCitedSources && (
         <ol className="flex animate-in flex-col gap-1 text-xs text-muted-foreground duration-300 fade-in-0">
           {citedSources.map((source) => (
-            <li key={source.id}>
+            // Keyed by number: several passages can come from one source.
+            <li key={source.number}>
               <a
-                href={getSourceFileHref(projectId, source.id)}
+                href={getCitationHref(projectId, source)}
                 target="_blank"
                 rel="noreferrer"
                 className="underline-offset-4 hover:text-foreground hover:underline"
               >
-                [{source.number}] {source.title}
+                [{source.number}] {getCitationLabel(source)}
               </a>
             </li>
           ))}

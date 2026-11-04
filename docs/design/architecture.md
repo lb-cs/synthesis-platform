@@ -48,7 +48,7 @@ flowchart LR
 | `lib/`         | `lib/projects.ts`, `lib/sources.ts`, `lib/supabase/*`  | Queries. Maps snake_case rows to camelCase domain types. Returns `{ ok, … }` results, never throws for expected failures  |
 | Supabase Auth  | hosted                                                 | Sign-in codes, sessions (a cookie pair), JWTs, the `auth.users` table                                                     |
 | Postgres + RLS | `supabase/migrations/`                                 | All data. RLS limits every query to the signed-in user's projects. Deletes cascade                                        |
-| pgvector       | `document_chunks.embedding`, `match_document_chunks()` | Semantic search, filtered to one project                                                                                  |
+| pgvector       | `document_chunks.embedding`, `match_document_chunks()` | Semantic search, filtered to one project; `match_source_chunks()` takes the best few from each chosen source (Compare)    |
 | Storage        | bucket `sources`                                       | Uploaded files at `{user_id}/{project_id}/{file}`. Storage policies allow only your own folder                            |
 | Worker         | `worker/` — separate Python service, on Railway        | Claims pending sources; parses, chunks, and embeds them; moves their status. Service role, so it bypasses RLS             |
 
@@ -96,30 +96,31 @@ build — something else already does it.
 
 ### AI — route handler + `lib/`
 
-| Spec controller              | Now                                                                                                                                                                                          | Status           |
-| ---------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------- |
-| RetrievalController          | **Mostly dropped.** `match_document_chunks(project_id, query_embedding)` in Postgres. Runs as the user, so RLS applies. Searches `ready` sources only. Chat doesn't call it yet (CECS491-73) | Built, not wired |
-| AIController                 | `lib/ai.ts`: closed-context prompt, question embedding, and the one streaming model call (AI Gateway). Swap it there                                                                         | Built            |
-| ChatController               | `POST /api/projects/[projectId]/chat`: streams the answer (AI SDK UI message stream) and writes `chat_messages`                                                                              | Built, naive     |
-| CitationController           | Insert `citations` rows for the chunks the answer used. RLS rejects a chunk from another user's project. Comes with retrieval (CECS491-73)                                                   | Not built        |
-| Summary, Comparison, Insight | Same pattern as chat                                                                                                                                                                         | Stretch goal     |
-| NotificationController       | **Dropped.** No use case needs it. Processing progress shows through `sources.status`                                                                                                        | —                |
+| Spec controller        | Now                                                                                                                                                                                                      | Status           |
+| ---------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------- |
+| RetrievalController    | **Mostly dropped.** `match_document_chunks(project_id, query_embedding)` in Postgres. Runs as the user, so RLS applies. Searches `ready` sources only. Chat doesn't call it yet (CECS491-73)             | Built, not wired |
+| AIController           | `lib/ai.ts`: closed-context prompt, question embedding, and the one streaming model call (AI Gateway). Swap it there                                                                                     | Built            |
+| ChatController         | `POST /api/projects/[projectId]/chat`: streams the answer (AI SDK UI message stream) and writes `chat_messages`                                                                                          | Built, naive     |
+| CitationController     | Insert `citations` rows for the chunks the answer used. RLS rejects a chunk from another user's project. Comes with retrieval (CECS491-73)                                                               | Not built        |
+| Comparison             | `POST /api/projects/[projectId]/compare`: embeds the topic, `match_source_chunks` per chosen source (`lib/comparison.ts`), streams `streamComparison` from `lib/ai.ts` with passage citations. Not saved | Built            |
+| Summary, Insight       | Same pattern as chat                                                                                                                                                                                     | Stretch goal     |
+| NotificationController | **Dropped.** No use case needs it. Processing progress shows through `sources.status`                                                                                                                    | —                |
 
 ## Screens and routes
 
-| Screen                | Route                                                | Use cases     | Status      |
-| --------------------- | ---------------------------------------------------- | ------------- | ----------- |
-| Landing page          | `/home` (`/` redirects by sign-in state)             | —             | Built       |
-| Sign in (and sign up) | `/login` — one form: email, then 6-digit code        | UC-01, UC-03  | Built       |
-| Dashboard             | `/dashboard`                                         | UC-09         | Built       |
-| New project           | `/projects/new`                                      | UC-07         | Built       |
-| Workspace             | `/projects/[projectId]` — sources + chat             | UC-09, UC-16  | Built       |
-| Sources               | `/projects/[projectId]/sources`                      | UC-11 – UC-14 | Built       |
-| Summaries             | `/projects/[projectId]/summaries`                    | UC-17         | Placeholder |
-| Analysis              | `/projects/[projectId]/analysis`                     | UC-18, UC-19  | Placeholder |
-| Settings              | `/settings` — change email, sign out, delete account | UC-04 – UC-06 | Built       |
-| Edit project          | `/projects/[projectId]/edit`                         | UC-08         | Built       |
-| Citation viewer       | —                                                    | UC-20         | Not built   |
+| Screen                | Route                                                          | Use cases     | Status        |
+| --------------------- | -------------------------------------------------------------- | ------------- | ------------- |
+| Landing page          | `/home` (`/` redirects by sign-in state)                       | —             | Built         |
+| Sign in (and sign up) | `/login` — one form: email, then 6-digit code                  | UC-01, UC-03  | Built         |
+| Dashboard             | `/dashboard`                                                   | UC-09         | Built         |
+| New project           | `/projects/new`                                                | UC-07         | Built         |
+| Workspace             | `/projects/[projectId]` — sources + chat                       | UC-09, UC-16  | Built         |
+| Sources               | `/projects/[projectId]/sources`                                | UC-11 – UC-14 | Built         |
+| Summaries             | `/projects/[projectId]/summaries`                              | UC-17         | Placeholder   |
+| Analysis              | `/projects/[projectId]/analysis` — Compare tab; Themes to come | UC-18, UC-19  | Compare built |
+| Settings              | `/settings` — change email, sign out, delete account           | UC-04 – UC-06 | Built         |
+| Edit project          | `/projects/[projectId]/edit`                                   | UC-08         | Built         |
+| Citation viewer       | —                                                              | UC-20         | Not built     |
 
 ## How a source gets processed (UC-11, UC-15)
 
