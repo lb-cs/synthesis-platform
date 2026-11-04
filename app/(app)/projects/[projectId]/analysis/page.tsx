@@ -4,12 +4,20 @@ import { CircleAlert, GitCompare, Layers } from 'lucide-react';
 import { notFound } from 'next/navigation';
 
 import { projectIdSchema } from '@/app/api/projects/schema';
-import { getComparableSources, MIN_COMPARED_SOURCES } from '@/lib/comparison';
+import {
+  getComparableSources,
+  MAX_COMPARED_SOURCES,
+  MIN_COMPARED_SOURCES,
+} from '@/lib/comparison';
 import { getProject } from '@/lib/projects';
 import { listSources } from '@/lib/sources';
 import { createClient } from '@/lib/supabase/server';
+import {
+  getThemesReadiness,
+  MAX_THEME_SOURCES,
+  type ThemesReadiness,
+} from '@/lib/themes';
 import { PageHeader } from '@/components/page-header';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
   Empty,
@@ -22,12 +30,13 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 import { ComparePanel } from './compare-panel';
+import { ThemesPanel } from './themes-panel';
 
 export const metadata: Metadata = {
   title: 'Analysis · Synthesis Platform',
 };
 
-const COMPARE_UNAVAILABLE_ID = 'compare-unavailable';
+const NOT_ENOUGH_SOURCES_ID = 'analysis-not-enough-sources';
 
 function LoadError() {
   return (
@@ -51,8 +60,21 @@ function getReadyCountText(readyCount: number): string {
   return 'Only one of this project’s sources is ready.';
 }
 
-// Why the Compare tab is disabled; the tab points here with aria-describedby.
-function CompareUnavailable({
+function SourcesButton({ projectId }: { projectId: string }) {
+  return (
+    <Button
+      variant="outline"
+      render={<Link href={`/projects/${projectId}/sources`} />}
+      nativeButton={false}
+    >
+      Go to Sources
+    </Button>
+  );
+}
+
+// Both tabs need the same minimum, so one notice covers both: the Themes tab shows it,
+// and the disabled Compare tab points at it with aria-describedby.
+function NotEnoughSources({
   projectId,
   readyCount,
 }: {
@@ -60,29 +82,69 @@ function CompareUnavailable({
   readyCount: number;
 }) {
   return (
-    <Empty id={COMPARE_UNAVAILABLE_ID}>
+    <Empty id={NOT_ENOUGH_SOURCES_ID}>
       <EmptyHeader>
         <EmptyMedia variant="icon">
-          <GitCompare />
+          <CircleAlert />
         </EmptyMedia>
         <EmptyTitle>
-          Compare needs at least {MIN_COMPARED_SOURCES} ready sources
+          Compare and Themes need at least {MIN_COMPARED_SOURCES} ready sources
         </EmptyTitle>
         <EmptyDescription>
           {getReadyCountText(readyCount)} A source is ready once it finishes processing.
         </EmptyDescription>
       </EmptyHeader>
       <EmptyContent>
-        <Button
-          variant="outline"
-          render={<Link href={`/projects/${projectId}/sources`} />}
-          nativeButton={false}
-        >
-          Go to Sources
-        </Button>
+        <SourcesButton projectId={projectId} />
       </EmptyContent>
     </Empty>
   );
+}
+
+function ProjectTooLarge({
+  projectId,
+  readiness,
+}: {
+  projectId: string;
+  readiness: Extract<ThemesReadiness, { kind: 'too-large' }>;
+}) {
+  return (
+    <Empty>
+      <EmptyHeader>
+        <EmptyMedia variant="icon">
+          <CircleAlert />
+        </EmptyMedia>
+        <EmptyTitle>This project is too large for Themes</EmptyTitle>
+        <EmptyDescription>
+          Themes reads up to {MAX_THEME_SOURCES} ready sources at once, and this project
+          has {readiness.readyCount}. Compare still works on any {MIN_COMPARED_SOURCES} to{' '}
+          {MAX_COMPARED_SOURCES} of them, or remove sources until there are{' '}
+          {MAX_THEME_SOURCES} or fewer.
+        </EmptyDescription>
+      </EmptyHeader>
+      <EmptyContent>
+        <SourcesButton projectId={projectId} />
+      </EmptyContent>
+    </Empty>
+  );
+}
+
+function ThemesContent({
+  projectId,
+  readiness,
+}: {
+  projectId: string;
+  readiness: ThemesReadiness;
+}) {
+  if (readiness.kind === 'too-few') {
+    return <NotEnoughSources projectId={projectId} readyCount={readiness.readyCount} />;
+  }
+
+  if (readiness.kind === 'too-large') {
+    return <ProjectTooLarge projectId={projectId} readiness={readiness} />;
+  }
+
+  return <ThemesPanel projectId={projectId} sourceCount={readiness.sources.length} />;
 }
 
 export default async function AnalysisPage({
@@ -115,6 +177,7 @@ export default async function AnalysisPage({
 
   const comparable = getComparableSources(sourcesResult.sources);
   const canCompare = comparable.length >= MIN_COMPARED_SOURCES;
+  const themesReadiness = getThemesReadiness(sourcesResult.sources);
 
   return (
     <>
@@ -123,30 +186,29 @@ export default async function AnalysisPage({
         description="Compare concepts and surface themes across the sources in this project."
       />
 
-      {/* null selects no tab: Base UI needs an enabled default when rendering on the server. */}
-      <Tabs defaultValue={canCompare ? 'compare' : null}>
+      {/* Base UI needs an enabled default when rendering on the server. */}
+      <Tabs defaultValue={canCompare ? 'compare' : 'themes'}>
         <TabsList>
           <TabsTrigger
             value="compare"
             disabled={!canCompare}
-            aria-describedby={canCompare ? undefined : COMPARE_UNAVAILABLE_ID}
+            aria-describedby={canCompare ? undefined : NOT_ENOUGH_SOURCES_ID}
           >
             <GitCompare />
             Compare
           </TabsTrigger>
-          <TabsTrigger value="themes" disabled>
+          <TabsTrigger value="themes">
             <Layers />
             Themes
-            <Badge variant="secondary">Soon</Badge>
           </TabsTrigger>
         </TabsList>
 
-        {!canCompare && (
-          <CompareUnavailable projectId={projectId} readyCount={comparable.length} />
-        )}
-
         <TabsContent value="compare" className="pt-4">
           <ComparePanel projectId={projectId} sources={comparable} />
+        </TabsContent>
+
+        <TabsContent value="themes" className="pt-4">
+          <ThemesContent projectId={projectId} readiness={themesReadiness} />
         </TabsContent>
       </Tabs>
     </>
