@@ -5,6 +5,7 @@ import { DefaultChatTransport } from 'ai';
 import { ArrowUp, MessageSquare, RotateCcw, Square } from 'lucide-react';
 import { useRef, useState } from 'react';
 
+import { describeChatError } from '@/lib/chat-errors';
 import { getMessageText, type ChatUIMessage } from '@/lib/citations';
 import { cn } from '@/lib/utils';
 import {
@@ -33,6 +34,11 @@ import {
 } from '@/components/ui/input-group';
 
 import { ConversationMessage, ENTER_ANIMATION } from './conversation-message';
+
+// `navigator` only exists in the browser; an error can only be shown after the page loaded.
+function isBrowserOffline(): boolean {
+  return typeof navigator !== 'undefined' && !navigator.onLine;
+}
 
 const STARTER_QUESTIONS = [
   'Summarize the main findings',
@@ -89,6 +95,7 @@ export function AskPanel({
     status === 'submitted' ||
     (streamingAnswer !== null && getMessageText(streamingAnswer) === '');
   const hasConversation = messages.length > 0;
+  const errorInfo = error ? describeChatError(error, isBrowserOffline()) : null;
 
   function sendQuestion(text: string) {
     sendMessage({ text });
@@ -168,7 +175,7 @@ export function AskPanel({
               </Message>
             )}
 
-            {error && (
+            {errorInfo && (
               <div
                 role="alert"
                 className={cn(
@@ -176,13 +183,13 @@ export function AskPanel({
                   ENTER_ANIMATION,
                 )}
               >
-                <p className="text-destructive">
-                  Could not get an answer. Check your connection and try again.
-                </p>
-                <Button variant="outline" size="sm" onClick={() => regenerate()}>
-                  <RotateCcw />
-                  Try again
-                </Button>
+                <p className="text-destructive">{errorInfo.message}</p>
+                {errorInfo.canRetry && (
+                  <Button variant="outline" size="sm" onClick={() => regenerate()}>
+                    <RotateCcw />
+                    Try again
+                  </Button>
+                )}
               </div>
             )}
           </ConversationContent>
