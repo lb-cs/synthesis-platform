@@ -1,10 +1,12 @@
 /**
- * The project's one conversation, in `public.chat_messages`. Runs as the signed-in user,
- * so RLS scopes every read and write to their projects.
+ * The project's one conversation, in `public.chat_messages`, and the `public.citations`
+ * its answers save. Runs as the signed-in user, so RLS scopes every read and write to
+ * their projects.
  */
 import type { SupabaseClient } from '@supabase/supabase-js';
 
-import type { ChatUIMessage, CitedSource } from '@/lib/citations';
+import type { PassageNumber } from '@/lib/ai';
+import { getCitedNumbers, type ChatUIMessage, type CitedSource } from '@/lib/citations';
 import type { Database, Tables } from '@/lib/supabase/database.types';
 
 // Mirror the check constraints on public.chat_messages.role and .status.
@@ -26,6 +28,12 @@ export type ChatMessageListResult =
 
 export type ChatMessageResult =
   { ok: true; message: ChatMessage } | { ok: false; kind: 'database-error' };
+
+export type SaveResult = { ok: true } | { ok: false; kind: 'database-error' };
+
+export type MessageCitationsResult =
+  | { ok: true; citationsByMessage: Map<string, CitedSource[]> }
+  | { ok: false; kind: 'database-error' };
 
 type Client = SupabaseClient<Database>;
 
@@ -107,7 +115,76 @@ export async function createChatMessage(
   return { ok: true, message: toChatMessage(data) };
 }
 
-/** A saved message in the shape `useChat` renders. Citations use today's source numbers. */
+/**
+ * Saves a row for each passage the answer cites, so its `[n]` still opens the right
+ * source and page after a reload. Passages it was sent but never cited aren't saved.
+ */
+export async function createCitations(
+  supabase: Client,
+  messageId: string,
+  answer: string,
+  passageNumbers: PassageNumber[],
+): Promise<SaveResult> {
+  const citedNumbers = getCitedNumbers(answer);
+  const cited = passageNumbers.filter(({ number }) => citedNumbers.has(number));
+
+  if (cited.length === 0) {
+    return { ok: true };
+  }
+
+  const rows = cited.map(({ number, chunkId }) => {
+    return { message_id: messageId, chunk_id: chunkId, number };
+  });
+  const { error } = await supabase.from('citations').insert(rows);
+
+  if (error) {
+    return { ok: false, kind: 'database-error' };
+  }
+
+  return { ok: true };
+}
+
+/**
+ * The saved citations of each message, as the source and page each `[n]` opens. A
+ * message with none (a question, or an answer that cited nothing) has no entry.
+ */
+export async function listMessageCitations(
+  supabase: Client,
+  messageIds: string[],
+): Promise<MessageCitationsResult> {
+  const citationsByMessage = new Map<string, CitedSource[]>();
+
+  if (messageIds.length === 0) {
+    return { ok: true, citationsByMessage };
+  }
+
+  const { data, error } = await supabase
+    .from('citations')
+    .select('message_id, number, document_chunks(page_number, sources(id, title))')
+    .in('message_id', messageIds)
+    .order('number');
+
+  if (error) {
+    return { ok: false, kind: 'database-error' };
+  }
+
+  data.forEach((row) => {
+    const chunk = row.document_chunks;
+    const citation: CitedSource = {
+      number: row.number,
+      id: chunk.sources.id,
+      title: chunk.sources.title,
+      pageNumber: chunk.page_number,
+    };
+    const citations = citationsByMessage.get(row.message_id) ?? [];
+
+    citationsByMessage.set(row.message_id, [...citations, citation]);
+  });
+
+  return { ok: true, citationsByMessage };
+}
+
+/** A saved message in the shape `useChat` renders, with the citations its `[n]` open. */
 export function toChatUIMessage(
   message: ChatMessage,
   sources: CitedSource[],
