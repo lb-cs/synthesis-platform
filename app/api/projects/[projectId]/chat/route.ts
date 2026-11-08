@@ -5,16 +5,21 @@ import {
   type ToolSet,
 } from 'ai';
 
-import { HISTORY_LIMIT } from '@/lib/ai';
-import { loadSourceDocuments, streamAnswer } from '@/lib/answer';
-import { createChatMessage, listRecentChatMessages, splitRetry } from '@/lib/chat';
-import { CHAT_ERROR_MESSAGES, type ChatErrorCode } from '@/lib/chat-errors';
 import {
-  getMessageText,
-  numberSources,
-  toCitedSources,
-  type ChatUIMessage,
-} from '@/lib/citations';
+  embedQuestion,
+  HISTORY_LIMIT,
+  streamGroundedAnswer,
+  toVectorLiteral,
+} from '@/lib/ai';
+import { findChatPassages, getChatSources, toChatCitations } from '@/lib/answer';
+import {
+  createChatMessage,
+  createCitations,
+  listRecentChatMessages,
+  splitRetry,
+} from '@/lib/chat';
+import { CHAT_ERROR_MESSAGES, type ChatErrorCode } from '@/lib/chat-errors';
+import { getMessageText, type ChatUIMessage } from '@/lib/citations';
 import { getProject } from '@/lib/projects';
 import { listSources } from '@/lib/sources';
 import { createClient, getSupabaseUser } from '@/lib/supabase/server';
@@ -30,7 +35,8 @@ function chatError(code: ChatErrorCode, status: number) {
   return Response.json({ error: CHAT_ERROR_MESSAGES[code], code }, { status });
 }
 
-// Streams an answer to one question as an AI SDK UI message stream, then saves it.
+// Retrieves the passages closest to one question, streams a cited answer as an AI SDK UI
+// message stream, then saves the answer and the passages it cites.
 export async function POST(request: Request, context: Context) {
   const supabase = await createClient();
   const supabaseUser = await getSupabaseUser(supabase);
@@ -73,33 +79,44 @@ export async function POST(request: Request, context: Context) {
     return Response.json({ error: 'Could not load sources.' }, { status: 500 });
   }
 
-  const numberedSources = numberSources(sourcesResult.sources);
+  const chatSources = getChatSources(sourcesResult.sources);
 
-  if (numberedSources.length === 0) {
+  if (chatSources.length === 0) {
     return chatError('no-sources', 409);
   }
 
   // Sources still pending or processing have no chunks to answer from yet.
-  const hasReadySource = numberedSources.some((source) => source.status === 'ready');
+  const hasReadySource = chatSources.some((source) => source.status === 'ready');
 
   if (!hasReadySource) {
     return chatError('sources-processing', 409);
   }
 
-  const [historyResult, documentsResult] = await Promise.all([
+  const question = parsed.data.question;
+  const [historyResult, embeddingResult] = await Promise.all([
     listRecentChatMessages(supabase, project.id, HISTORY_LIMIT),
-    loadSourceDocuments(supabase, numberedSources),
+    embedQuestion(question),
   ]);
 
   if (!historyResult.ok) {
     return Response.json({ error: 'Could not load the conversation.' }, { status: 500 });
   }
 
-  if (!documentsResult.ok) {
-    return Response.json({ error: 'Could not read your sources.' }, { status: 500 });
+  if (!embeddingResult.ok) {
+    return chatError('ai-unavailable', 503);
   }
 
-  const question = parsed.data.question;
+  const passagesResult = await findChatPassages(
+    supabase,
+    project.id,
+    chatSources,
+    toVectorLiteral(embeddingResult.embedding),
+  );
+
+  if (!passagesResult.ok) {
+    return Response.json({ error: 'Could not search your sources.' }, { status: 500 });
+  }
+
   const { isRetry, earlier } = splitRetry(historyResult.messages, question);
   const savedQuestion = isRetry
     ? { ok: true as const }
@@ -113,19 +130,21 @@ export async function POST(request: Request, context: Context) {
     return Response.json({ error: 'Could not save your question.' }, { status: 500 });
   }
 
-  const result = streamAnswer({
-    documents: documentsResult.documents,
+  const passages = passagesResult.passages;
+  // No passages still goes to the model: the prompt says none matched, and it answers so.
+  const { result, passageNumbers } = streamGroundedAnswer({
+    chunks: passages,
     history: earlier,
     question,
   });
-  const citedSources = toCitedSources(numberedSources);
+  const citations = toChatCitations(passages, passageNumbers);
 
   const stream = toUIMessageStream<ToolSet, ChatUIMessage>({
     stream: result.stream,
     generateMessageId: generateId,
     messageMetadata: ({ part }) => {
       if (part.type === 'start') {
-        return { sources: citedSources };
+        return { sources: citations };
       }
     },
     onEnd: async ({ responseMessage, outcome }) => {
@@ -138,11 +157,18 @@ export async function POST(request: Request, context: Context) {
 
       const status = outcome.status === 'completed' ? 'complete' : 'failed';
 
-      await createChatMessage(supabase, project.id, {
+      const answerResult = await createChatMessage(supabase, project.id, {
         role: 'assistant',
         content: answer,
         status,
       });
+
+      if (!answerResult.ok) {
+        return;
+      }
+
+      // The answer is already on screen; a failed save only costs its links after a reload.
+      await createCitations(supabase, answerResult.message.id, answer, passageNumbers);
     },
     onError: () => {
       return CHAT_ERROR_MESSAGES['ai-unavailable'];
