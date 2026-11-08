@@ -124,7 +124,7 @@ to embed, so it samples instead of searching. Same rules: runs as the caller.
 | Column       | Type        | Notes                                                     |
 | ------------ | ----------- | --------------------------------------------------------- |
 | `id`         | uuid        |                                                           |
-| `project_id` | uuid        | One running conversation per project                      |
+| `project_id` | uuid        | One running conversation per project. New chat deletes it |
 | `role`       | text        | `user` \| `assistant`                                     |
 | `content`    | text        |                                                           |
 | `status`     | text        | `streaming` \| `complete` \| `failed`. Default `complete` |
@@ -137,6 +137,7 @@ to embed, so it samples instead of searching. Same rules: runs as the caller.
 | `id`          | uuid        |                                                    |
 | `message_id`  | uuid        | The assistant message                              |
 | `chunk_id`    | uuid        | The supporting chunk. It gives the source and page |
+| `number`      | integer     | The `[n]` the answer used. Unique per message      |
 | `anchor_text` | text, null  | The quoted passage, when the model quotes one      |
 | `created_at`  | timestamptz |                                                    |
 
@@ -190,11 +191,14 @@ Planned for their own migration later. What the spec asked for:
 
 Open question: today a citation belongs to a chat message. Summaries, comparisons, and
 insights need citations too — either a nullable link per output type, or one shared
-"output" table. Decide when the first one is built.
+"output" table. Comparisons (UC-18) dodge it for now: they are not saved, so their
+citations live only in the streamed response. Decide when summaries or insights need to
+be stored.
 
 ## Still open from the spec
 
 - **YouTube sources** need a `kind` value, and a location that isn't a page (the spec's
   `timestampRange`). Web links exist (`kind = 'link'`, `url`) but the worker does not
-  fetch them yet (CECS491-85)
+  fetch them yet (CECS491-85). When it does, citations need a fallback: today every
+  citation opens `…/sources/[sourceId]/file`, which returns 404 for a link
 - **"Typical" and "moderate-size"** — the spec never gives numbers

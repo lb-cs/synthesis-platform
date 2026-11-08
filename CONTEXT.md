@@ -95,6 +95,7 @@ _Avoid_: "document" on its own, "segment", "embedding" (that is one column of a 
 **Chat message**:
 One turn in a project's single conversation, `role` `'user' | 'assistant'`
 (`public.chat_messages`). An assistant message is `'streaming' | 'complete' | 'failed'`.
+**New chat** deletes them all (`clearChat`); there is no archive.
 _Avoid_: "conversation" or "thread" for a message; "chat" is the whole history.
 
 **Citation**:
@@ -102,16 +103,10 @@ A link from an assistant message to a document chunk that supports it
 (`public.citations`). The chunk gives the source and page.
 _Avoid_: "reference", "footnote", "source" (a citation points into a source).
 
-**Source number**:
-The `[n]` an answer cites a whole source by until chat retrieves chunks — non-failed sources,
-oldest first (`numberSources` in `lib/citations.ts`). Shown in the workspace's Sources
-panel. Not stored; removing a source renumbers the ones after it.
-_Avoid_: "citation" for the number itself (a citation is the chunk link), "index".
-
 **Passage number**:
 The `[n]` an answer cites a document chunk by: chunks are numbered in the order they go
 into one prompt (`PassageNumber` in `lib/ai.ts`), mapped back to chunk ids to write
-citations. Only meaningful within that one answer.
+citations. Only meaningful within that one answer, so each citation row stores it.
 _Avoid_: "chunk id" for the number (the model never sees ids), "reference".
 
 **Comparison**:

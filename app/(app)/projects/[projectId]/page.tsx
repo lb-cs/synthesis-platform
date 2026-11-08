@@ -5,8 +5,12 @@ import { notFound } from 'next/navigation';
 
 import { projectIdSchema } from '@/app/api/projects/schema';
 import { PageHeader } from '@/components/page-header';
-import { listRecentChatMessages, toChatUIMessage } from '@/lib/chat';
-import { numberSources, toCitedSources } from '@/lib/citations';
+import { getChatSources } from '@/lib/answer';
+import {
+  listMessageCitations,
+  listRecentChatMessages,
+  toChatUIMessage,
+} from '@/lib/chat';
 import { getProject } from '@/lib/projects';
 import { listSources } from '@/lib/sources';
 import { createClient } from '@/lib/supabase/server';
@@ -82,11 +86,20 @@ export default async function WorkspacePage({
     return <LoadError />;
   }
 
+  const messageIds = messagesResult.messages.map((message) => message.id);
+  const citationsResult = await listMessageCitations(supabase, messageIds);
+
+  if (!citationsResult.ok) {
+    return <LoadError />;
+  }
+
   const { project } = result;
-  const numberedSources = numberSources(sourcesResult.sources);
-  const citedSources = toCitedSources(numberedSources);
+  const chatSources = getChatSources(sourcesResult.sources);
+  const { citationsByMessage } = citationsResult;
   const initialMessages = messagesResult.messages.map((message) => {
-    return toChatUIMessage(message, citedSources);
+    const citations = citationsByMessage.get(message.id) ?? [];
+
+    return toChatUIMessage(message, citations);
   });
   const description =
     project.description ??
@@ -112,20 +125,16 @@ export default async function WorkspacePage({
             <CardDescription>Everything the answers can cite.</CardDescription>
           </CardHeader>
           <CardContent className="flex flex-1 flex-col">
-            <WorkspaceSources projectId={projectId} sources={numberedSources} />
+            <WorkspaceSources projectId={projectId} sources={chatSources} />
           </CardContent>
         </Card>
 
         {/* Capped so a long chat scrolls inside the card instead of pushing the input down. */}
         <Card className="flex max-h-[70svh] min-h-96 flex-col lg:max-h-[calc(100svh-10rem)]">
-          <CardHeader>
-            <CardTitle>Ask</CardTitle>
-            <CardDescription>Answers come with citations you can open.</CardDescription>
-          </CardHeader>
           <AskPanel
             projectId={projectId}
             initialMessages={initialMessages}
-            hasSources={numberedSources.length > 0}
+            hasSources={chatSources.length > 0}
           />
         </Card>
       </div>

@@ -2,7 +2,6 @@ import { FileText } from 'lucide-react';
 
 import { getSourceFileHref } from '@/lib/citations';
 import { isSourceInProgress, type Source } from '@/lib/sources';
-import { Badge } from '@/components/ui/badge';
 import {
   Empty,
   EmptyDescription,
@@ -14,14 +13,14 @@ import {
 import { RefreshWhileProcessing } from './sources/refresh-while-processing';
 import { SourceStatusBadge } from './sources/source-status-badge';
 
-// The workspace's left panel: each source under the number answers cite it by. Statuses
-// update on their own while the worker processes.
+// The workspace's left panel: the sources chat draws on. Statuses update on their own
+// while the worker processes.
 export function WorkspaceSources({
   projectId,
   sources,
 }: {
   projectId: string;
-  sources: (Source & { number: number })[];
+  sources: Source[];
 }) {
   if (sources.length === 0) {
     return (
@@ -61,7 +60,6 @@ export function WorkspaceSources({
               rel="noreferrer"
               className="flex items-center gap-3 rounded-md px-2 py-2 text-sm hover:bg-muted"
             >
-              <Badge variant="outline">{source.number}</Badge>
               <span className="min-w-0 flex-1 truncate">{source.title}</span>
               <SourceStatusBadge status={source.status} />
             </a>

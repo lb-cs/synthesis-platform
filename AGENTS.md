@@ -20,13 +20,12 @@ Synthesis Platform — an AI-assisted research workspace. CECS 491, Team Quintes
 Algorithms. Built so far: Supabase auth (email one-time code, route guard in `proxy.ts`),
 the schema in `supabase/migrations/` (projects, sources, chunks, chat, citations), and
 the first features over it — projects (dashboard, create, edit, delete, REST API in
-`app/api/projects/`), sources (upload, list, rename, remove, live status, retry),
+`app/api/projects/`), sources (upload, add a web link, list, rename, remove, live status, retry),
 Settings (change email, sign out, delete account), a first workspace chat (AI SDK over Vercel AI
-Gateway, `lib/answer.ts`), the Analysis page's Compare and Themes tabs (cited comparisons
-and key themes over the worker's chunks), and the Python worker in `worker/` (deployed on Railway) that
-claims uploaded sources, parses, chunks, and embeds them, and moves their status. Chat
-does not use those embeddings yet: it still sends whole source files until retrieval is
-wired (CECS491-73). [Architecture](docs/design/architecture.md)
+Gateway, retrieval over embedded chunks in `lib/answer.ts`), the Analysis page's Compare
+and Themes tabs (cited comparisons and key themes over the worker's chunks), and the Python worker in
+`worker/` (deployed on Railway) that claims uploaded sources, parses, chunks, and embeds
+them, and moves their status. [Architecture](docs/design/architecture.md)
 tracks status per screen.
 
 **Tech stack**: Next.js 16 (App Router) / React 19 / TypeScript, Tailwind CSS v4,
