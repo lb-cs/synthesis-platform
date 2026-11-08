@@ -68,6 +68,27 @@ export async function listRecentChatMessages(
   return { ok: true, messages: newestFirst.toReversed() };
 }
 
+/**
+ * A retry re-sends the question whose answer failed, and that question is already saved.
+ * Spots it so the route doesn't save it twice or show it to the model twice. `earlier` is
+ * the conversation before that question (and before its failed partial answer, if any).
+ */
+export function splitRetry(
+  messages: ChatMessage[],
+  question: string,
+): { isRetry: boolean; earlier: ChatMessage[] } {
+  const last = messages.at(-1);
+  const hasFailedAnswer = last?.role === 'assistant' && last.status === 'failed';
+  const questionIndex = messages.length - (hasFailedAnswer ? 2 : 1);
+  const asked = messages[questionIndex];
+
+  if (asked?.role !== 'user' || asked.content !== question) {
+    return { isRetry: false, earlier: messages };
+  }
+
+  return { isRetry: true, earlier: messages.slice(0, questionIndex) };
+}
+
 export async function createChatMessage(
   supabase: Client,
   projectId: string,

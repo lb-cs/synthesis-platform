@@ -7,7 +7,8 @@ import {
 
 import { HISTORY_LIMIT } from '@/lib/ai';
 import { loadSourceDocuments, streamAnswer } from '@/lib/answer';
-import { createChatMessage, listRecentChatMessages } from '@/lib/chat';
+import { createChatMessage, listRecentChatMessages, splitRetry } from '@/lib/chat';
+import { CHAT_ERROR_MESSAGES, type ChatErrorCode } from '@/lib/chat-errors';
 import {
   getMessageText,
   numberSources,
@@ -23,6 +24,11 @@ import { projectIdSchema } from '@/app/api/projects/schema';
 import { askQuestionSchema } from './schema';
 
 type Context = RouteContext<'/api/projects/[projectId]/chat'>;
+
+// The Ask panel reads `code` to show the right message; `error` is the same words.
+function chatError(code: ChatErrorCode, status: number) {
+  return Response.json({ error: CHAT_ERROR_MESSAGES[code], code }, { status });
+}
 
 // Streams an answer to one question as an AI SDK UI message stream, then saves it.
 export async function POST(request: Request, context: Context) {
@@ -70,10 +76,14 @@ export async function POST(request: Request, context: Context) {
   const numberedSources = numberSources(sourcesResult.sources);
 
   if (numberedSources.length === 0) {
-    return Response.json(
-      { error: 'Add a source to this project before asking.' },
-      { status: 409 },
-    );
+    return chatError('no-sources', 409);
+  }
+
+  // Sources still pending or processing have no chunks to answer from yet.
+  const hasReadySource = numberedSources.some((source) => source.status === 'ready');
+
+  if (!hasReadySource) {
+    return chatError('sources-processing', 409);
   }
 
   const [historyResult, documentsResult] = await Promise.all([
@@ -90,19 +100,22 @@ export async function POST(request: Request, context: Context) {
   }
 
   const question = parsed.data.question;
-  const userMessageResult = await createChatMessage(supabase, project.id, {
-    role: 'user',
-    content: question,
-    status: 'complete',
-  });
+  const { isRetry, earlier } = splitRetry(historyResult.messages, question);
+  const savedQuestion = isRetry
+    ? { ok: true as const }
+    : await createChatMessage(supabase, project.id, {
+        role: 'user',
+        content: question,
+        status: 'complete',
+      });
 
-  if (!userMessageResult.ok) {
+  if (!savedQuestion.ok) {
     return Response.json({ error: 'Could not save your question.' }, { status: 500 });
   }
 
   const result = streamAnswer({
     documents: documentsResult.documents,
-    history: historyResult.messages,
+    history: earlier,
     question,
   });
   const citedSources = toCitedSources(numberedSources);
@@ -132,7 +145,7 @@ export async function POST(request: Request, context: Context) {
       });
     },
     onError: () => {
-      return 'The AI service is unavailable right now. Try again in a moment.';
+      return CHAT_ERROR_MESSAGES['ai-unavailable'];
     },
   });
 
