@@ -17,7 +17,13 @@ import { Message, MessageContent } from '@/components/ai-elements/message';
 import { Shimmer } from '@/components/ai-elements/shimmer';
 import { Suggestion, Suggestions } from '@/components/ai-elements/suggestion';
 import { Button } from '@/components/ui/button';
-import { CardFooter } from '@/components/ui/card';
+import {
+  CardAction,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import {
   Empty,
   EmptyDescription,
@@ -34,6 +40,7 @@ import {
 } from '@/components/ui/input-group';
 
 import { ConversationMessage, ENTER_ANIMATION } from './conversation-message';
+import { NewChatButton } from './new-chat-button';
 
 // `navigator` only exists in the browser; an error can only be shown after the page loaded.
 function isBrowserOffline(): boolean {
@@ -63,22 +70,30 @@ export function AskPanel({
   );
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  const { messages, sendMessage, regenerate, status, stop, error } =
-    useChat<ChatUIMessage>({
-      id: projectId,
-      messages: initialMessages,
-      // Batches token updates so a long answer doesn't re-render on every chunk.
-      throttle: 50,
-      // The server keeps the history, so each request carries only the new question.
-      transport: new DefaultChatTransport({
-        api: `/api/projects/${projectId}/chat`,
-        prepareSendMessagesRequest: ({ messages: chatMessages }) => {
-          const lastMessage = chatMessages[chatMessages.length - 1];
+  const {
+    messages,
+    setMessages,
+    sendMessage,
+    regenerate,
+    status,
+    stop,
+    error,
+    clearError,
+  } = useChat<ChatUIMessage>({
+    id: projectId,
+    messages: initialMessages,
+    // Batches token updates so a long answer doesn't re-render on every chunk.
+    throttle: 50,
+    // The server keeps the history, so each request carries only the new question.
+    transport: new DefaultChatTransport({
+      api: `/api/projects/${projectId}/chat`,
+      prepareSendMessagesRequest: ({ messages: chatMessages }) => {
+        const lastMessage = chatMessages[chatMessages.length - 1];
 
-          return { body: { question: getMessageText(lastMessage) } };
-        },
-      }),
-    });
+        return { body: { question: getMessageText(lastMessage) } };
+      },
+    }),
+  });
 
   const isBusy = status === 'submitted' || status === 'streaming';
   const trimmedQuestion = question.trim();
@@ -96,6 +111,13 @@ export function AskPanel({
     (streamingAnswer !== null && getMessageText(streamingAnswer) === '');
   const hasConversation = messages.length > 0;
   const errorInfo = error ? describeChatError(error, isBrowserOffline()) : null;
+
+  // The server already deleted the conversation; show the empty state and starters.
+  function handleChatCleared() {
+    setMessages([]);
+    clearError();
+    setQuestion('');
+  }
 
   function sendQuestion(text: string) {
     sendMessage({ text });
@@ -139,6 +161,18 @@ export function AskPanel({
 
   return (
     <>
+      <CardHeader>
+        <CardTitle>Ask</CardTitle>
+        <CardDescription>Answers come with citations you can open.</CardDescription>
+        <CardAction>
+          <NewChatButton
+            projectId={projectId}
+            disabled={isBusy || !hasConversation}
+            onCleared={handleChatCleared}
+          />
+        </CardAction>
+      </CardHeader>
+
       {!hasConversation && (
         <Empty className="flex-1">
           <EmptyHeader>

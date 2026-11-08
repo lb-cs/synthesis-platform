@@ -95,6 +95,7 @@ _Avoid_: "document" on its own, "segment", "embedding" (that is one column of a 
 **Chat message**:
 One turn in a project's single conversation, `role` `'user' | 'assistant'`
 (`public.chat_messages`). An assistant message is `'streaming' | 'complete' | 'failed'`.
+**New chat** deletes them all (`clearChat`); there is no archive.
 _Avoid_: "conversation" or "thread" for a message; "chat" is the whole history.
 
 **Citation**:

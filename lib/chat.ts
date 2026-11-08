@@ -184,6 +184,28 @@ export async function listMessageCitations(
   return { ok: true, citationsByMessage };
 }
 
+export type ClearChatResult = { ok: true } | { ok: false; kind: 'database-error' };
+
+/**
+ * Starts the project's chat over: deletes every message, and their citations cascade.
+ * There is no archive, so this can't be undone. RLS limits it to the user's projects.
+ */
+export async function clearChat(
+  supabase: Client,
+  projectId: string,
+): Promise<ClearChatResult> {
+  const { error } = await supabase
+    .from('chat_messages')
+    .delete()
+    .eq('project_id', projectId);
+
+  if (error) {
+    return { ok: false, kind: 'database-error' };
+  }
+
+  return { ok: true };
+}
+
 /** A saved message in the shape `useChat` renders, with the citations its `[n]` open. */
 export function toChatUIMessage(
   message: ChatMessage,

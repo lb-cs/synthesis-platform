@@ -120,7 +120,7 @@ crowd a short one out of a comparison. Same rules: runs as the caller, `ready` o
 | Column       | Type        | Notes                                                     |
 | ------------ | ----------- | --------------------------------------------------------- |
 | `id`         | uuid        |                                                           |
-| `project_id` | uuid        | One running conversation per project                      |
+| `project_id` | uuid        | One running conversation per project. New chat deletes it |
 | `role`       | text        | `user` \| `assistant`                                     |
 | `content`    | text        |                                                           |
 | `status`     | text        | `streaming` \| `complete` \| `failed`. Default `complete` |
