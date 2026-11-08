@@ -1,16 +1,15 @@
 /**
- * Source numbers: until chat retrieves chunks, an answer cites whole sources as [1],
- * [2], … Pure and client-safe, so the route and the Ask panel number sources the same way.
+ * Citations in an answer: `[n]` markers and the source and page each one opens. An
+ * answer's numbers are its passage numbers, so they restart with every answer. Pure and
+ * client-safe, so the route and the Ask panel read them the same way.
  */
 import type { UIMessage } from 'ai';
-
-import type { Source } from '@/lib/sources';
 
 export type CitedSource = {
   number: number;
   id: string;
   title: string;
-  /** Set when `[number]` is one passage of the source rather than all of it. */
+  /** The page the cited passage is on, when the file has pages. */
   pageNumber?: number | null;
 };
 
@@ -18,7 +17,7 @@ export type ChatMessageMetadata = {
   sources: CitedSource[];
 };
 
-/** What `useChat` holds: an AI SDK message carrying the source numbers it can cite. */
+/** What `useChat` holds: an AI SDK message carrying what each of its `[n]` opens. */
 export type ChatUIMessage = UIMessage<ChatMessageMetadata>;
 
 export type AnswerSegment =
@@ -50,29 +49,6 @@ export function getCitationLabel(source: CitedSource): string {
   }
 
   return `${source.title}, p. ${source.pageNumber}`;
-}
-
-export type NumberedFileSource = Source & { storagePath: string; number: number };
-
-function hasFile(source: Source): source is Source & { storagePath: string } {
-  return source.storagePath !== null;
-}
-
-/**
- * Oldest first, so adding a source never renumbers the ones already cited. Only files:
- * chat sends whole files until it retrieves chunks (CECS491-73), and a link has none.
- */
-export function numberSources(sources: Source[]): NumberedFileSource[] {
-  const usable = sources.filter((source) => source.status !== 'failed').filter(hasFile);
-  const oldestFirst = usable.toSorted((a, b) => a.createdAt.localeCompare(b.createdAt));
-
-  return oldestFirst.map((source, index) => {
-    return { ...source, number: index + 1 };
-  });
-}
-
-export function toCitedSources(sources: (Source & { number: number })[]): CitedSource[] {
-  return sources.map(({ number, id, title }) => ({ number, id, title }));
 }
 
 /** Splits an answer into plain text and `[n]` markers, in order. */
@@ -112,8 +88,8 @@ export function getCitationNumber(href: string | undefined): number | null {
   return Number.isInteger(number) ? number : null;
 }
 
-/** The sources an answer actually cites, in source-number order. */
-export function getCitedSources(text: string, sources: CitedSource[]): CitedSource[] {
+/** Every `[n]` an answer uses, once each. */
+export function getCitedNumbers(text: string): Set<number> {
   const citedNumbers = new Set<number>();
 
   splitCitations(text).forEach((segment) => {
@@ -121,6 +97,13 @@ export function getCitedSources(text: string, sources: CitedSource[]): CitedSour
       citedNumbers.add(segment.number);
     }
   });
+
+  return citedNumbers;
+}
+
+/** The citations an answer actually uses, in number order. */
+export function getCitedSources(text: string, sources: CitedSource[]): CitedSource[] {
+  const citedNumbers = getCitedNumbers(text);
 
   return sources.filter((source) => citedNumbers.has(source.number));
 }

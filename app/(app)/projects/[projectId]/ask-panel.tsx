@@ -147,7 +147,7 @@ export function AskPanel({
             </EmptyMedia>
             <EmptyTitle>Ask a question about your sources</EmptyTitle>
             <EmptyDescription>
-              Answers cite the numbered sources they draw on.
+              Answers cite the passages they draw on, down to the page.
             </EmptyDescription>
           </EmptyHeader>
         </Empty>
