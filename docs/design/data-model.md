@@ -133,6 +133,7 @@ crowd a short one out of a comparison. Same rules: runs as the caller, `ready` o
 | `id`          | uuid        |                                                    |
 | `message_id`  | uuid        | The assistant message                              |
 | `chunk_id`    | uuid        | The supporting chunk. It gives the source and page |
+| `number`      | integer     | The `[n]` the answer used. Unique per message      |
 | `anchor_text` | text, null  | The quoted passage, when the model quotes one      |
 | `created_at`  | timestamptz |                                                    |
 
