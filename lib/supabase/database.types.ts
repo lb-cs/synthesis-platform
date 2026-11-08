@@ -71,6 +71,7 @@ export type Database = {
           created_at: string;
           id: string;
           message_id: string;
+          number: number;
         };
         Insert: {
           anchor_text?: string | null;
@@ -78,6 +79,7 @@ export type Database = {
           created_at?: string;
           id?: string;
           message_id: string;
+          number: number;
         };
         Update: {
           anchor_text?: string | null;
@@ -85,6 +87,7 @@ export type Database = {
           created_at?: string;
           id?: string;
           message_id?: string;
+          number?: number;
         };
         Relationships: [
           {

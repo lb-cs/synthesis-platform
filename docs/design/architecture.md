@@ -96,15 +96,15 @@ build — something else already does it.
 
 ### AI — route handler + `lib/`
 
-| Spec controller        | Now                                                                                                                                                                                                      | Status           |
-| ---------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------- |
-| RetrievalController    | **Mostly dropped.** `match_document_chunks(project_id, query_embedding)` in Postgres. Runs as the user, so RLS applies. Searches `ready` sources only. Chat doesn't call it yet (CECS491-73)             | Built, not wired |
-| AIController           | `lib/ai.ts`: closed-context prompt, question embedding, and the one streaming model call (AI Gateway). Swap it there                                                                                     | Built            |
-| ChatController         | `POST /api/projects/[projectId]/chat`: streams the answer (AI SDK UI message stream) and writes `chat_messages`                                                                                          | Built, naive     |
-| CitationController     | Insert `citations` rows for the chunks the answer used. RLS rejects a chunk from another user's project. Comes with retrieval (CECS491-73)                                                               | Not built        |
-| Comparison             | `POST /api/projects/[projectId]/compare`: embeds the topic, `match_source_chunks` per chosen source (`lib/comparison.ts`), streams `streamComparison` from `lib/ai.ts` with passage citations. Not saved | Built            |
-| Summary, Insight       | Same pattern as chat                                                                                                                                                                                     | Stretch goal     |
-| NotificationController | **Dropped.** No use case needs it. Processing progress shows through `sources.status`                                                                                                                    | —                |
+| Spec controller        | Now                                                                                                                                                                                                                | Status       |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------ |
+| RetrievalController    | **Mostly dropped.** `match_document_chunks(project_id, query_embedding)` in Postgres. Runs as the user, so RLS applies. Searches `ready` sources only. Chat calls it through `findChatPassages` in `lib/answer.ts` | Built        |
+| AIController           | `lib/ai.ts`: closed-context prompt, question embedding, and the one streaming model call (AI Gateway). Swap it there                                                                                               | Built        |
+| ChatController         | `POST /api/projects/[projectId]/chat`: retrieves passages, streams the answer (AI SDK UI message stream), and writes `chat_messages`                                                                               | Built        |
+| CitationController     | `createCitations` in `lib/chat.ts`: a `citations` row per passage the answer cites, with its number. RLS rejects a chunk from another user's project                                                               | Built        |
+| Comparison             | `POST /api/projects/[projectId]/compare`: embeds the topic, `match_source_chunks` per chosen source (`lib/comparison.ts`), streams `streamComparison` from `lib/ai.ts` with passage citations. Not saved           | Built        |
+| Summary, Insight       | Same pattern as chat                                                                                                                                                                                               | Stretch goal |
+| NotificationController | **Dropped.** No use case needs it. Processing progress shows through `sources.status`                                                                                                                              | —            |
 
 ## Screens and routes
 
@@ -161,23 +161,21 @@ The app polls too: while any source is `pending` or `processing`, the Sources pa
 the workspace's Sources panel call `router.refresh()` every 3 s
 (`sources/refresh-while-processing.tsx`). A `failed` source shows its `processing_error`
 and a **Retry processing** button, which calls `retry_failed_source()` to set it back to
-`pending`. Until a source is `ready`, the workspace says so (UC-16 E2); chat still
-answers, from the whole files, until retrieval lands (CECS491-73).
+`pending`. Until a source is `ready`, the workspace says so (UC-16 E2); chat refuses
+until one is, since only `ready` sources have chunks to search.
 
 ## How a question gets answered (UC-16)
 
-**What runs today is a naive stand-in.** The worker now writes embedded chunks, but the
-chat route does not retrieve them yet (CECS491-73; whether to switch is CECS491-75).
-`lib/answer.ts` sends every non-failed source file whole (PDFs as documents), numbered
-oldest first, and the model cites `[n]`. No question embedding, no `citations` rows, no
-page numbers. A citation
-opens the file through `GET …/sources/[sourceId]/file`. Removing a source renumbers the
-ones after it, so old answers can point at the wrong number.
+Chat retrieves (CECS491-73). `POST /api/projects/[projectId]/chat` embeds the question
+(`embedQuestion`, the worker's model), and `findChatPassages` in `lib/answer.ts` calls
+`match_document_chunks` for the 8 closest chunks across the project's `ready` sources.
+`streamGroundedAnswer` in `lib/ai.ts` sends those chunks numbered `[1]…[n]` plus the last
+`HISTORY_LIMIT` turns. The numbers restart with every answer, so each saved answer keeps
+its own `citations` rows: one per passage it cites, with the `number` it used. A citation
+opens the file at its page through `GET …/sources/[sourceId]/file#page=`.
 
-The shape the schema is built for, once the route retrieves. `lib/ai.ts` already does the model
-side: `embedQuestion` (same model as the worker), `buildGroundedPrompt` (the chunks
-numbered `[1]…[n]` plus the last `HISTORY_LIMIT` turns, never the whole chat), and
-`streamGroundedAnswer`. The chunks' numbers map back to chunk ids for `citations`.
+Answers saved before retrieval cited whole sources and have no `citations` rows, so
+their `[n]` no longer link.
 
 ```mermaid
 sequenceDiagram
@@ -189,17 +187,20 @@ sequenceDiagram
 
   User->>UI: types a question
   UI->>RH: POST the question
-  RH->>DB: insert user chat_message
-  RH->>LLM: embed the question
-  RH->>DB: match_document_chunks(project, embedding)
-  alt nothing relevant
-    RH-->>UI: "No matching information found in your sources"
-  else chunks found
-    RH->>DB: insert assistant chat_message (streaming)
-    RH->>LLM: question + chunks + last few messages
-    LLM-->>UI: stream the answer
-    RH->>DB: insert citations, set message complete
+  par
+    RH->>DB: last HISTORY_LIMIT chat_messages
+  and
+    RH->>LLM: embed the question
   end
+  RH->>DB: match_document_chunks(project, embedding)
+  RH->>DB: insert user chat_message (not on a retry)
+  RH->>LLM: passages + last few messages + question
+  LLM-->>UI: stream the answer, with what each [n] opens
+  alt no passage matched
+    LLM-->>UI: "No matching information found in your sources."
+  end
+  RH->>DB: insert assistant chat_message (complete, or failed if cut off)
+  RH->>DB: insert citations for the [n] the answer used
 ```
 
 Retrieval sends the model the matching chunks and the last few messages — never the
