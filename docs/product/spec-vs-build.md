@@ -26,7 +26,7 @@ a decision changes.
 | Embeddings          | —                                                           | OpenAI `text-embedding-3-small` through Vercel AI Gateway, in the worker and `lib/ai.ts`                                                         |
 | LLM provider        | OpenAI or Anthropic                                         | **Vercel AI Gateway** in front of the model. The model id lives in `lib/ai.ts` only                                                              |
 | API versioning      | `/api/v1/…` (SRS §6.5)                                      | Unversioned: `/api/projects`                                                                                                                     |
-| Stretch goals       | Everything in the RFP                                       | Links (UC-12), summaries (UC-17, `CECS491-15`), analysis (UC-18, UC-19, `CECS491-16`)                                                            |
+| Stretch goals       | Everything in the RFP                                       | Sprint 4 began links (UC-12, not fetched yet) and Compare (UC-18). Stretch: summaries (UC-17, `CECS491-15`), themes (UC-19, `CECS491-16`)        |
 
 ## By use case
 

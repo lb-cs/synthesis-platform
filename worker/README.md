@@ -1,7 +1,5 @@
 # Worker
 
-TEST DEPLOYMENT
-
 The Python service that processes uploaded sources (UC-15). It runs outside the Next.js
 app: the app inserts a `sources` row with status `pending`, and the worker moves it to
 `processing` and then `ready` or `failed` (with a `processing_error` the user sees).
@@ -12,6 +10,10 @@ chunks, and saves the chunks and the file's details (see
 `openai/text-embedding-3-small` through Vercel AI Gateway before saving it, the same
 model the app embeds questions with. Chunks are saved before the source is marked
 `ready`, so retrieval only sees complete sources.
+
+Web link sources (`kind = 'link'`) have a `url` and no file. The worker cannot fetch
+pages yet (CECS491-85), so it fails a link straight away with "Web links cannot be
+processed yet." (`LINK_NOT_SUPPORTED` in `src/worker/loop.py`).
 
 ## How it works
 
@@ -107,3 +109,8 @@ eight concurrent claimers, checking none get the same row. It runs when `supabas
 is up and skips otherwise. It rolls back its claims and deletes the test user it creates.
 `tests/test_match_sql.py` checks the same way that chat search skips sources that are not
 `ready`.
+
+Both connect to `127.0.0.1:54322` (override with `WORKER_TEST_DATABASE_URL`). If another
+project's local Supabase holds that port, they error with `relation "public.projects"
+does not exist` instead of skipping. Stop that project, or point the variable at an
+unreachable address to skip them.
