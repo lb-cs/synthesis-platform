@@ -118,10 +118,6 @@ export default async function WorkspacePage({
 
         {/* Capped so a long chat scrolls inside the card instead of pushing the input down. */}
         <Card className="flex max-h-[70svh] min-h-96 flex-col lg:max-h-[calc(100svh-10rem)]">
-          <CardHeader>
-            <CardTitle>Ask</CardTitle>
-            <CardDescription>Answers come with citations you can open.</CardDescription>
-          </CardHeader>
           <AskPanel
             projectId={projectId}
             initialMessages={initialMessages}
