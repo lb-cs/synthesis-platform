@@ -31,7 +31,7 @@ tracks status per screen.
 **Tech stack**: Next.js 16 (App Router) / React 19 / TypeScript, Tailwind CSS v4,
 shadcn/ui on Base UI, lucide-react, Supabase (`@supabase/ssr`), zod + react-hook-form,
 AI SDK v7 (`ai`, `@ai-sdk/react`) with models through Vercel AI Gateway, AI Elements +
-Streamdown for the chat UI.
+Streamdown for the chat UI, react-pdf for the citation viewer.
 Node 24, npm 11. One package at the repo root.
 
 **What the product must become** is specified in [`docs/product/`](docs/product/README.md)

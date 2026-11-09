@@ -120,7 +120,7 @@ build — something else already does it.
 | Analysis              | `/projects/[projectId]/analysis` — Compare tab; Themes to come | UC-18, UC-19  | Compare built |
 | Settings              | `/settings` — change email, sign out, delete account           | UC-04 – UC-06 | Built         |
 | Edit project          | `/projects/[projectId]/edit`                                   | UC-08         | Built         |
-| Citation viewer       | —                                                              | UC-20         | Not built     |
+| Citation viewer       | A sheet over any project screen, opened by a `[n]` chip        | UC-20         | Built         |
 
 ## How a source gets processed (UC-11, UC-15)
 
@@ -172,7 +172,9 @@ Chat retrieves (CECS491-73). `POST /api/projects/[projectId]/chat` embeds the qu
 `streamGroundedAnswer` in `lib/ai.ts` sends those chunks numbered `[1]…[n]` plus the last
 `HISTORY_LIMIT` turns. The numbers restart with every answer, so each saved answer keeps
 its own `citations` rows: one per passage it cites, with the `number` it used. A citation
-opens the file at its page through `GET …/sources/[sourceId]/file#page=`.
+opens the citation viewer (CECS491-78): it downloads the file from `GET …/sources/[sourceId]/file`,
+shows the cited page of a PDF (react-pdf), and marks the cited chunk's text on it. A text file
+is shown whole with the passage marked. If the passage can't be found, the page still opens.
 
 Answers saved before retrieval cited whole sources and have no `citations` rows, so
 their `[n]` no longer link.
