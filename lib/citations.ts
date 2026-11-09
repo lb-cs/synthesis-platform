@@ -11,6 +11,8 @@ export type CitedSource = {
   title: string;
   /** The page the cited passage is on, when the file has pages. */
   pageNumber?: number | null;
+  /** The cited chunk's text, so the viewer can find and highlight it in the file. */
+  passage?: string;
 };
 
 export type ChatMessageMetadata = {
