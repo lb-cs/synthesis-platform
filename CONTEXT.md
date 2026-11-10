@@ -37,9 +37,16 @@ zod shape for both steps.
 _Avoid_: "OTP" in user-facing copy, "magic link" (that is the link variant we turned off
 in the email template), "password" (there are none).
 
+**Google sign-in**:
+The second way in: "Continue with Google" on `/login`. `signInWithGoogle`
+(`app/login/actions.ts`) sends the browser to Google through Supabase's Google provider;
+`app/auth/callback/route.ts` swaps the returned code for a session. A Google account and
+a one-time code for the same email are the same user.
+_Avoid_: "OAuth login" in user-facing copy, "SSO".
+
 **Public path**:
 A route the guard lets a signed-out visitor reach. The list is `PUBLIC_PATHS` in
-`lib/supabase/proxy.ts` (`/home`, `/login`, `/api/health`); everything not on it is
+`lib/supabase/proxy.ts` (`/home`, `/login`, `/auth/callback`, `/api/health`); everything not on it is
 **protected**: a page redirects to `/login`, an `/api/*` route answers 401. `/` has no
 page: the proxy sends it to `/dashboard` or `/home` depending on whether there is a user.
 _Avoid_: "unprotected", "open route", "whitelist".

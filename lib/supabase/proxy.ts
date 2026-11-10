@@ -4,7 +4,7 @@ import { NextResponse, type NextRequest } from 'next/server';
 import type { Database } from './database.types';
 
 // Reachable signed out. Everything else redirects to /login (or 401s under /api).
-const PUBLIC_PATHS = ['/home', '/login', '/api/health'];
+const PUBLIC_PATHS = ['/home', '/login', '/auth/callback', '/api/health'];
 
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });

@@ -52,6 +52,22 @@ port or domain.
    a file in the production app. It goes `pending → processing → ready` in about 10
    seconds
 
+## Google sign-in (hosted)
+
+The hosted Supabase project holds its own copy of the Google OAuth client; nothing is set
+in Vercel.
+
+1. **Google Cloud Console → Google Auth Platform → Clients** → the Web application client:
+   - **Authorized JavaScript origins**: the production site URL
+   - **Authorized redirect URIs**: `https://<project-ref>.supabase.co/auth/v1/callback`
+     (shown on the Supabase Google provider page)
+2. **Supabase dashboard → Authentication → Sign In / Providers → Google**: enable it and
+   paste the client ID and client secret
+3. **Supabase dashboard → Authentication → URL Configuration**: Site URL is the production
+   site; add `https://<site>/auth/callback` to Redirect URLs. For previews to sign in, also add
+   `https://synthesis-platform-*-<team>.vercel.app/**`. A redirect that matches nothing on
+   the list silently falls back to the Site URL, so a preview sign-in lands on production
+
 ## Shipping changes
 
 - **Merging to `main` deploys the worker** when `worker/**` changed. If the new code needs
