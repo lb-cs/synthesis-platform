@@ -223,7 +223,9 @@ export async function listMessageCitations(
 
   const { data, error } = await supabase
     .from('citations')
-    .select('message_id, number, document_chunks(page_number, sources(id, title))')
+    .select(
+      'message_id, number, document_chunks(page_number, content, sources(id, title))',
+    )
     .in('message_id', messageIds)
     .order('number');
 
@@ -238,6 +240,7 @@ export async function listMessageCitations(
       id: chunk.sources.id,
       title: chunk.sources.title,
       pageNumber: chunk.page_number,
+      passage: chunk.content,
     };
     const citations = citationsByMessage.get(row.message_id) ?? [];
 

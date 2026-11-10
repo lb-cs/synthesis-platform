@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, use, useMemo, type ComponentProps } from 'react';
+import { createContext, use, useMemo, type ComponentProps, type MouseEvent } from 'react';
 import type { AnimateOptions, Components } from 'streamdown';
 
 import {
@@ -14,6 +14,8 @@ import {
 import { MessageResponse } from '@/components/ai-elements/message';
 import { badgeVariants } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+
+import { useSourceViewer } from './source-viewer/source-viewer-provider';
 
 // Blur hides tokens that land in one batch better than a plain fade.
 const STREAM_ANIMATION: AnimateOptions = {
@@ -32,8 +34,29 @@ type CitationContextValue = {
 
 const CitationContext = createContext<CitationContextValue | null>(null);
 
+// A plain click opens the viewer; a click meant for a new tab or window keeps the link.
+function isPlainClick(event: MouseEvent): boolean {
+  const hasModifier = event.metaKey || event.ctrlKey || event.shiftKey || event.altKey;
+
+  return event.button === 0 && !hasModifier;
+}
+
+function useOpenCitation() {
+  const viewer = useSourceViewer();
+
+  return (event: MouseEvent, source: CitedSource) => {
+    if (!viewer || !isPlainClick(event)) {
+      return;
+    }
+
+    event.preventDefault();
+    viewer.openCitation(source);
+  };
+}
+
 function CitationAnchor({ href, children }: ComponentProps<'a'>) {
   const citations = use(CitationContext);
+  const openCitation = useOpenCitation();
 
   // Hidden until the marker completes, so a stray "[1" never flashes in the answer.
   if (href === INCOMPLETE_LINK_HREF) {
@@ -75,6 +98,7 @@ function CitationAnchor({ href, children }: ComponentProps<'a'>) {
             target="_blank"
             rel="noreferrer"
             aria-label={`Open source ${source.number}: ${getCitationLabel(source)}`}
+            onClick={(event) => openCitation(event, source)}
           />
         }
       >
@@ -110,6 +134,7 @@ export function AnswerText({
     return { projectId, sourcesByNumber };
   }, [projectId, sources]);
 
+  const openCitation = useOpenCitation();
   const citedSources = getCitedSources(text, sources);
   const showCitedSources = !isStreaming && citedSources.length > 0;
 
@@ -135,6 +160,7 @@ export function AnswerText({
                 target="_blank"
                 rel="noreferrer"
                 className="underline-offset-4 hover:text-foreground hover:underline"
+                onClick={(event) => openCitation(event, source)}
               >
                 [{source.number}] {getCitationLabel(source)}
               </a>
