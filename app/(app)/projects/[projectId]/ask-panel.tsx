@@ -40,6 +40,7 @@ import {
 } from '@/components/ui/input-group';
 
 import { ConversationMessage, ENTER_ANIMATION } from './conversation-message';
+import { LoadEarlierMessages } from './load-earlier-messages';
 import { NewChatButton } from './new-chat-button';
 
 // `navigator` only exists in the browser; an error can only be shown after the page loaded.
@@ -57,17 +58,20 @@ const STARTER_QUESTIONS = [
 export function AskPanel({
   projectId,
   initialMessages,
+  initialHasEarlier,
   hasSources,
 }: {
   projectId: string;
   initialMessages: ChatUIMessage[];
+  initialHasEarlier: boolean;
   hasSources: boolean;
 }) {
   const [question, setQuestion] = useState('');
   // Only messages sent in this visit animate in; the loaded history just appears.
-  const [loadedIds] = useState(
+  const [loadedIds, setLoadedIds] = useState(
     () => new Set(initialMessages.map((message) => message.id)),
   );
+  const [hasEarlier, setHasEarlier] = useState(initialHasEarlier);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const {
@@ -115,8 +119,17 @@ export function AskPanel({
   // The server already deleted the conversation; show the empty state and starters.
   function handleChatCleared() {
     setMessages([]);
+    setHasEarlier(false);
     clearError();
     setQuestion('');
+  }
+
+  function handleEarlierLoaded(earlier: ChatUIMessage[], hasMore: boolean) {
+    setLoadedIds((current) => {
+      return new Set([...current, ...earlier.map((message) => message.id)]);
+    });
+    setMessages((current) => [...earlier, ...current]);
+    setHasEarlier(hasMore);
   }
 
   function sendQuestion(text: string) {
@@ -191,6 +204,13 @@ export function AskPanel({
         // min-h-0 lets the log scroll inside the capped card, keeping the input at the bottom.
         <Conversation className="min-h-0" aria-label="Conversation">
           <ConversationContent className="pt-0">
+            <LoadEarlierMessages
+              projectId={projectId}
+              oldestMessageId={messages[0].id}
+              hasEarlier={hasEarlier}
+              onLoaded={handleEarlierLoaded}
+            />
+
             {messages.map((message) => (
               <ConversationMessage
                 key={message.id}

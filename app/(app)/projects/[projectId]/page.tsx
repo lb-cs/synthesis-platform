@@ -6,11 +6,7 @@ import { notFound } from 'next/navigation';
 import { projectIdSchema } from '@/app/api/projects/schema';
 import { PageHeader } from '@/components/page-header';
 import { getChatSources } from '@/lib/answer';
-import {
-  listMessageCitations,
-  listRecentChatMessages,
-  toChatUIMessage,
-} from '@/lib/chat';
+import { CHAT_PAGE_SIZE, listChatMessagePage, toChatUIMessages } from '@/lib/chat';
 import { getProject } from '@/lib/projects';
 import { listSources } from '@/lib/sources';
 import { createClient } from '@/lib/supabase/server';
@@ -32,9 +28,6 @@ import {
 
 import { AskPanel } from './ask-panel';
 import { WorkspaceSources } from './workspace-sources';
-
-// How much of the conversation the page shows on load.
-const VISIBLE_MESSAGE_LIMIT = 50;
 
 function LoadError() {
   return (
@@ -79,28 +72,21 @@ export default async function WorkspacePage({
 
   const [sourcesResult, messagesResult] = await Promise.all([
     listSources(supabase, projectId),
-    listRecentChatMessages(supabase, projectId, VISIBLE_MESSAGE_LIMIT),
+    listChatMessagePage(supabase, projectId, { limit: CHAT_PAGE_SIZE }),
   ]);
 
   if (!sourcesResult.ok || !messagesResult.ok) {
     return <LoadError />;
   }
 
-  const messageIds = messagesResult.messages.map((message) => message.id);
-  const citationsResult = await listMessageCitations(supabase, messageIds);
+  const uiMessagesResult = await toChatUIMessages(supabase, messagesResult.messages);
 
-  if (!citationsResult.ok) {
+  if (!uiMessagesResult.ok) {
     return <LoadError />;
   }
 
   const { project } = result;
   const chatSources = getChatSources(sourcesResult.sources);
-  const { citationsByMessage } = citationsResult;
-  const initialMessages = messagesResult.messages.map((message) => {
-    const citations = citationsByMessage.get(message.id) ?? [];
-
-    return toChatUIMessage(message, citations);
-  });
   const description =
     project.description ??
     "Ask questions and get answers grounded in this project's sources.";
@@ -133,7 +119,8 @@ export default async function WorkspacePage({
         <Card className="flex max-h-[70svh] min-h-96 flex-col lg:max-h-[calc(100svh-10rem)]">
           <AskPanel
             projectId={projectId}
-            initialMessages={initialMessages}
+            initialMessages={uiMessagesResult.messages}
+            initialHasEarlier={messagesResult.hasEarlier}
             hasSources={chatSources.length > 0}
           />
         </Card>

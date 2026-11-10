@@ -76,6 +76,69 @@ export async function listRecentChatMessages(
   return { ok: true, messages: newestFirst.toReversed() };
 }
 
+// How many messages the panel shows on load, and how many each "Load earlier" adds.
+export const CHAT_PAGE_SIZE = 50;
+
+export type ChatMessagePageResult =
+  | { ok: true; messages: ChatMessage[]; hasEarlier: boolean }
+  | { ok: false; kind: 'not-found' | 'database-error' };
+
+/**
+ * One page of the conversation, oldest first: the latest `limit` messages, or the
+ * `limit` before the message `beforeId`. `hasEarlier` says whether older ones remain.
+ */
+export async function listChatMessagePage(
+  supabase: Client,
+  projectId: string,
+  { limit, beforeId }: { limit: number; beforeId?: string },
+): Promise<ChatMessagePageResult> {
+  let query = supabase
+    .from('chat_messages')
+    .select(CHAT_MESSAGE_COLUMNS)
+    .eq('project_id', projectId);
+
+  if (beforeId) {
+    const { data: cursor, error } = await supabase
+      .from('chat_messages')
+      .select('created_at')
+      .eq('project_id', projectId)
+      .eq('id', beforeId)
+      .maybeSingle();
+
+    if (error) {
+      return { ok: false, kind: 'database-error' };
+    }
+
+    // Gone: the chat was cleared since the page loaded, maybe in another tab.
+    if (!cursor) {
+      return { ok: false, kind: 'not-found' };
+    }
+
+    // Strictly before the cursor in (created_at, id) order, so no row repeats.
+    const createdAt = `"${cursor.created_at}"`;
+    const id = `"${beforeId}"`;
+
+    query = query.or(
+      `created_at.lt.${createdAt},and(created_at.eq.${createdAt},id.lt.${id})`,
+    );
+  }
+
+  // One extra row says whether there is another page, without a count query.
+  const { data, error } = await query
+    .order('created_at', { ascending: false })
+    .order('id', { ascending: false })
+    .limit(limit + 1);
+
+  if (error) {
+    return { ok: false, kind: 'database-error' };
+  }
+
+  const hasEarlier = data.length > limit;
+  const newestFirst = data.slice(0, limit).map(toChatMessage);
+
+  return { ok: true, messages: newestFirst.toReversed(), hasEarlier };
+}
+
 /**
  * A retry re-sends the question whose answer failed, and that question is already saved.
  * Spots it so the route doesn't save it twice or show it to the model twice. `earlier` is
@@ -207,6 +270,31 @@ export async function clearChat(
   }
 
   return { ok: true };
+}
+
+export type ChatUIMessagesResult =
+  { ok: true; messages: ChatUIMessage[] } | { ok: false; kind: 'database-error' };
+
+/** Saved messages, with their citations loaded, ready to hand to `useChat`. */
+export async function toChatUIMessages(
+  supabase: Client,
+  messages: ChatMessage[],
+): Promise<ChatUIMessagesResult> {
+  const messageIds = messages.map((message) => message.id);
+  const citationsResult = await listMessageCitations(supabase, messageIds);
+
+  if (!citationsResult.ok) {
+    return { ok: false, kind: 'database-error' };
+  }
+
+  const { citationsByMessage } = citationsResult;
+  const uiMessages = messages.map((message) => {
+    const citations = citationsByMessage.get(message.id) ?? [];
+
+    return toChatUIMessage(message, citations);
+  });
+
+  return { ok: true, messages: uiMessages };
 }
 
 /** A saved message in the shape `useChat` renders, with the citations its `[n]` open. */
