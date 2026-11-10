@@ -57,6 +57,7 @@ export function toPassageCitations(
           id: source.id,
           title: source.title,
           pageNumber: chunk.pageNumber,
+          passage: chunk.content,
         };
 
         return [chunk.id, passage] as const;

@@ -103,6 +103,13 @@ A link from an assistant message to a document chunk that supports it
 (`public.citations`). The chunk gives the source and page.
 _Avoid_: "reference", "footnote", "source" (a citation points into a source).
 
+**Citation viewer**:
+The sheet a `[n]` chip opens, shared by the whole project (`SourceViewerProvider` in
+`app/(app)/projects/[projectId]/source-viewer/`): a PDF at the cited page, or a text file,
+with the cited passage marked. `CitedSource.passage` is the chunk's text, which
+`lib/passage-match.ts` finds in the page. Outside a project the chip opens the file.
+_Avoid_: "preview", "reader", "PDF viewer" (it also shows text files).
+
 **Passage number**:
 The `[n]` an answer cites a document chunk by: chunks are numbered in the order they go
 into one prompt (`PassageNumber` in `lib/ai.ts`), mapped back to chunk ids to write

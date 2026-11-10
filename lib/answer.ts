@@ -100,6 +100,7 @@ export function toChatCitations(
       id: passage.sourceId,
       title: passage.sourceTitle,
       pageNumber: passage.pageNumber,
+      passage: passage.content,
     };
 
     return [citation];
