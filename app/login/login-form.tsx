@@ -122,7 +122,6 @@ function GoogleButton({ initialError }: { initialError: string | null }) {
   const [error, setError] = useState(initialError);
   const [pending, setPending] = useState(false);
 
-  // Leaves for Google on success, so we only come back here with an error.
   async function onClick() {
     setError(null);
     setPending(true);
@@ -130,10 +129,17 @@ function GoogleButton({ initialError }: { initialError: string | null }) {
     // A server action rejects only when the request never reaches the server.
     try {
       const result = await signInWithGoogle();
-      setError(result.error);
+
+      if ('error' in result) {
+        setError(result.error);
+        setPending(false);
+        return;
+      }
+
+      // Stay disabled: the browser is on its way to Google.
+      window.location.assign(result.url);
     } catch {
       setError('Could not reach the server. Check your connection and try again.');
-    } finally {
       setPending(false);
     }
   }

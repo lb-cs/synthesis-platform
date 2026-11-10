@@ -47,9 +47,10 @@ export async function verifyCode(input: CodeInput): Promise<{ error?: string }> 
   redirect('/dashboard');
 }
 
-// Redirects the browser to Google on success, so the caller only ever sees an error back.
+// Returns Google's consent URL for the browser to open. Not a redirect(): leaving the
+// site from inside an action rejects the caller's promise, which looks like a failure.
 // signInWithOAuth stores the PKCE verifier in a cookie; /auth/callback needs it to finish.
-export async function signInWithGoogle(): Promise<{ error: string }> {
+export async function signInWithGoogle(): Promise<{ url: string } | { error: string }> {
   const headerStore = await headers();
   const origin = headerStore.get('origin');
   if (!origin) {
@@ -65,7 +66,7 @@ export async function signInWithGoogle(): Promise<{ error: string }> {
     return { error: GOOGLE_SIGN_IN_ERROR };
   }
 
-  redirect(data.url);
+  return { url: data.url };
 }
 
 export async function signOut() {

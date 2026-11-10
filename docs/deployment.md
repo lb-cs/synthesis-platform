@@ -64,8 +64,9 @@ in Vercel.
 2. **Supabase dashboard → Authentication → Sign In / Providers → Google**: enable it and
    paste the client ID and client secret
 3. **Supabase dashboard → Authentication → URL Configuration**: Site URL is the production
-   site; add `https://<site>/auth/callback` to Redirect URLs (and
-   `https://*-<team>.vercel.app/auth/callback` if previews should sign in)
+   site; add `https://<site>/auth/callback` to Redirect URLs. For previews to sign in, also add
+   `https://synthesis-platform-*-<team>.vercel.app/**`. A redirect that matches nothing on
+   the list silently falls back to the Site URL, so a preview sign-in lands on production
 
 ## Shipping changes
 
