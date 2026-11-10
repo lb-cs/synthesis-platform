@@ -122,6 +122,13 @@ page's Compare tab (`lib/comparison.ts`, `streamComparison` in `lib/ai.ts`). Pas
 retrieved per source and cited by passage number. Not stored: each run stands alone.
 _Avoid_: "diff" (it compares claims, not text), "analysis" for this one feature.
 
+**Theme**:
+A concept, claim, or relationship that recurs across a project's sources, listed with
+cited evidence by the Analysis page's Themes tab (`lib/themes.ts`, `streamThemes` in
+`lib/ai.ts`). Found in a sample of passages spread through each of 2–15 ready sources.
+Not stored: each run stands alone.
+_Avoid_: "topic" (that is what a comparison is about), "insight" in code (UC-19's name).
+
 ## Shell
 
 **Dashboard**:

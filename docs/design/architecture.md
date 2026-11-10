@@ -39,18 +39,18 @@ flowchart LR
   Worker --> Embed["AI Gateway<br/>embeddings"]
 ```
 
-| Piece          | Where                                                  | Does                                                                                                                      |
-| -------------- | ------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------- |
-| Route guard    | `proxy.ts` → `lib/supabase/proxy.ts`                   | Refreshes the session cookie. Signed out: pages redirect to `/login`, `/api/*` answers 401. Public paths are listed there |
-| Pages          | `app/**/page.tsx`                                      | Server components. Read data on the server through `lib/`                                                                 |
-| Route handlers | `app/api/**/route.ts`                                  | The REST API. Check sign-in → zod → `lib/` → `Response.json`                                                              |
-| Server actions | `app/**/actions.ts`                                    | The app's own forms (sign-in, create project, remove source). Same three steps as a route handler                         |
-| `lib/`         | `lib/projects.ts`, `lib/sources.ts`, `lib/supabase/*`  | Queries. Maps snake_case rows to camelCase domain types. Returns `{ ok, … }` results, never throws for expected failures  |
-| Supabase Auth  | hosted                                                 | Sign-in codes, sessions (a cookie pair), JWTs, the `auth.users` table                                                     |
-| Postgres + RLS | `supabase/migrations/`                                 | All data. RLS limits every query to the signed-in user's projects. Deletes cascade                                        |
-| pgvector       | `document_chunks.embedding`, `match_document_chunks()` | Semantic search, filtered to one project; `match_source_chunks()` takes the best few from each chosen source (Compare)    |
-| Storage        | bucket `sources`                                       | Uploaded files at `{user_id}/{project_id}/{file}`. Storage policies allow only your own folder                            |
-| Worker         | `worker/` — separate Python service, on Railway        | Claims pending sources; parses, chunks, and embeds them; moves their status. Service role, so it bypasses RLS             |
+| Piece          | Where                                                  | Does                                                                                                                                                                                                 |
+| -------------- | ------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Route guard    | `proxy.ts` → `lib/supabase/proxy.ts`                   | Refreshes the session cookie. Signed out: pages redirect to `/login`, `/api/*` answers 401. Public paths are listed there                                                                            |
+| Pages          | `app/**/page.tsx`                                      | Server components. Read data on the server through `lib/`                                                                                                                                            |
+| Route handlers | `app/api/**/route.ts`                                  | The REST API. Check sign-in → zod → `lib/` → `Response.json`                                                                                                                                         |
+| Server actions | `app/**/actions.ts`                                    | The app's own forms (sign-in, create project, remove source). Same three steps as a route handler                                                                                                    |
+| `lib/`         | `lib/projects.ts`, `lib/sources.ts`, `lib/supabase/*`  | Queries. Maps snake_case rows to camelCase domain types. Returns `{ ok, … }` results, never throws for expected failures                                                                             |
+| Supabase Auth  | hosted                                                 | Sign-in codes, sessions (a cookie pair), JWTs, the `auth.users` table                                                                                                                                |
+| Postgres + RLS | `supabase/migrations/`                                 | All data. RLS limits every query to the signed-in user's projects. Deletes cascade                                                                                                                   |
+| pgvector       | `document_chunks.embedding`, `match_document_chunks()` | Semantic search, filtered to one project; `match_source_chunks()` takes the best few from each chosen source (Compare); `sample_source_chunks()` spreads a sample through each ready source (Themes) |
+| Storage        | bucket `sources`                                       | Uploaded files at `{user_id}/{project_id}/{file}`. Storage policies allow only your own folder                                                                                                       |
+| Worker         | `worker/` — separate Python service, on Railway        | Claims pending sources; parses, chunks, and embeds them; moves their status. Service role, so it bypasses RLS                                                                                        |
 
 ### Two rules every backend change follows
 
@@ -96,31 +96,32 @@ build — something else already does it.
 
 ### AI — route handler + `lib/`
 
-| Spec controller        | Now                                                                                                                                                                                                                | Status       |
-| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------ |
-| RetrievalController    | **Mostly dropped.** `match_document_chunks(project_id, query_embedding)` in Postgres. Runs as the user, so RLS applies. Searches `ready` sources only. Chat calls it through `findChatPassages` in `lib/answer.ts` | Built        |
-| AIController           | `lib/ai.ts`: closed-context prompt, question embedding, and the one streaming model call (AI Gateway). Swap it there                                                                                               | Built        |
-| ChatController         | `POST /api/projects/[projectId]/chat`: retrieves passages, streams the answer (AI SDK UI message stream), and writes `chat_messages`                                                                               | Built        |
-| CitationController     | `createCitations` in `lib/chat.ts`: a `citations` row per passage the answer cites, with its number. RLS rejects a chunk from another user's project                                                               | Built        |
-| Comparison             | `POST /api/projects/[projectId]/compare`: embeds the topic, `match_source_chunks` per chosen source (`lib/comparison.ts`), streams `streamComparison` from `lib/ai.ts` with passage citations. Not saved           | Built        |
-| Summary, Insight       | Same pattern as chat                                                                                                                                                                                               | Stretch goal |
-| NotificationController | **Dropped.** No use case needs it. Processing progress shows through `sources.status`                                                                                                                              | —            |
+| Spec controller        | Now                                                                                                                                                                                                                                               | Status       |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| RetrievalController    | **Mostly dropped.** `match_document_chunks(project_id, query_embedding)` in Postgres. Runs as the user, so RLS applies. Searches `ready` sources only. Chat calls it through `findChatPassages` in `lib/answer.ts`                                | Built        |
+| AIController           | `lib/ai.ts`: closed-context prompt, question embedding, and the one streaming model call (AI Gateway). Swap it there                                                                                                                              | Built        |
+| ChatController         | `POST /api/projects/[projectId]/chat`: retrieves passages, streams the answer (AI SDK UI message stream), and writes `chat_messages`                                                                                                              | Built        |
+| CitationController     | `createCitations` in `lib/chat.ts`: a `citations` row per passage the answer cites, with its number. RLS rejects a chunk from another user's project                                                                                              | Built        |
+| Comparison             | `POST /api/projects/[projectId]/compare`: embeds the topic, `match_source_chunks` per chosen source (`lib/comparison.ts`), streams `streamComparison` from `lib/ai.ts` with passage citations. Not saved                                          | Built        |
+| Insight (themes)       | `POST /api/projects/[projectId]/themes`: `sample_source_chunks` takes passages spread through every ready source (`lib/themes.ts`), streams `streamThemes` from `lib/ai.ts` with passage citations. 2–15 ready sources, else 409 / 422. Not saved | Built        |
+| Summary                | Same pattern as chat                                                                                                                                                                                                                              | Stretch goal |
+| NotificationController | **Dropped.** No use case needs it. Processing progress shows through `sources.status`                                                                                                                                                             | —            |
 
 ## Screens and routes
 
-| Screen                | Route                                                          | Use cases     | Status        |
-| --------------------- | -------------------------------------------------------------- | ------------- | ------------- |
-| Landing page          | `/home` (`/` redirects by sign-in state)                       | —             | Built         |
-| Sign in (and sign up) | `/login` — one form: email, then 6-digit code                  | UC-01, UC-03  | Built         |
-| Dashboard             | `/dashboard`                                                   | UC-09         | Built         |
-| New project           | `/projects/new`                                                | UC-07         | Built         |
-| Workspace             | `/projects/[projectId]` — sources + chat                       | UC-09, UC-16  | Built         |
-| Sources               | `/projects/[projectId]/sources`                                | UC-11 – UC-14 | Built         |
-| Summaries             | `/projects/[projectId]/summaries`                              | UC-17         | Placeholder   |
-| Analysis              | `/projects/[projectId]/analysis` — Compare tab; Themes to come | UC-18, UC-19  | Compare built |
-| Settings              | `/settings` — change email, sign out, delete account           | UC-04 – UC-06 | Built         |
-| Edit project          | `/projects/[projectId]/edit`                                   | UC-08         | Built         |
-| Citation viewer       | A sheet over any project screen, opened by a `[n]` chip        | UC-20         | Built         |
+| Screen                | Route                                                      | Use cases     | Status      |
+| --------------------- | ---------------------------------------------------------- | ------------- | ----------- |
+| Landing page          | `/home` (`/` redirects by sign-in state)                   | —             | Built       |
+| Sign in (and sign up) | `/login` — one form: email, then 6-digit code              | UC-01, UC-03  | Built       |
+| Dashboard             | `/dashboard`                                               | UC-09         | Built       |
+| New project           | `/projects/new`                                            | UC-07         | Built       |
+| Workspace             | `/projects/[projectId]` — sources + chat                   | UC-09, UC-16  | Built       |
+| Sources               | `/projects/[projectId]/sources`                            | UC-11 – UC-14 | Built       |
+| Summaries             | `/projects/[projectId]/summaries`                          | UC-17         | Placeholder |
+| Analysis              | `/projects/[projectId]/analysis` — Compare and Themes tabs | UC-18, UC-19  | Built       |
+| Settings              | `/settings` — change email, sign out, delete account       | UC-04 – UC-06 | Built       |
+| Edit project          | `/projects/[projectId]/edit`                               | UC-08         | Built       |
+| Citation viewer       | A sheet over any project screen, opened by a `[n]` chip    | UC-20         | Built       |
 
 ## How a source gets processed (UC-11, UC-15)
 
