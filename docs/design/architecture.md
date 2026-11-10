@@ -69,12 +69,12 @@ build — something else already does it.
 
 ### Identity and security — handled by Supabase and Postgres
 
-| Spec controller    | Now                                                                                                                                                                                                                                                                                                                                      | Status    |
-| ------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------- |
-| AuthController     | **Dropped.** Supabase Auth: `signInWithOtp` / `verifyOtp` / `signOut` in `app/login/actions.ts`. Sessions and JWTs are Supabase's; read with `getClaims()`                                                                                                                                                                               | Built     |
-| OAuthController    | **Dropped.** Supabase's Google provider: `signInWithOAuth`, plus one callback route that calls `exchangeCodeForSession`                                                                                                                                                                                                                  | Not built |
-| UserController     | **Mostly dropped.** Email change is Supabase's `updateUser`, which emails a code to the new address; `verifyOtp` with that code switches it (`lib/account.ts`). Account deletion needs one server-side call with the service role (`auth.admin.deleteUser`); the database cascades the rest. Storage is cleared first (`lib/account.ts`) | Built     |
-| SecurityController | **Dropped.** RLS on every table and the storage bucket, `proxy.ts` for routes, zod for input, Next.js origin check on server actions                                                                                                                                                                                                     | Built     |
+| Spec controller    | Now                                                                                                                                                                                                                                                                                                                                      | Status |
+| ------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ |
+| AuthController     | **Dropped.** Supabase Auth: `signInWithOtp` / `verifyOtp` / `signOut` in `app/login/actions.ts`. Sessions and JWTs are Supabase's; read with `getClaims()`                                                                                                                                                                               | Built  |
+| OAuthController    | **Dropped.** Supabase's Google provider: `signInWithOAuth` (`signInWithGoogle` in `app/login/actions.ts`), plus one callback route that calls `exchangeCodeForSession` (`app/auth/callback/route.ts`)                                                                                                                                    | Built  |
+| UserController     | **Mostly dropped.** Email change is Supabase's `updateUser`, which emails a code to the new address; `verifyOtp` with that code switches it (`lib/account.ts`). Account deletion needs one server-side call with the service role (`auth.admin.deleteUser`); the database cascades the rest. Storage is cleared first (`lib/account.ts`) | Built  |
+| SecurityController | **Dropped.** RLS on every table and the storage bucket, `proxy.ts` for routes, zod for input, Next.js origin check on server actions                                                                                                                                                                                                     | Built  |
 
 ### Projects and sources — thin routes over `lib/`
 
@@ -112,7 +112,7 @@ build — something else already does it.
 | Screen                | Route                                                      | Use cases     | Status      |
 | --------------------- | ---------------------------------------------------------- | ------------- | ----------- |
 | Landing page          | `/home` (`/` redirects by sign-in state)                   | —             | Built       |
-| Sign in (and sign up) | `/login` — one form: email, then 6-digit code              | UC-01, UC-03  | Built       |
+| Sign in (and sign up) | `/login` — Google button, or email then 6-digit code       | UC-01, UC-03  | Built       |
 | Dashboard             | `/dashboard`                                               | UC-09         | Built       |
 | New project           | `/projects/new`                                            | UC-07         | Built       |
 | Workspace             | `/projects/[projectId]` — sources + chat                   | UC-09, UC-16  | Built       |

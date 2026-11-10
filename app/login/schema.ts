@@ -10,3 +10,8 @@ export const codeSchema = emailSchema.extend({
 
 export type EmailInput = z.infer<typeof emailSchema>;
 export type CodeInput = z.infer<typeof codeSchema>;
+
+// Shown when Google sign-in fails or is cancelled, whether the action or the callback
+// route caught it.
+export const GOOGLE_SIGN_IN_ERROR =
+  'Google sign-in did not finish. Try again, or use an email code.';

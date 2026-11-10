@@ -13,18 +13,25 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { Field, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field';
+import {
+  Field,
+  FieldError,
+  FieldGroup,
+  FieldLabel,
+  FieldSeparator,
+} from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp';
 
-import { sendCode, verifyCode } from './actions';
+import { sendCode, signInWithGoogle, verifyCode } from './actions';
+import { GoogleIcon } from './google-icon';
 import { codeSchema, emailSchema, type CodeInput, type EmailInput } from './schema';
 
-export function LoginForm() {
+export function LoginForm({ googleError }: { googleError: string | null }) {
   const [email, setEmail] = useState<string | null>(null);
 
   if (email === null) {
-    return <EmailStep onSent={setEmail} />;
+    return <EmailStep googleError={googleError} onSent={setEmail} />;
   }
 
   return (
@@ -37,7 +44,13 @@ export function LoginForm() {
   );
 }
 
-function EmailStep({ onSent }: { onSent: (email: string) => void }) {
+function EmailStep({
+  googleError,
+  onSent,
+}: {
+  googleError: string | null;
+  onSent: (email: string) => void;
+}) {
   const form = useForm<EmailInput>({
     resolver: zodResolver(emailSchema),
     defaultValues: { email: '' },
@@ -56,11 +69,17 @@ function EmailStep({ onSent }: { onSent: (email: string) => void }) {
     <Card className="w-full max-w-sm">
       <CardHeader>
         <CardTitle>Sign in</CardTitle>
-        <CardDescription>We&apos;ll email you a one-time code.</CardDescription>
+        <CardDescription>
+          Continue with Google, or we&apos;ll email you a one-time code.
+        </CardDescription>
       </CardHeader>
       <CardContent>
         <form id="email-form" onSubmit={form.handleSubmit(onSubmit)}>
           <FieldGroup>
+            <GoogleButton initialError={googleError} />
+            <FieldSeparator className="*:data-[slot=field-separator-content]:bg-card">
+              or
+            </FieldSeparator>
             <Controller
               name="email"
               control={form.control}
@@ -96,6 +115,43 @@ function EmailStep({ onSent }: { onSent: (email: string) => void }) {
         </Button>
       </CardFooter>
     </Card>
+  );
+}
+
+function GoogleButton({ initialError }: { initialError: string | null }) {
+  const [error, setError] = useState(initialError);
+  const [pending, setPending] = useState(false);
+
+  // Leaves for Google on success, so we only come back here with an error.
+  async function onClick() {
+    setError(null);
+    setPending(true);
+
+    // A server action rejects only when the request never reaches the server.
+    try {
+      const result = await signInWithGoogle();
+      setError(result.error);
+    } catch {
+      setError('Could not reach the server. Check your connection and try again.');
+    } finally {
+      setPending(false);
+    }
+  }
+
+  return (
+    <Field>
+      <Button
+        type="button"
+        variant="outline"
+        className="w-full"
+        onClick={onClick}
+        disabled={pending}
+      >
+        <GoogleIcon />
+        Continue with Google
+      </Button>
+      {error && <FieldError>{error}</FieldError>}
+    </Field>
   );
 }
 

@@ -145,7 +145,7 @@ The setup follows Supabase's
 [Next.js server-side auth guide](https://supabase.com/docs/guides/auth/server-side/nextjs)
 file for file.
 
-- **Route guard:** `lib/supabase/proxy.ts`. Only `/home`, `/login`, and `/api/health`
+- **Route guard:** `lib/supabase/proxy.ts`. Only `/home`, `/login`, `/auth/callback`, and `/api/health`
   work signed out (`/` redirects by sign-in state); any other page redirects to `/login`,
   any other `/api/*` route answers 401. Add a path to `PUBLIC_PATHS` there to open it.
 - **Server code:** `const supabase = await createClient()` from
@@ -153,7 +153,7 @@ file for file.
   Never trust `getSession()` on the server — it doesn't verify the JWT.
 - **Client code:** `createClient()` from `@/lib/supabase/client`.
 - **Login form:** `app/login/login-form.tsx` — react-hook-form + zod, shadcn `Field`.
-  Server actions in `app/login/actions.ts` (`sendCode`, `verifyCode`, `signOut`).
+  Server actions in `app/login/actions.ts` (`sendCode`, `verifyCode`, `signInWithGoogle`, `signOut`).
 
 Import alias: `@/*` maps to the repo root (e.g. `@/components/ui/button`).
 

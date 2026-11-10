@@ -81,6 +81,29 @@ Then fill in the values using the output of `supabase status`:
 
 Note: `.env.example` says to copy to `.env.local`; the README says `.env`. Either works with Next.js.
 
+## 6b. Google sign-in (optional)
+
+The email code works without this. "Continue with Google" needs a Google OAuth client:
+
+1. Get the client ID and client secret. The team shares one client — ask in the team chat.
+   To make your own: [Google Cloud Console → Google Auth Platform → Clients](https://console.cloud.google.com/auth/clients)
+   → **Create client** → **Web application**, with:
+   - **Authorized JavaScript origins**: `http://localhost:3000` and `http://127.0.0.1:3000`
+   - **Authorized redirect URIs**: `http://127.0.0.1:54321/auth/v1/callback`
+2. Add both to the repo-root `.env` (use `.env`, the Supabase CLI reads it):
+
+   ```
+   SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_ID=<client-id>.apps.googleusercontent.com
+   SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_SECRET=<client-secret>
+   ```
+
+3. Restart Supabase so it reads them: `npx supabase stop`, then `npx supabase start`
+
+Without these, `supabase start` warns that the two variables are unset and the Google
+button fails; everything else works.
+
+The hosted project is configured separately — see [deployment.md](deployment.md).
+
 ## 7. Run the app
 
 ```
@@ -139,6 +162,8 @@ supabase stop         # or: npx supabase stop
 | `unable to unlink` / `.git/objects` errors                             | Move the repo out of OneDrive (step 3)                                                        |
 | Pasted commands show strange characters                                | Type the command by hand                                                                      |
 | Login code never arrives                                               | Check the local inbox at http://127.0.0.1:54324, not your real email                          |
+| Google says `redirect_uri_mismatch`                                    | The OAuth client is missing `http://127.0.0.1:54321/auth/v1/callback` under redirect URIs     |
+| "Google sign-in did not finish" every time                             | The two Google values are missing from `.env`, or Supabase wasn't restarted (step 6b)         |
 | Port already in use                                                    | Stop the other process or `supabase stop` then `supabase start`                               |
 | Wrong Node version                                                     | Install Node 24 (`nvm use` reads `.nvmrc`)                                                    |
 
