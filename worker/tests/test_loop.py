@@ -1,7 +1,7 @@
 import threading
 import time
 
-from tests.fakes import FakeFiles, FakeQueue, make_source
+from tests.fakes import FakeFiles, FakePages, FakeQueue, make_source
 from worker.config import Config
 from worker.embeddings import EMBEDDING_DIMENSIONS
 from worker.loop import run
@@ -26,7 +26,9 @@ def start_loop(
 ) -> tuple[threading.Thread, threading.Event]:
     stop = threading.Event()
     thread = threading.Thread(
-        target=run, args=(queue, files, FakeEmbedder(), CONFIG, stop), daemon=True
+        target=run,
+        args=(queue, files, FakePages(), FakeEmbedder(), CONFIG, stop),
+        daemon=True,
     )
     thread.start()
 

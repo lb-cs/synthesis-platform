@@ -13,6 +13,7 @@ from worker.db import SourcesQueue
 from worker.embeddings import GatewayEmbedder
 from worker.loop import run
 from worker.storage import SourceFiles
+from worker.web import PageFetcher
 
 log = logging.getLogger('worker')
 
@@ -53,7 +54,7 @@ def main() -> int:
         config.concurrency,
         config.poll_interval_seconds,
     )
-    run(queue, SourceFiles(client), embedder, config, stop)
+    run(queue, SourceFiles(client), PageFetcher(), embedder, config, stop)
     log.info('worker stopped')
 
     return 0

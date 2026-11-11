@@ -21,6 +21,8 @@ class ClaimedSource:
     kind: str
     # Null for a link: it points at a web page and has no file in the bucket.
     storage_path: str | None
+    # The page a link points at. Null for a file.
+    url: str | None
 
 
 class SourcesQueue:

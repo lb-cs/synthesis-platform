@@ -155,3 +155,40 @@ def test_only_the_service_role_can_run_the_queue_functions(
 
         with pytest.raises(psycopg.errors.InsufficientPrivilege):
             cur.execute(sql.SQL('select public.{}()').format(sql.Identifier(function)))
+
+
+def test_a_claimed_link_comes_with_its_url():
+    try:
+        conn = connect()
+    except psycopg.OperationalError:
+        pytest.skip('local Supabase database is not running (supabase start)')
+
+    user_id = uuid.uuid4()
+    url = 'https://example.com/claimed-link'
+
+    # One transaction, rolled back: the user, project, and link never persist.
+    with conn, conn.cursor() as cur:
+        cur.execute(
+            'insert into auth.users (id, email) values (%s, %s)',
+            (user_id, f'worker-test-{user_id}@example.com'),
+        )
+        cur.execute(
+            "insert into public.projects (user_id, title) values (%s, 'Link test')"
+            ' returning id',
+            (user_id,),
+        )
+        project_id = cur.fetchone()[0]
+        cur.execute(
+            'insert into public.sources (project_id, kind, title, url)'
+            " values (%s, 'link', 'A link', %s) returning id",
+            (project_id, url),
+        )
+        source_id = cur.fetchone()[0]
+        cur.execute('set role service_role')
+        cur.execute(
+            'select id, kind, storage_path, url from public.claim_pending_sources(1000)'
+        )
+        claimed = {row[0]: row[1:] for row in cur.fetchall()}
+        conn.rollback()
+
+    assert claimed[source_id] == ('link', None, url)

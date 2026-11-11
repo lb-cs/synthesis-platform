@@ -9,6 +9,7 @@ dependencies = [
     "pymupdf>=1.26,<2",
     "python-dotenv>=1.2.4",
     "supabase>=2.33.0",
+    "trafilatura>=2,<3",
 ]
 
 [dependency-groups]

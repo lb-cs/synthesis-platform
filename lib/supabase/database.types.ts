@@ -236,6 +236,7 @@ export type Database = {
           kind: string;
           project_id: string;
           storage_path: string;
+          url: string;
         }[];
       };
       fail_stale_sources: {
