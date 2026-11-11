@@ -9,9 +9,14 @@ import type { Source } from '@/lib/sources';
 
 export type PassageSource = Pick<Source, 'id' | 'title'>;
 
-/** Ready sources, oldest first: only those have chunks to search or sample. */
+/**
+ * Ready files, oldest first: only those have chunks to search or sample. Links have
+ * chunks too, but a citation can only open a file yet, so they stay out, as in chat.
+ */
 export function getReadySources(sources: Source[]): PassageSource[] {
-  const ready = sources.filter((source) => source.status === 'ready');
+  const ready = sources.filter((source) => {
+    return source.status === 'ready' && source.storagePath !== null;
+  });
   const oldestFirst = ready.toSorted((a, b) => a.createdAt.localeCompare(b.createdAt));
 
   return oldestFirst.map(({ id, title }) => ({ id, title }));

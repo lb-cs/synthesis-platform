@@ -28,8 +28,8 @@ function hasFile(source: Source): boolean {
 
 /**
  * The sources chat can draw on, oldest first: uploaded files that haven't failed. Only
- * the `ready` ones are searchable yet; the rest are still processing. Links are left
- * out until the worker fetches them (CECS491-85).
+ * the `ready` ones are searchable yet; the rest are still processing. The worker reads
+ * links too, but they stay out until a citation can open a web page, not just a file.
  */
 export function getChatSources(sources: Source[]): Source[] {
   const usable = sources.filter((source) => source.status !== 'failed').filter(hasFile);
