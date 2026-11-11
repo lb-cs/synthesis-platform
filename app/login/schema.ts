@@ -11,6 +11,9 @@ export const codeSchema = emailSchema.extend({
 export type EmailInput = z.infer<typeof emailSchema>;
 export type CodeInput = z.infer<typeof codeSchema>;
 
+// The `?error=` value /auth/callback sends back to /login when Google sign-in fails.
+export const GOOGLE_ERROR_PARAM = 'google';
+
 // Shown when Google sign-in fails or is cancelled, whether the action or the callback
 // route caught it.
 export const GOOGLE_SIGN_IN_ERROR =
