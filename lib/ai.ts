@@ -83,6 +83,8 @@ export type GroundedPrompt = {
 export type SourcePassages = {
   id: string;
   title: string;
+  /** A link source's web page, so its citations open there. Null for a file. */
+  url: string | null;
   chunks: RetrievedChunk[];
 };
 
