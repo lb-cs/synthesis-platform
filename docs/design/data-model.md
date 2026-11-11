@@ -198,7 +198,9 @@ be stored.
 ## Still open from the spec
 
 - **YouTube sources** need a `kind` value, and a location that isn't a page (the spec's
-  `timestampRange`). Web links exist (`kind = 'link'`, `url`) but the worker does not
-  fetch them yet (CECS491-85). When it does, citations need a fallback: today every
-  citation opens `…/sources/[sourceId]/file`, which returns 404 for a link
+  `timestampRange`). Web links exist (`kind = 'link'`, `url`), and the worker fetches
+  them into chunks (CECS491-85), with the page title in `metadata.title`. Citations still
+  need a fallback before links can be searched: today every citation opens
+  `…/sources/[sourceId]/file`, which returns 404 for a link, so chat (`getChatSources`)
+  and Analysis (`getReadySources`) leave links out
 - **"Typical" and "moderate-size"** — the spec never gives numbers

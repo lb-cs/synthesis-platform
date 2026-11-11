@@ -78,12 +78,12 @@ build — something else already does it.
 
 ### Projects and sources — thin routes over `lib/`
 
-| Spec controller         | Now                                                                                                                                                              | Status       |
-| ----------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| ProjectController       | `lib/projects.ts`, exposed by `app/api/projects/**` and the `createProject` server action                                                                        | Built        |
-| SourceController        | `lib/sources.ts` with authenticated GET/POST and PATCH/DELETE source routes. User edits can change only the title; delete removes the Storage file after the row | Built        |
-| UploadController        | **Mostly dropped.** The bucket enforces type (PDF, text, Markdown) and size (50 MiB). The app uploads to Storage, then inserts the `sources` row                 | Built        |
-| LinkIngestionController | Link sources. **Web links:** the Add link form (`addLinkSource` action) inserts a `link` row; page fetching in the worker is CECS491-85. YouTube is not built    | Partly built |
+| Spec controller         | Now                                                                                                                                                                                                                                                                              | Status       |
+| ----------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| ProjectController       | `lib/projects.ts`, exposed by `app/api/projects/**` and the `createProject` server action                                                                                                                                                                                        | Built        |
+| SourceController        | `lib/sources.ts` with authenticated GET/POST and PATCH/DELETE source routes. User edits can change only the title; delete removes the Storage file after the row                                                                                                                 | Built        |
+| UploadController        | **Mostly dropped.** The bucket enforces type (PDF, text, Markdown) and size (50 MiB). The app uploads to Storage, then inserts the `sources` row                                                                                                                                 | Built        |
+| LinkIngestionController | Link sources. **Web links:** the Add link form (`addLinkSource` action) inserts a `link` row; the worker fetches the page, extracts its text, and chunks and embeds it (CECS491-85). Chat and Analysis leave links out until citations can open a web page. YouTube is not built | Partly built |
 
 ### Processing — the worker
 
