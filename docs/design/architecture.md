@@ -78,12 +78,12 @@ build — something else already does it.
 
 ### Projects and sources — thin routes over `lib/`
 
-| Spec controller         | Now                                                                                                                                                                                                                                                                              | Status       |
-| ----------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| ProjectController       | `lib/projects.ts`, exposed by `app/api/projects/**` and the `createProject` server action                                                                                                                                                                                        | Built        |
-| SourceController        | `lib/sources.ts` with authenticated GET/POST and PATCH/DELETE source routes. User edits can change only the title; delete removes the Storage file after the row                                                                                                                 | Built        |
-| UploadController        | **Mostly dropped.** The bucket enforces type (PDF, text, Markdown) and size (50 MiB). The app uploads to Storage, then inserts the `sources` row                                                                                                                                 | Built        |
-| LinkIngestionController | Link sources. **Web links:** the Add link form (`addLinkSource` action) inserts a `link` row; the worker fetches the page, extracts its text, and chunks and embeds it (CECS491-85). Chat and Analysis leave links out until citations can open a web page. YouTube is not built | Partly built |
+| Spec controller         | Now                                                                                                                                                                                                                                                                                                                  | Status       |
+| ----------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| ProjectController       | `lib/projects.ts`, exposed by `app/api/projects/**` and the `createProject` server action                                                                                                                                                                                                                            | Built        |
+| SourceController        | `lib/sources.ts` with authenticated GET/POST and PATCH/DELETE source routes. User edits can change only the title; delete removes the Storage file after the row                                                                                                                                                     | Built        |
+| UploadController        | **Mostly dropped.** The bucket enforces type (PDF, text, Markdown) and size (50 MiB). The app uploads to Storage, then inserts the `sources` row                                                                                                                                                                     | Built        |
+| LinkIngestionController | Link sources. **Web links:** the Add link form (`addLinkSource` action) inserts a `link` row; the worker fetches the page, extracts its text, and chunks and embeds it (CECS491-85). Chat, Compare, and Themes search links like files; a link's citation shows the passage and opens the page. YouTube is not built | Partly built |
 
 ### Processing — the worker
 
@@ -176,6 +176,8 @@ its own `citations` rows: one per passage it cites, with the `number` it used. A
 opens the citation viewer (CECS491-78): it downloads the file from `GET …/sources/[sourceId]/file`,
 shows the cited page of a PDF (react-pdf), and marks the cited chunk's text on it. A text file
 is shown whole with the passage marked. If the passage can't be found, the page still opens.
+A web link has no stored file, so its citation shows the cited passage and opens the page
+itself (the citation carries the source's `url`).
 
 Answers saved before retrieval cited whole sources and have no `citations` rows, so
 their `[n]` no longer link.

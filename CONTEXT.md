@@ -67,7 +67,7 @@ _Avoid_: "project page", "chat page".
 
 **Source**:
 Something a user adds to a project for the AI to draw on: an uploaded PDF or text file
-today, a web link (added; the worker cannot read it yet) or a YouTube video as a stretch
+today, a web link (the worker fetches the page's text), or a YouTube video as a stretch
 goal. A link has a `url` instead of a file. Listed under `…/sources`; CRUD
 lives in `lib/sources.ts` and `/api/projects/[projectId]/sources`. User edits can
 change only the title; removing a source cascades its chunks and citations, then deletes
