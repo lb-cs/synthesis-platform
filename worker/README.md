@@ -49,6 +49,17 @@ embeds it like a plain-text file (see [Web links](#web-links)).
 | `src/worker/embeddings.py` | AI Gateway embedding requests and response validation    |
 | `src/worker/summary.py`    | AI Gateway request for each source's short summary       |
 
+## Threads and the Supabase connection
+
+The polling thread and the source threads share one Supabase client
+(`create_worker_client` in `db.py`), and it talks HTTP/1.1 on purpose. supabase-py
+defaults to HTTP/2, which puts every thread's requests on one connection; httpx's sync
+HTTP/2 connection can't be read from several threads at once, and two requests that
+overlapped both died with `ReadError: [Errno 11] Resource temporarily unavailable`,
+failing the source. Over HTTP/1.1 each request in flight gets its own pooled
+connection. Saving a source's results is also retried (3 tries) when the connection
+drops, since saving clears the source's chunks first and is safe to run again.
+
 ## Parsing and chunking
 
 `src/worker/parsing.py` turns a file into text, one entry per page. PDFs are read with

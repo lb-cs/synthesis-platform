@@ -7,9 +7,13 @@ relying on a policy.
 from dataclasses import dataclass
 from typing import Any
 
-from supabase import Client
+import httpx
+from supabase import Client, ClientOptions, create_client
 
 from worker.chunking import Chunk
+
+# supabase-py's own default for database requests.
+SUPABASE_TIMEOUT_SECONDS = 120.0
 
 # Rows per insert. 100 chunks of up to 1,000 characters is about 100 KB a request.
 CHUNK_INSERT_BATCH_SIZE = 100
@@ -36,6 +40,32 @@ def to_claimed_source(row: dict[str, Any]) -> ClaimedSource:
         kind=row['kind'],
         storage_path=row['storage_path'],
         url=row.get('url'),
+    )
+
+
+def create_worker_client(
+    supabase_url: str,
+    service_role_key: str,
+    transport: httpx.BaseTransport | None = None,
+) -> Client:
+    """The Supabase client every thread shares, over HTTP/1.1.
+
+    supabase-py defaults to HTTP/2, which sends every thread's requests down one
+    connection. httpx's sync HTTP/2 connection is not safe to read from several threads
+    at once: the polling thread and a source thread collided, both requests died with
+    `ReadError: [Errno 11]`, and the source failed. Over HTTP/1.1 each request in flight
+    takes its own pooled connection, so threads never share a socket. `transport` is for
+    tests.
+    """
+    http_client = httpx.Client(
+        http2=False,
+        follow_redirects=True,
+        timeout=SUPABASE_TIMEOUT_SECONDS,
+        transport=transport,
+    )
+
+    return create_client(
+        supabase_url, service_role_key, options=ClientOptions(httpx_client=http_client)
     )
 
 
