@@ -11,7 +11,12 @@ import {
   streamGroundedAnswer,
   toVectorLiteral,
 } from '@/lib/ai';
-import { findChatPassages, getChatSources, toChatCitations } from '@/lib/answer';
+import {
+  findChatPassages,
+  getChatSources,
+  toChatCitations,
+  toListedSources,
+} from '@/lib/answer';
 import {
   createChatMessage,
   createCitations,
@@ -134,6 +139,7 @@ export async function POST(request: Request, context: Context) {
   const passages = passagesResult.passages;
   // No passages still goes to the model: the prompt says none matched, and it answers so.
   const { result, passageNumbers } = streamGroundedAnswer({
+    sources: toListedSources(chatSources),
     chunks: passages,
     history: earlier,
     question,

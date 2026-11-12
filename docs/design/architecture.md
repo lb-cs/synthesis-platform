@@ -170,11 +170,15 @@ until one is, since only `ready` sources have chunks to search.
 Chat retrieves (CECS491-73). `POST /api/projects/[projectId]/chat` embeds the question
 (`embedQuestion`, the worker's model), and `findChatPassages` in `lib/answer.ts` calls
 `match_document_chunks` for the 8 closest chunks across the project's `ready` sources.
-A question that names a source by its title or a link's host ("summarize workos.com",
+A question that names a source by its title, the title inside the document, or a link's host ("summarize workos.com",
 `findNamedSources`) is answered from the named sources only: up to 16 passages shared
 between them, half spread through each source and half its closest chunks
 (`match_source_chunks`). A chunk's text doesn't carry its source's name, so the
 project-wide search alone can't find a source by name.
+Every prompt also opens with the project's source list (`toListedSources`): each chat
+source's title, kind, link, and what the worker put in `metadata` (page count, the
+document's own title, author, subject). The model uses it to tell which source a
+question means and to say what the project holds; it still cites passages only.
 `streamGroundedAnswer` in `lib/ai.ts` sends those chunks numbered `[1]…[n]` plus the last
 `HISTORY_LIMIT` turns. The numbers restart with every answer, so each saved answer keeps
 its own `citations` rows: one per passage it cites, with the `number` it used. A citation

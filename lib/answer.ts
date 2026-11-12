@@ -6,7 +6,7 @@
  */
 import type { SupabaseClient } from '@supabase/supabase-js';
 
-import type { PassageNumber, RetrievedChunk } from '@/lib/ai';
+import type { ListedSource, PassageNumber, RetrievedChunk } from '@/lib/ai';
 import type { CitedSource } from '@/lib/citations';
 import type { PassageRow } from '@/lib/passages';
 import type { Source } from '@/lib/sources';
@@ -20,6 +20,9 @@ const CHAT_PASSAGE_COUNT = 8;
 // this many passages, shared between the named sources.
 const NAMED_PASSAGE_COUNT = 16;
 const NAMED_SOURCE_LIMIT = 4;
+
+// Per detail in the prompt's source list: a PDF's title or subject can run to paragraphs.
+const DETAIL_LENGTH_LIMIT = 120;
 
 // Shorter titles ("ai", "v2") turn up in questions that aren't about the source.
 const MIN_NAME_LENGTH = 3;
@@ -42,15 +45,99 @@ export function getChatSources(sources: Source[]): Source[] {
   return usable.toSorted((a, b) => a.createdAt.localeCompare(b.createdAt));
 }
 
-/** How a question can name a source: its title, and a link's host (`workos.com`). */
+const KIND_LABELS: Record<Source['kind'], string> = {
+  pdf: 'PDF',
+  text: 'text file',
+  link: 'web page',
+};
+
+/** One line of whitespace-free text, cut short: document metadata can be any length. */
+function toDetailText(value: string): string {
+  const oneLine = value.replace(/\s+/g, ' ').trim();
+
+  return oneLine.slice(0, DETAIL_LENGTH_LIMIT);
+}
+
+/** What the worker's `metadata` says about a source, as short facts. */
+function getMetadataDetails(source: Source): string[] {
+  const metadata = source.metadata;
+
+  if (metadata === null || typeof metadata !== 'object' || Array.isArray(metadata)) {
+    return [];
+  }
+
+  const details: string[] = [];
+  const { page_count: pageCount, title, author, subject } = metadata;
+
+  if (typeof pageCount === 'number') {
+    details.push(`${pageCount} pages`);
+  }
+
+  // A file's own title often says more than its file name; skip it when they match.
+  if (typeof title === 'string' && toDetailText(title) !== source.title) {
+    details.push(`titled "${toDetailText(title)}"`);
+  }
+
+  if (typeof author === 'string') {
+    details.push(`by ${toDetailText(author)}`);
+  }
+
+  if (typeof subject === 'string') {
+    details.push(`about ${toDetailText(subject)}`);
+  }
+
+  return details;
+}
+
+/**
+ * Every chat source as a line for the prompt's source list, oldest first, so the model
+ * knows what the project holds and which source a question means. A source still
+ * processing is listed too, marked as not searchable yet.
+ */
+export function toListedSources(sources: Source[]): ListedSource[] {
+  return sources.map((source) => {
+    const details = [KIND_LABELS[source.kind]];
+
+    if (source.url !== null) {
+      details.push(toDetailText(source.url));
+    }
+
+    details.push(...getMetadataDetails(source));
+
+    if (source.status !== 'ready') {
+      details.push('still processing, not searchable yet');
+    }
+
+    return { title: source.title, details };
+  });
+}
+
+/** The title the worker found inside the file or page, when it found one. */
+function getDocumentTitle(source: Source): string | null {
+  const metadata = source.metadata;
+
+  if (metadata === null || typeof metadata !== 'object' || Array.isArray(metadata)) {
+    return null;
+  }
+
+  return typeof metadata.title === 'string' ? metadata.title : null;
+}
+
+/**
+ * How a question can name a source: its title, the title inside the document, and a
+ * link's host (`workos.com`).
+ */
 function getSourceNames(source: Source): string[] {
+  const documentTitle = getDocumentTitle(source);
+  const titles = documentTitle === null ? [source.title] : [source.title, documentTitle];
+
   if (source.url === null || !URL.canParse(source.url)) {
-    return [source.title];
+    return titles;
   }
 
   const host = new URL(source.url).hostname.replace(/^www\./, '');
 
-  return [source.title, host];
+  return [...titles, host];
 }
 
 /** Lowercase words padded with spaces, so `includes` only matches whole words. */
