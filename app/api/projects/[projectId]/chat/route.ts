@@ -110,6 +110,7 @@ export async function POST(request: Request, context: Context) {
     supabase,
     project.id,
     chatSources,
+    question,
     toVectorLiteral(embeddingResult.embedding),
   );
 
