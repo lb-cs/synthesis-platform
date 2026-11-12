@@ -182,6 +182,12 @@ source's title, kind, link, and what the worker put in `metadata` (page count, t
 document's own title, author, subject, and the short `summary` it writes after
 embedding, `worker/src/worker/summary.py`). The model uses it to tell which source a
 question means and to say what the project holds; it still cites passages only.
+When those passages don't answer the question, the model fetches more itself with two
+tools (`lib/chat-tools.ts`): `searchSources` (a query, across the project or in one
+source) and `readSource` (a spread through one source). It gets up to three rounds of
+tool calls, then must answer. A fetched passage takes the next passage number (the
+answer's `PassageBook`), so it is cited and saved like the rest; the citations for
+fetched passages reach the browser when the answer finishes.
 `streamGroundedAnswer` in `lib/ai.ts` sends those chunks numbered `[1]…[n]` plus the last
 `HISTORY_LIMIT` turns. The numbers restart with every answer, so each saved answer keeps
 its own `citations` rows: one per passage it cites, with the `number` it used. A citation

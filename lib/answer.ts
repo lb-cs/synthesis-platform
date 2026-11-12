@@ -21,6 +21,9 @@ const CHAT_PASSAGE_COUNT = 8;
 const NAMED_PASSAGE_COUNT = 16;
 const NAMED_SOURCE_LIMIT = 4;
 
+// What the readSource tool returns: enough to summarize one source from.
+const READ_PASSAGE_COUNT = 12;
+
 // Per detail in the prompt's source list: a PDF's title or subject can run to paragraphs.
 const DETAIL_LENGTH_LIMIT = 120;
 
@@ -331,6 +334,16 @@ export async function findChatPassages(
     }
   }
 
+  return findProjectPassages(supabase, projectId, sources, queryEmbedding);
+}
+
+/** The chunks closest to a query across the project's ready sources, best first. */
+export async function findProjectPassages(
+  supabase: Client,
+  projectId: string,
+  sources: Source[],
+  queryEmbedding: string,
+): Promise<ChatPassagesResult> {
   const { data, error } = await supabase.rpc('match_document_chunks', {
     project_id: projectId,
     query_embedding: queryEmbedding,
@@ -350,6 +363,89 @@ export async function findChatPassages(
   });
 
   return { ok: true, passages };
+}
+
+/** The chunks of one ready source closest to a query, best first. */
+export async function findSourcePassages(
+  supabase: Client,
+  projectId: string,
+  source: Source,
+  queryEmbedding: string,
+): Promise<ChatPassagesResult> {
+  const { data, error } = await supabase.rpc('match_source_chunks', {
+    project_id: projectId,
+    source_ids: [source.id],
+    query_embedding: queryEmbedding,
+    match_count_per_source: CHAT_PASSAGE_COUNT,
+  });
+
+  if (error) {
+    return { ok: false, kind: 'database-error' };
+  }
+
+  return { ok: true, passages: data.map((row) => toChatPassage(row, source)) };
+}
+
+/** Passages spread from the start to the end of one source, in reading order. */
+export async function sampleSourcePassages(
+  supabase: Client,
+  source: Source,
+): Promise<ChatPassagesResult> {
+  const rows = await sampleSourceChunks(supabase, source.id, READ_PASSAGE_COUNT);
+
+  if (rows === null) {
+    return { ok: false, kind: 'database-error' };
+  }
+
+  return { ok: true, passages: rows.map((row) => toChatPassage(row, source)) };
+}
+
+/**
+ * The ready source a name refers to: its exact title first, since two titles can share
+ * words, then whatever `findNamedSources` makes of it.
+ */
+export function findSourceByName(name: string, sources: Source[]): Source | null {
+  const wanted = name.trim().toLowerCase();
+  const exact = sources.find((source) => {
+    return source.status === 'ready' && source.title.toLowerCase() === wanted;
+  });
+
+  return exact ?? findNamedSources(name, sources).at(0) ?? null;
+}
+
+/**
+ * Numbers every passage one answer can cite. The passages retrieved up front take
+ * [1]…[n]; each passage a tool fetches later takes the next number, and a passage seen
+ * before keeps the number it has.
+ */
+export type PassageBook = {
+  /** Every passage so far; a passage's number is its position plus one. */
+  passages: ChatPassage[];
+};
+
+/** Adds the passages the book doesn't have, and returns each with its number. */
+export function numberPassages(
+  book: PassageBook,
+  passages: ChatPassage[],
+): { passage: ChatPassage; number: number }[] {
+  return passages.map((passage) => {
+    const known = book.passages.findIndex((candidate) => candidate.id === passage.id);
+
+    if (known !== -1) {
+      return { passage, number: known + 1 };
+    }
+
+    book.passages.push(passage);
+
+    return { passage, number: book.passages.length };
+  });
+}
+
+/** The book's numbers as chunk ids, to build citations and save them. */
+export function getPassageNumbers(book: PassageBook): PassageNumber[] {
+  return book.passages.map((passage, index) => {
+    return { number: index + 1, chunkId: passage.id };
+  });
 }
 
 /** Each `[n]` the answer can cite, as the source and page it opens. */
