@@ -2,7 +2,9 @@
 PageFetcher against a fake DNS and httpx.MockTransport: no request leaves the machine.
 """
 
+import http.server
 import socket
+import threading
 from collections.abc import Callable
 
 import httpx
@@ -27,6 +29,7 @@ from worker.web import (
     FetchError,
     PageFetcher,
     is_public_address,
+    new_client,
 )
 
 PUBLIC_ADDRESS = '93.184.216.34'
@@ -275,3 +278,39 @@ def test_only_global_addresses_count_as_public():
     assert is_public_address('8.8.8.8')
     assert is_public_address('2606:4700::1111')
     assert not is_public_address('224.0.0.1')
+
+
+def test_two_sites_on_one_address_never_share_a_connection():
+    """Requests go to the IP, so a pooled connection would carry one site's TLS session
+    into another site's request. A loopback server counts the connections it accepts."""
+    connections: set[tuple[str, int]] = set()
+
+    class CountConnections(http.server.BaseHTTPRequestHandler):
+        protocol_version = 'HTTP/1.1'
+
+        def do_GET(self) -> None:
+            connections.add(self.client_address)
+            self.send_response(200)
+            self.send_header('content-length', '2')
+            self.end_headers()
+            self.wfile.write(b'ok')
+
+        def log_message(self, *args: object) -> None:
+            pass
+
+    server = http.server.ThreadingHTTPServer(('127.0.0.1', 0), CountConnections)
+    threading.Thread(target=server.serve_forever, daemon=True).start()
+    url = f'http://127.0.0.1:{server.server_address[1]}/'
+
+    try:
+        with new_client() as client:
+            for host in ('one.example', 'two.example'):
+                request = client.build_request('GET', url, headers={'Host': host})
+                response = client.send(request, stream=True)
+                response.read()
+                response.close()
+    finally:
+        server.shutdown()
+        server.server_close()
+
+    assert len(connections) == 2

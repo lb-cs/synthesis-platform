@@ -84,7 +84,9 @@ private, link-local, which includes cloud metadata at `169.254.169.254`, or rese
 ranges). The request then goes to the address that was checked, with the real name in
 `Host` and in TLS SNI so the certificate is still verified. Connecting by name again
 would let a DNS answer change between the check and the request (DNS rebinding).
-Redirects are followed by hand for the same reason. The app's link form rejects IP
+Redirects are followed by hand for the same reason. Connections are not kept alive:
+httpx pools them by address, so a reused one would carry one site's TLS session into a
+request for another site on the same address. The app's link form rejects IP
 addresses and bare host names too (`lib/link-url.ts`), but the worker does not rely on it.
 
 **Limits.** 10 seconds for the whole fetch, redirects included (a typical page takes well

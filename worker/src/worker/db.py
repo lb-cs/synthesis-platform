@@ -5,6 +5,7 @@ relying on a policy.
 """
 
 from dataclasses import dataclass
+from typing import Any
 
 from supabase import Client
 
@@ -25,6 +26,19 @@ class ClaimedSource:
     url: str | None
 
 
+def to_claimed_source(row: dict[str, Any]) -> ClaimedSource:
+    # Read by name, not ClaimedSource(**row): the migration and the worker deploy at
+    # different moments, so a claim may return a column this worker doesn't know yet, or
+    # lack `url`. Raising here would strand rows the claim already marked 'processing'.
+    return ClaimedSource(
+        id=row['id'],
+        project_id=row['project_id'],
+        kind=row['kind'],
+        storage_path=row['storage_path'],
+        url=row.get('url'),
+    )
+
+
 class SourcesQueue:
     """sources.status is the queue: pending → processing → ready | failed."""
 
@@ -36,7 +50,7 @@ class SourcesQueue:
             'claim_pending_sources', {'max_count': max_count}
         ).execute()
 
-        return [ClaimedSource(**row) for row in response.data]
+        return [to_claimed_source(row) for row in response.data]
 
     def fail_stale(self, stale_after_minutes: int) -> int:
         response = self._client.rpc(

@@ -106,6 +106,16 @@ def is_public_address(address: str) -> bool:
     return ip.is_global and not ip.is_multicast
 
 
+def new_client() -> httpx.Client:
+    # Requests go to an IP address, so httpx pools connections by address, not by name.
+    # A kept-alive connection opened for one site (its SNI and certificate) would be
+    # reused for another site on the same address, so every request gets its own.
+    no_keep_alive = httpx.Limits(max_keepalive_connections=0)
+
+    # Redirects are followed by hand so each hop's address is checked.
+    return httpx.Client(follow_redirects=False, limits=no_keep_alive)
+
+
 class PageFetcher:
     def __init__(
         self,
@@ -113,8 +123,7 @@ class PageFetcher:
         resolve: Resolver = resolve_host,
         clock: Callable[[], float] = time.monotonic,
     ) -> None:
-        # Redirects are followed by hand so each hop's address is checked.
-        self._client = client or httpx.Client(follow_redirects=False)
+        self._client = client or new_client()
         self._resolve = resolve
         self._clock = clock
 
