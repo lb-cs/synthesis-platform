@@ -1,3 +1,4 @@
+import httpx
 import pytest
 from supabase import StorageException
 
@@ -167,3 +168,42 @@ def test_embedding_failure_marks_source_failed_without_leaking_provider_details(
 
     assert queue.failed == {'source-1': UNEXPECTED_FAILURE}
     assert queue.saved == {}
+
+
+class FlakyQueue(FakeQueue):
+    """Drops the connection on the first `drops` saves, then saves normally."""
+
+    def __init__(self, drops: int) -> None:
+        super().__init__([])
+        self.drops = drops
+        self.save_attempts = 0
+
+    def save_results(self, source, metadata, chunks):
+        self.save_attempts += 1
+
+        if self.save_attempts <= self.drops:
+            raise httpx.ReadError('[Errno 11] Resource temporarily unavailable')
+
+        super().save_results(source, metadata, chunks)
+
+
+def test_a_dropped_connection_while_saving_is_retried(monkeypatch):
+    monkeypatch.setattr('worker.loop.SAVE_RETRY_DELAY_SECONDS', 0)
+    queue = FlakyQueue(drops=2)
+
+    process_source(make_source(1), queue, FakeFiles(), FakePages(), FakeEmbedder())
+
+    assert queue.save_attempts == 3
+    assert queue.ready == ['source-1']
+    assert queue.failed == {}
+
+
+def test_a_connection_that_keeps_dropping_fails_the_source(monkeypatch):
+    monkeypatch.setattr('worker.loop.SAVE_RETRY_DELAY_SECONDS', 0)
+    queue = FlakyQueue(drops=3)
+
+    process_source(make_source(1), queue, FakeFiles(), FakePages(), FakeEmbedder())
+
+    assert queue.save_attempts == 3
+    assert queue.failed == {'source-1': UNEXPECTED_FAILURE}
+    assert queue.ready == []

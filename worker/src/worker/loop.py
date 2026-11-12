@@ -9,6 +9,7 @@ import time
 from concurrent.futures import FIRST_COMPLETED, Future, ThreadPoolExecutor, wait
 from typing import Protocol
 
+import httpx
 from supabase import StorageException
 
 from worker import pipeline
@@ -27,6 +28,11 @@ DOWNLOAD_FAILED = 'The file could not be read from storage. Try uploading it aga
 UNEXPECTED_FAILURE = 'Processing failed unexpectedly. Try uploading the file again.'
 
 STALE_SWEEP_INTERVAL_SECONDS = 60
+
+# A dropped connection while saving shouldn't fail a source that parsed and embedded
+# fine. Saving clears the source's chunks first, so running it again is safe.
+SAVE_ATTEMPTS = 3
+SAVE_RETRY_DELAY_SECONDS = 1.0
 
 
 class Queue(Protocol):
@@ -80,7 +86,7 @@ def run_pipeline(
     """Returns the user-facing failure message, or None when the source is ready."""
     try:
         processed = read_source(source, files, pages, embedder, summarizer)
-        queue.save_results(source, processed.metadata, processed.chunks)
+        save_results(source, queue, processed)
     except (ProcessingError, FetchError) as error:
         return str(error)
     except StorageException as error:
@@ -91,6 +97,26 @@ def run_pipeline(
         return UNEXPECTED_FAILURE
 
     return None
+
+
+def save_results(
+    source: ClaimedSource, queue: Queue, processed: pipeline.ProcessedSource
+) -> None:
+    """Saves the chunks and metadata, trying again when the connection drops."""
+    for attempt in range(1, SAVE_ATTEMPTS + 1):
+        try:
+            queue.save_results(source, processed.metadata, processed.chunks)
+            return
+        except httpx.TransportError as error:
+            if attempt == SAVE_ATTEMPTS:
+                raise
+
+            log.warning(
+                'source %s: saving failed (%s); trying again',
+                source.id,
+                type(error).__name__,
+            )
+            time.sleep(SAVE_RETRY_DELAY_SECONDS * attempt)
 
 
 def read_source(
