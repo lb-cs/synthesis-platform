@@ -121,3 +121,39 @@ export async function retryFailedSource(
 
   return {};
 }
+
+/** Sends a ready source through the worker again, replacing its chunks and metadata. */
+export async function reprocessReadySource(
+  input: SourceIdsInput,
+): Promise<{ error?: string }> {
+  const parsed = sourceIdsSchema.safeParse(input);
+
+  if (!parsed.success) {
+    return { error: 'This source cannot be processed again. Refresh the page.' };
+  }
+
+  const supabase = await createClient();
+  const supabaseUser = await getSupabaseUser(supabase);
+
+  if (!supabaseUser) {
+    return { error: 'Your session expired. Sign in again.' };
+  }
+
+  const { projectId, sourceId } = parsed.data;
+  const { data, error } = await supabase.rpc('reprocess_ready_source', {
+    p_project_id: projectId,
+    p_source_id: sourceId,
+  });
+
+  if (error) {
+    return { error: 'Could not process this source again. Try again.' };
+  }
+
+  if (!data) {
+    return { error: 'This source is no longer ready. Refresh the page.' };
+  }
+
+  revalidatePath(`/projects/${projectId}`, 'layout');
+
+  return {};
+}

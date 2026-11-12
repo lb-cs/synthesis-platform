@@ -162,7 +162,9 @@ The app polls too: while any source is `pending` or `processing`, the Sources pa
 the workspace's Sources panel call `router.refresh()` every 3 s
 (`sources/refresh-while-processing.tsx`). A `failed` source shows its `processing_error`
 and a **Retry processing** button, which calls `retry_failed_source()` to set it back to
-`pending`. Until a source is `ready`, the workspace says so (UC-16 E2); chat refuses
+`pending`. A `ready` source has **Process again**, which calls `reprocess_ready_source()`
+to do the same: the worker replaces its chunks and metadata (a link is fetched again),
+and earlier answers lose their citation links into it. Until a source is `ready`, the workspace says so (UC-16 E2); chat refuses
 until one is, since only `ready` sources have chunks to search.
 
 ## How a question gets answered (UC-16)

@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Field, FieldError, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 
-import { removeSource, retryFailedSource } from './actions';
+import { removeSource, reprocessReadySource, retryFailedSource } from './actions';
 
 const TITLE_MAX_LENGTH = 200;
 
@@ -25,10 +25,11 @@ export function SourceEditForm({
   const [error, setError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [isRetrying, startRetryTransition] = useTransition();
+  const [isReprocessing, startReprocessTransition] = useTransition();
   const [isRemoving, startRemoveTransition] = useTransition();
 
   const trimmedTitle = title.trim();
-  const isBusy = isSaving || isRetrying || isRemoving;
+  const isBusy = isSaving || isRetrying || isReprocessing || isRemoving;
   const canSave = trimmedTitle.length > 0 && trimmedTitle !== source.title && !isBusy;
 
   async function onSubmit(event: React.SubmitEvent<HTMLFormElement>) {
@@ -62,6 +63,28 @@ export function SourceEditForm({
     setError(null);
     startRetryTransition(async () => {
       const result = await retryFailedSource({ projectId, sourceId: source.id });
+
+      if (result.error) {
+        setError(result.error);
+        return;
+      }
+
+      router.refresh();
+    });
+  }
+
+  function onReprocess() {
+    const confirmed = window.confirm(
+      `Process "${source.title}" again? It can't be searched until it finishes, and earlier answers lose their citation links to it.`,
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    setError(null);
+    startReprocessTransition(async () => {
+      const result = await reprocessReadySource({ projectId, sourceId: source.id });
 
       if (result.error) {
         setError(result.error);
@@ -112,6 +135,16 @@ export function SourceEditForm({
           {source.status === 'failed' && (
             <Button type="button" variant="outline" disabled={isBusy} onClick={onRetry}>
               {isRetrying ? 'Retrying…' : 'Retry processing'}
+            </Button>
+          )}
+          {source.status === 'ready' && (
+            <Button
+              type="button"
+              variant="outline"
+              disabled={isBusy}
+              onClick={onReprocess}
+            >
+              {isReprocessing ? 'Starting…' : 'Process again'}
             </Button>
           )}
           <Button

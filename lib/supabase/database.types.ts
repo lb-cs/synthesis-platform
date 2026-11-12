@@ -243,6 +243,10 @@ export type Database = {
         Args: { stale_after_minutes?: number };
         Returns: number;
       };
+      reprocess_ready_source: {
+        Args: { p_project_id: string; p_source_id: string };
+        Returns: boolean;
+      };
       retry_failed_source: {
         Args: { p_project_id: string; p_source_id: string };
         Returns: boolean;

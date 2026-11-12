@@ -84,8 +84,8 @@ _Avoid_: "source" for the file itself, "blob", "attachment".
 **Processing status**:
 Where a source is in the worker's pipeline: `'pending' | 'processing' | 'ready' |
 'failed'` (`public.sources.status`). The worker moves it through the pipeline; the signed-in
-owner can retry a failed source to return it to `pending`. A source is answerable once it is
-`ready`.
+owner can retry a failed source, or process a ready one again, to return it to `pending`.
+A source is answerable once it is `ready`.
 _Avoid_: "state", "job" (there is no job table; the status column is the queue).
 
 **Claim**:

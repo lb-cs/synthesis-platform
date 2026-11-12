@@ -16,7 +16,8 @@ summary of the source and saves it as `sources.metadata.summary`. Chat lists it 
 every prompt, so the model knows what each source is about. A long source is sampled
 from start to end (40,000 characters) instead of sent whole. The summary is optional:
 if the Gateway call fails, the source still ends `ready`, without one. A source
-processed before this change has no summary until it is processed again.
+processed before this change has no summary until it is processed again (**Process
+again** on the source in the app).
 
 Web link sources (`kind = 'link'`) have a `url` and no file. The worker fetches the
 page instead of downloading a file, keeps its readable text, and from there chunks and
