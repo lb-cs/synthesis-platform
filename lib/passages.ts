@@ -7,14 +7,14 @@ import type { PassageNumber, SourcePassages } from '@/lib/ai';
 import type { CitedSource } from '@/lib/citations';
 import type { Source } from '@/lib/sources';
 
-export type PassageSource = Pick<Source, 'id' | 'title'>;
+export type PassageSource = Pick<Source, 'id' | 'title' | 'url'>;
 
-/** Ready sources, oldest first: only those have chunks to search or sample. */
+/** Ready files and links, oldest first: only those have chunks to search or sample. */
 export function getReadySources(sources: Source[]): PassageSource[] {
   const ready = sources.filter((source) => source.status === 'ready');
   const oldestFirst = ready.toSorted((a, b) => a.createdAt.localeCompare(b.createdAt));
 
-  return oldestFirst.map(({ id, title }) => ({ id, title }));
+  return oldestFirst.map(({ id, title, url }) => ({ id, title, url }));
 }
 
 /** A row from match_source_chunks or sample_source_chunks. */
@@ -41,7 +41,7 @@ export function groupPassages(
       };
     });
 
-    return { id: source.id, title: source.title, chunks };
+    return { id: source.id, title: source.title, url: source.url, chunks };
   });
 }
 
@@ -58,6 +58,7 @@ export function toPassageCitations(
           title: source.title,
           pageNumber: chunk.pageNumber,
           passage: chunk.content,
+          url: source.url,
         };
 
         return [chunk.id, passage] as const;

@@ -57,6 +57,19 @@ function SourceViewerBody({
   return <TextViewer file={fileState.file} passage={citation.passage} />;
 }
 
+// A web page isn't stored, only its extracted text, so the cited passage is the view.
+function WebPassage({ passage }: { passage: string | undefined }) {
+  if (!passage) {
+    return <ViewerMessage>Open the web page to read this source.</ViewerMessage>;
+  }
+
+  return (
+    <blockquote className="border-l-2 border-yellow-400 pl-4 text-sm leading-relaxed whitespace-pre-wrap">
+      {passage}
+    </blockquote>
+  );
+}
+
 // UC-20: a citation opens its source here, at the cited page, with the passage marked.
 export function SourceViewerSheet({
   projectId,
@@ -73,9 +86,11 @@ export function SourceViewerSheet({
     return null;
   }
 
+  const isWebPage = Boolean(citation.url);
   const description = citation.pageNumber
     ? `Page ${citation.pageNumber}`
     : 'Cited passage';
+  const openLabel = isWebPage ? 'Open the web page' : 'Open the original file';
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -85,11 +100,15 @@ export function SourceViewerSheet({
           <SheetDescription>{description}</SheetDescription>
         </SheetHeader>
         <div className="flex-1 overflow-y-auto px-4">
-          <SourceViewerBody
-            key={`${citation.id}-${citation.number}`}
-            projectId={projectId}
-            citation={citation}
-          />
+          {isWebPage ? (
+            <WebPassage passage={citation.passage} />
+          ) : (
+            <SourceViewerBody
+              key={`${citation.id}-${citation.number}`}
+              projectId={projectId}
+              citation={citation}
+            />
+          )}
         </div>
         <SheetFooter>
           <Button
@@ -103,7 +122,7 @@ export function SourceViewerSheet({
             }
             nativeButton={false}
           >
-            Open the original file
+            {openLabel}
           </Button>
         </SheetFooter>
       </SheetContent>

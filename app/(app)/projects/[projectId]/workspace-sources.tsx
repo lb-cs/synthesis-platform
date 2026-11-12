@@ -1,6 +1,6 @@
 import { FileText } from 'lucide-react';
 
-import { getSourceFileHref } from '@/lib/citations';
+import { getSourceHref } from '@/lib/citations';
 import { isSourceInProgress, type Source } from '@/lib/sources';
 import {
   Empty,
@@ -31,7 +31,8 @@ export function WorkspaceSources({
           </EmptyMedia>
           <EmptyTitle>No sources yet</EmptyTitle>
           <EmptyDescription>
-            Upload PDFs or text files to give the AI something to work with.
+            Upload PDFs or text files, or add web links, to give the AI something to work
+            with.
           </EmptyDescription>
         </EmptyHeader>
       </Empty>
@@ -55,7 +56,7 @@ export function WorkspaceSources({
         {sources.map((source) => (
           <li key={source.id}>
             <a
-              href={getSourceFileHref(projectId, source.id)}
+              href={getSourceHref(projectId, source)}
               target="_blank"
               rel="noreferrer"
               className="flex items-center gap-3 rounded-md px-2 py-2 text-sm hover:bg-muted"

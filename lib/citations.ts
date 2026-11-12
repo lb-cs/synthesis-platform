@@ -13,6 +13,8 @@ export type CitedSource = {
   pageNumber?: number | null;
   /** The cited chunk's text, so the viewer can find and highlight it in the file. */
   passage?: string;
+  /** The web page a link source points at. Null or missing for an uploaded file. */
+  url?: string | null;
 };
 
 export type ChatMessageMetadata = {
@@ -33,9 +35,17 @@ export function getSourceFileHref(projectId: string, sourceId: string): string {
   return `/api/projects/${projectId}/sources/${sourceId}/file`;
 }
 
-/** Opens the cited file; PDF viewers jump to `#page=` and other files ignore it. */
+/** Where a source opens in a new tab: a link's web page, or a file through the app. */
+export function getSourceHref(
+  projectId: string,
+  source: { id: string; url?: string | null },
+): string {
+  return source.url ?? getSourceFileHref(projectId, source.id);
+}
+
+/** Opens the cited source; PDF viewers jump to `#page=` and other files ignore it. */
 export function getCitationHref(projectId: string, source: CitedSource): string {
-  const href = getSourceFileHref(projectId, source.id);
+  const href = getSourceHref(projectId, source);
 
   if (!source.pageNumber) {
     return href;

@@ -15,24 +15,19 @@ import type { Database } from '@/lib/supabase/database.types';
 const CHAT_PASSAGE_COUNT = 8;
 
 /** A retrieved chunk plus the source it came from, so a citation can open it. */
-export type ChatPassage = RetrievedChunk & { sourceId: string };
+export type ChatPassage = RetrievedChunk & { sourceId: string; sourceUrl: string | null };
 
 export type ChatPassagesResult =
   { ok: true; passages: ChatPassage[] } | { ok: false; kind: 'database-error' };
 
 type Client = SupabaseClient<Database>;
 
-function hasFile(source: Source): boolean {
-  return source.storagePath !== null;
-}
-
 /**
- * The sources chat can draw on, oldest first: uploaded files that haven't failed. Only
- * the `ready` ones are searchable yet; the rest are still processing. Links are left
- * out until the worker fetches them (CECS491-85).
+ * The sources chat can draw on, oldest first: files and links that haven't failed. Only
+ * the `ready` ones are searchable yet; the rest are still processing.
  */
 export function getChatSources(sources: Source[]): Source[] {
-  const usable = sources.filter((source) => source.status !== 'failed').filter(hasFile);
+  const usable = sources.filter((source) => source.status !== 'failed');
 
   return usable.toSorted((a, b) => a.createdAt.localeCompare(b.createdAt));
 }
@@ -58,19 +53,20 @@ export async function findChatPassages(
     return { ok: false, kind: 'database-error' };
   }
 
-  const titleById = new Map(sources.map((source) => [source.id, source.title]));
+  const sourceById = new Map(sources.map((source) => [source.id, source]));
 
   const passages = data.flatMap((row) => {
-    const sourceTitle = titleById.get(row.source_id);
+    const source = sourceById.get(row.source_id);
 
-    if (sourceTitle === undefined) {
+    if (source === undefined) {
       return [];
     }
 
     const passage: ChatPassage = {
       id: row.id,
       sourceId: row.source_id,
-      sourceTitle,
+      sourceTitle: source.title,
+      sourceUrl: source.url,
       content: row.content,
       pageNumber: row.page_number,
     };
@@ -101,6 +97,7 @@ export function toChatCitations(
       title: passage.sourceTitle,
       pageNumber: passage.pageNumber,
       passage: passage.content,
+      url: passage.sourceUrl,
     };
 
     return [citation];

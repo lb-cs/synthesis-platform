@@ -6,6 +6,7 @@ import pymupdf
 
 from worker.chunking import Chunk
 from worker.db import ClaimedSource
+from worker.web import WebPage
 
 
 def make_source(number: int, kind: str = 'text') -> ClaimedSource:
@@ -16,8 +17,9 @@ def make_source(number: int, kind: str = 'text') -> ClaimedSource:
         id=f'source-{number}',
         project_id='project-1',
         kind=kind,
-        # A link has no file in the bucket.
+        # A link has no file in the bucket, and a file has no url.
         storage_path=None if kind == 'link' else path,
+        url=f'https://example.com/article-{number}' if kind == 'link' else None,
     )
 
 
@@ -80,6 +82,17 @@ class FakeFiles:
             return b'Hello world.'
 
         return self._download(storage_path)
+
+
+class FakePages:
+    def __init__(self, fetch: Callable[[str], WebPage] | None = None) -> None:
+        self._fetch = fetch
+
+    def fetch(self, url: str) -> WebPage:
+        if self._fetch is None:
+            return WebPage(url=url, title='An article', text='Hello from the web.')
+
+        return self._fetch(url)
 
 
 def make_pdf(

@@ -11,9 +11,9 @@ chunks, and saves the chunks and the file's details (see
 model the app embeds questions with. Chunks are saved before the source is marked
 `ready`, so retrieval only sees complete sources.
 
-Web link sources (`kind = 'link'`) have a `url` and no file. The worker cannot fetch
-pages yet (CECS491-85), so it fails a link straight away with "Web links cannot be
-processed yet." (`LINK_NOT_SUPPORTED` in `src/worker/loop.py`).
+Web link sources (`kind = 'link'`) have a `url` and no file. The worker fetches the
+page instead of downloading a file, keeps its readable text, and from there chunks and
+embeds it like a plain-text file (see [Web links](#web-links)).
 
 ## How it works
 
@@ -35,6 +35,7 @@ processed yet." (`LINK_NOT_SUPPORTED` in `src/worker/loop.py`).
 | `src/worker/config.py`     | Environment variables and their defaults                 |
 | `src/worker/db.py`         | Every query against `public.sources`                     |
 | `src/worker/storage.py`    | Downloads files from the `sources` bucket                |
+| `src/worker/web.py`        | Fetches a link's page and extracts its readable text     |
 | `src/worker/loop.py`       | Polling loop and thread pool; turns errors into `failed` |
 | `src/worker/pipeline.py`   | Parses, chunks, and embeds each source                   |
 | `src/worker/embeddings.py` | AI Gateway embedding requests and response validation    |
@@ -67,6 +68,45 @@ page number wrong.
 A file the worker can't read fails with a message the user sees in `processing_error`:
 damaged or password-protected PDFs, PDFs with no text layer (scans made of images; OCR is
 a separate requirement), text that isn't UTF-8, and binary files with a text extension.
+
+## Web links
+
+`src/worker/web.py` fetches a link source's page. The readable text comes from
+[trafilatura](https://trafilatura.readthedocs.io/), which drops navigation, footers, and
+other boilerplate; the page title goes to `sources.metadata.title`, next to
+`character_count`. A page has no page numbers, so it is one entry, like plain text.
+`text/plain` links are read as they are.
+
+**No internal addresses.** The worker runs inside the hosting network, so a user must not
+be able to point it at one. Each hop (the first request and every redirect) resolves the
+host and refuses it unless every address is public (`ipaddress.is_global`: no loopback,
+private, link-local, which includes cloud metadata at `169.254.169.254`, or reserved
+ranges). The request then goes to the address that was checked, with the real name in
+`Host` and in TLS SNI so the certificate is still verified. Connecting by name again
+would let a DNS answer change between the check and the request (DNS rebinding).
+Redirects are followed by hand for the same reason. Connections are not kept alive:
+httpx pools them by address, so a reused one would carry one site's TLS session into a
+request for another site on the same address. The app's link form rejects IP
+addresses and bare host names too (`lib/link-url.ts`), but the worker does not rely on it.
+
+**Limits.** 10 seconds for the whole fetch, redirects included (a typical page takes well
+under one), at most 5 redirects, and 5 MB of page.
+
+A page that can't be read fails with a reason the user sees:
+
+| Situation                                          | Message starts with                       |
+| -------------------------------------------------- | ----------------------------------------- |
+| 401, 403, 407                                      | "This page needs a login or blocks…"      |
+| 404, 410                                           | "This page was not found…"                |
+| 429                                                | "The site is limiting requests…"          |
+| 5xx                                                | "The site had an error…"                  |
+| Not HTML or plain text (a PDF, an image)           | "This link is not a web page with text…"  |
+| No readable text (a JavaScript app, a login shell) | "No readable text was found…"             |
+| Private or local address, at any hop               | "This link points to a private or local…" |
+| Unknown host, timeout, refused connection          | "This site could not be found…" and so on |
+
+The `User-Agent` names the project and links to the repository. Some sites, Wikipedia
+among them, answer 403 to a client that gives no way to reach its owner.
 
 ## Run it locally
 

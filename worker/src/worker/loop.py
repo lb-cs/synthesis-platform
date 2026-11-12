@@ -17,14 +17,13 @@ from worker.config import Config
 from worker.db import ClaimedSource
 from worker.embeddings import Embedder
 from worker.pipeline import ProcessingError
+from worker.web import FetchError, WebPage
 
 log = logging.getLogger(__name__)
 
 # Written to sources.processing_error, which the sources page shows the user.
 DOWNLOAD_FAILED = 'The file could not be read from storage. Try uploading it again.'
 UNEXPECTED_FAILURE = 'Processing failed unexpectedly. Try uploading the file again.'
-# Links have no file to read yet. The worker will fetch the page (CECS491-85).
-LINK_NOT_SUPPORTED = 'Web links cannot be processed yet.'
 
 STALE_SWEEP_INTERVAL_SECONDS = 60
 
@@ -43,11 +42,15 @@ class Files(Protocol):
     def download(self, storage_path: str) -> bytes: ...
 
 
+class Pages(Protocol):
+    def fetch(self, url: str) -> WebPage: ...
+
+
 def process_source(
-    source: ClaimedSource, queue: Queue, files: Files, embedder: Embedder
+    source: ClaimedSource, queue: Queue, files: Files, pages: Pages, embedder: Embedder
 ) -> None:
     """Runs one claimed source to `ready` or `failed`. Never raises for a bad file."""
-    failure = run_pipeline(source, queue, files, embedder)
+    failure = run_pipeline(source, queue, files, pages, embedder)
 
     if failure is not None:
         is_updated = queue.mark_failed(source.id, failure)
@@ -61,17 +64,13 @@ def process_source(
 
 
 def run_pipeline(
-    source: ClaimedSource, queue: Queue, files: Files, embedder: Embedder
+    source: ClaimedSource, queue: Queue, files: Files, pages: Pages, embedder: Embedder
 ) -> str | None:
     """Returns the user-facing failure message, or None when the source is ready."""
-    if source.storage_path is None:
-        return LINK_NOT_SUPPORTED
-
     try:
-        file_bytes = files.download(source.storage_path)
-        processed = pipeline.process(source, file_bytes, embedder)
+        processed = read_source(source, files, pages, embedder)
         queue.save_results(source, processed.metadata, processed.chunks)
-    except ProcessingError as error:
+    except (ProcessingError, FetchError) as error:
         return str(error)
     except StorageException as error:
         log.warning('source %s: download failed: %s', source.id, error)
@@ -83,9 +82,26 @@ def run_pipeline(
     return None
 
 
+def read_source(
+    source: ClaimedSource, files: Files, pages: Pages, embedder: Embedder
+) -> pipeline.ProcessedSource:
+    """A link is fetched from the web; every other kind is a file in storage."""
+    if source.url is not None:
+        page = pages.fetch(source.url)
+        return pipeline.process_page(page, embedder)
+
+    if source.storage_path is None:
+        raise ProcessingError(UNEXPECTED_FAILURE)
+
+    file_bytes = files.download(source.storage_path)
+
+    return pipeline.process(source, file_bytes, embedder)
+
+
 def run(
     queue: Queue,
     files: Files,
+    pages: Pages,
     embedder: Embedder,
     config: Config,
     stop: threading.Event,
@@ -115,7 +131,9 @@ def run(
             claimed = claim(queue, free_slots)
 
             for source in claimed:
-                future = pool.submit(process_source, source, queue, files, embedder)
+                future = pool.submit(
+                    process_source, source, queue, files, pages, embedder
+                )
                 future.add_done_callback(log_crash)
                 in_flight.add(future)
 
