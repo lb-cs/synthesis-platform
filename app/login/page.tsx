@@ -6,7 +6,7 @@ import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 
 import { LoginForm } from './login-form';
-import { GOOGLE_SIGN_IN_ERROR } from './schema';
+import { GOOGLE_ERROR_PARAM, GOOGLE_SIGN_IN_ERROR } from './schema';
 
 export const metadata: Metadata = {
   title: 'Sign in · Synthesis Platform',
@@ -23,7 +23,7 @@ export default async function LoginPage({ searchParams }: PageProps<'/login'>) {
 
   // /auth/callback sends a failed or cancelled Google sign-in back here with ?error=google.
   const { error } = await searchParams;
-  const googleError = error === 'google' ? GOOGLE_SIGN_IN_ERROR : null;
+  const googleError = error === GOOGLE_ERROR_PARAM ? GOOGLE_SIGN_IN_ERROR : null;
 
   return (
     <main className="flex flex-1 flex-col">
