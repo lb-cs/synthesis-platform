@@ -6,10 +6,9 @@ import sys
 import threading
 
 from dotenv import find_dotenv, load_dotenv
-from supabase import create_client
 
 from worker.config import ConfigError, load_config
-from worker.db import SourcesQueue
+from worker.db import SourcesQueue, create_worker_client
 from worker.embeddings import GatewayEmbedder
 from worker.loop import run
 from worker.storage import SourceFiles
@@ -35,7 +34,7 @@ def main() -> int:
         log.error('%s', error)
         return 1
 
-    client = create_client(config.supabase_url, config.service_role_key)
+    client = create_worker_client(config.supabase_url, config.service_role_key)
     queue = SourcesQueue(client)
     embedder = GatewayEmbedder(config.ai_gateway_api_key)
     summarizer = GatewaySummarizer(config.ai_gateway_api_key)
