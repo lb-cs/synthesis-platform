@@ -177,7 +177,8 @@ between them, half spread through each source and half its closest chunks
 project-wide search alone can't find a source by name.
 Every prompt also opens with the project's source list (`toListedSources`): each chat
 source's title, kind, link, and what the worker put in `metadata` (page count, the
-document's own title, author, subject). The model uses it to tell which source a
+document's own title, author, subject, and the short `summary` it writes after
+embedding, `worker/src/worker/summary.py`). The model uses it to tell which source a
 question means and to say what the project holds; it still cites passages only.
 `streamGroundedAnswer` in `lib/ai.ts` sends those chunks numbered `[1]…[n]` plus the last
 `HISTORY_LIMIT` turns. The numbers restart with every answer, so each saved answer keeps

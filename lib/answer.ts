@@ -24,6 +24,9 @@ const NAMED_SOURCE_LIMIT = 4;
 // Per detail in the prompt's source list: a PDF's title or subject can run to paragraphs.
 const DETAIL_LENGTH_LIMIT = 120;
 
+// Matches SUMMARY_LENGTH_LIMIT in worker/src/worker/summary.py.
+const SUMMARY_LENGTH_LIMIT = 600;
+
 // Shorter titles ("ai", "v2") turn up in questions that aren't about the source.
 const MIN_NAME_LENGTH = 3;
 
@@ -51,11 +54,28 @@ const KIND_LABELS: Record<Source['kind'], string> = {
   link: 'web page',
 };
 
-/** One line of whitespace-free text, cut short: document metadata can be any length. */
-function toDetailText(value: string): string {
+/** One line of text, cut short: document metadata can be any length. */
+function toDetailText(value: string, lengthLimit = DETAIL_LENGTH_LIMIT): string {
   const oneLine = value.replace(/\s+/g, ' ').trim();
 
-  return oneLine.slice(0, DETAIL_LENGTH_LIMIT);
+  return oneLine.slice(0, lengthLimit);
+}
+
+/** The summary the worker wrote into `metadata` when it processed the source. */
+function getSummary(source: Source): string | null {
+  const metadata = source.metadata;
+
+  if (metadata === null || typeof metadata !== 'object' || Array.isArray(metadata)) {
+    return null;
+  }
+
+  const summary = metadata.summary;
+
+  if (typeof summary !== 'string' || summary.trim() === '') {
+    return null;
+  }
+
+  return toDetailText(summary, SUMMARY_LENGTH_LIMIT);
 }
 
 /** What the worker's `metadata` says about a source, as short facts. */
@@ -108,7 +128,7 @@ export function toListedSources(sources: Source[]): ListedSource[] {
       details.push('still processing, not searchable yet');
     }
 
-    return { title: source.title, details };
+    return { title: source.title, details, summary: getSummary(source) };
   });
 }
 

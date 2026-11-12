@@ -13,6 +13,7 @@ from worker.db import SourcesQueue
 from worker.embeddings import GatewayEmbedder
 from worker.loop import run
 from worker.storage import SourceFiles
+from worker.summary import GatewaySummarizer
 from worker.web import PageFetcher
 
 log = logging.getLogger('worker')
@@ -37,6 +38,7 @@ def main() -> int:
     client = create_client(config.supabase_url, config.service_role_key)
     queue = SourcesQueue(client)
     embedder = GatewayEmbedder(config.ai_gateway_api_key)
+    summarizer = GatewaySummarizer(config.ai_gateway_api_key)
 
     # One harmless call up front, so a wrong URL or key fails here, not on every poll.
     try:
@@ -54,7 +56,7 @@ def main() -> int:
         config.concurrency,
         config.poll_interval_seconds,
     )
-    run(queue, SourceFiles(client), PageFetcher(), embedder, config, stop)
+    run(queue, SourceFiles(client), PageFetcher(), embedder, config, stop, summarizer)
     log.info('worker stopped')
 
     return 0

@@ -81,7 +81,7 @@ Code: `lib/projects.ts` (list, get, create, update, delete). API: `/api/projects
 | `status`                | text              | `pending` → `processing` → `ready` \| `failed`. The worker's queue                                                        |
 | `processing_error`      | text, null        | Why it failed                                                                                                             |
 | `processing_started_at` | timestamptz, null | When the worker claimed it. A stale value means the worker died                                                           |
-| `metadata`              | jsonb             | Whatever the parser finds: author, page count, …. Chat lists it in every prompt                                           |
+| `metadata`              | jsonb             | Whatever the parser finds: author, page count, …, plus the worker's short `summary`. Chat lists it in every prompt        |
 | `created_at`            | timestamptz       |                                                                                                                           |
 
 The bucket accepts PDF, plain text, and Markdown up to 50 MiB.
