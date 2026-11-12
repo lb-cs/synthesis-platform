@@ -162,7 +162,9 @@ The app polls too: while any source is `pending` or `processing`, the Sources pa
 the workspace's Sources panel call `router.refresh()` every 3 s
 (`sources/refresh-while-processing.tsx`). A `failed` source shows its `processing_error`
 and a **Retry processing** button, which calls `retry_failed_source()` to set it back to
-`pending`. Until a source is `ready`, the workspace says so (UC-16 E2); chat refuses
+`pending`. A `ready` source has **Process again**, which calls `reprocess_ready_source()`
+to do the same: the worker replaces its chunks and metadata (a link is fetched again),
+and earlier answers lose their citation links into it. Until a source is `ready`, the workspace says so (UC-16 E2); chat refuses
 until one is, since only `ready` sources have chunks to search.
 
 ## How a question gets answered (UC-16)
@@ -170,6 +172,22 @@ until one is, since only `ready` sources have chunks to search.
 Chat retrieves (CECS491-73). `POST /api/projects/[projectId]/chat` embeds the question
 (`embedQuestion`, the worker's model), and `findChatPassages` in `lib/answer.ts` calls
 `match_document_chunks` for the 8 closest chunks across the project's `ready` sources.
+A question that names a source by its title, the title inside the document, or a link's host ("summarize workos.com",
+`findNamedSources`) is answered from the named sources only: up to 16 passages shared
+between them, half spread through each source and half its closest chunks
+(`match_source_chunks`). A chunk's text doesn't carry its source's name, so the
+project-wide search alone can't find a source by name.
+Every prompt also opens with the project's source list (`toListedSources`): each chat
+source's title, kind, link, and what the worker put in `metadata` (page count, the
+document's own title, author, subject, and the short `summary` it writes after
+embedding, `worker/src/worker/summary.py`). The model uses it to tell which source a
+question means and to say what the project holds; it still cites passages only.
+When those passages don't answer the question, the model fetches more itself with two
+tools (`lib/chat-tools.ts`): `searchSources` (a query, across the project or in one
+source) and `readSource` (a spread through one source). It gets up to three rounds of
+tool calls, then must answer. A fetched passage takes the next passage number (the
+answer's `PassageBook`), so it is cited and saved like the rest; the citations for
+fetched passages reach the browser when the answer finishes.
 `streamGroundedAnswer` in `lib/ai.ts` sends those chunks numbered `[1]…[n]` plus the last
 `HISTORY_LIMIT` turns. The numbers restart with every answer, so each saved answer keeps
 its own `citations` rows: one per passage it cites, with the `number` it used. A citation

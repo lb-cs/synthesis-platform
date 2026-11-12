@@ -17,6 +17,7 @@ from worker.config import Config
 from worker.db import ClaimedSource
 from worker.embeddings import Embedder
 from worker.pipeline import ProcessingError
+from worker.summary import Summarizer
 from worker.web import FetchError, WebPage
 
 log = logging.getLogger(__name__)
@@ -47,10 +48,15 @@ class Pages(Protocol):
 
 
 def process_source(
-    source: ClaimedSource, queue: Queue, files: Files, pages: Pages, embedder: Embedder
+    source: ClaimedSource,
+    queue: Queue,
+    files: Files,
+    pages: Pages,
+    embedder: Embedder,
+    summarizer: Summarizer | None = None,
 ) -> None:
     """Runs one claimed source to `ready` or `failed`. Never raises for a bad file."""
-    failure = run_pipeline(source, queue, files, pages, embedder)
+    failure = run_pipeline(source, queue, files, pages, embedder, summarizer)
 
     if failure is not None:
         is_updated = queue.mark_failed(source.id, failure)
@@ -64,11 +70,16 @@ def process_source(
 
 
 def run_pipeline(
-    source: ClaimedSource, queue: Queue, files: Files, pages: Pages, embedder: Embedder
+    source: ClaimedSource,
+    queue: Queue,
+    files: Files,
+    pages: Pages,
+    embedder: Embedder,
+    summarizer: Summarizer | None = None,
 ) -> str | None:
     """Returns the user-facing failure message, or None when the source is ready."""
     try:
-        processed = read_source(source, files, pages, embedder)
+        processed = read_source(source, files, pages, embedder, summarizer)
         queue.save_results(source, processed.metadata, processed.chunks)
     except (ProcessingError, FetchError) as error:
         return str(error)
@@ -83,19 +94,23 @@ def run_pipeline(
 
 
 def read_source(
-    source: ClaimedSource, files: Files, pages: Pages, embedder: Embedder
+    source: ClaimedSource,
+    files: Files,
+    pages: Pages,
+    embedder: Embedder,
+    summarizer: Summarizer | None = None,
 ) -> pipeline.ProcessedSource:
     """A link is fetched from the web; every other kind is a file in storage."""
     if source.url is not None:
         page = pages.fetch(source.url)
-        return pipeline.process_page(page, embedder)
+        return pipeline.process_page(page, embedder, summarizer)
 
     if source.storage_path is None:
         raise ProcessingError(UNEXPECTED_FAILURE)
 
     file_bytes = files.download(source.storage_path)
 
-    return pipeline.process(source, file_bytes, embedder)
+    return pipeline.process(source, file_bytes, embedder, summarizer)
 
 
 def run(
@@ -105,6 +120,7 @@ def run(
     embedder: Embedder,
     config: Config,
     stop: threading.Event,
+    summarizer: Summarizer | None = None,
 ) -> None:
     """Polls until `stop` is set, then lets in-flight sources finish."""
     in_flight: set[Future[None]] = set()
@@ -132,7 +148,7 @@ def run(
 
             for source in claimed:
                 future = pool.submit(
-                    process_source, source, queue, files, pages, embedder
+                    process_source, source, queue, files, pages, embedder, summarizer
                 )
                 future.add_done_callback(log_crash)
                 in_flight.add(future)

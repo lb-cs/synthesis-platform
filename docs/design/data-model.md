@@ -44,7 +44,7 @@ erDiagram
 - **Users can't fake processing.** Users can insert a source (`project_id`, `kind`,
   `title`, and `storage_path` for a file or `url` for a link) and rename it. Only the worker sets `processing_error`,
   `metadata`, and writes chunks. A narrow `retry_failed_source()` function lets the owner
-  move a failed source back to `pending`
+  move a failed source back to `pending`, and `reprocess_ready_source()` does the same for a ready one
 
 ## Tables
 
@@ -81,7 +81,7 @@ Code: `lib/projects.ts` (list, get, create, update, delete). API: `/api/projects
 | `status`                | text              | `pending` → `processing` → `ready` \| `failed`. The worker's queue                                                        |
 | `processing_error`      | text, null        | Why it failed                                                                                                             |
 | `processing_started_at` | timestamptz, null | When the worker claimed it. A stale value means the worker died                                                           |
-| `metadata`              | jsonb             | Whatever the parser finds: author, page count, …                                                                          |
+| `metadata`              | jsonb             | Whatever the parser finds: author, page count, …, plus the worker's short `summary`. Chat lists it in every prompt        |
 | `created_at`            | timestamptz       |                                                                                                                           |
 
 The bucket accepts PDF, plain text, and Markdown up to 50 MiB.

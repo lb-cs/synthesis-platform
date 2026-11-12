@@ -11,6 +11,14 @@ chunks, and saves the chunks and the file's details (see
 model the app embeds questions with. Chunks are saved before the source is marked
 `ready`, so retrieval only sees complete sources.
 
+After embedding, the worker asks the app's chat model for a two-to-three sentence
+summary of the source and saves it as `sources.metadata.summary`. Chat lists it in
+every prompt, so the model knows what each source is about. A long source is sampled
+from start to end (40,000 characters) instead of sent whole. The summary is optional:
+if the Gateway call fails, the source still ends `ready`, without one. A source
+processed before this change has no summary until it is processed again (**Process
+again** on the source in the app).
+
 Web link sources (`kind = 'link'`) have a `url` and no file. The worker fetches the
 page instead of downloading a file, keeps its readable text, and from there chunks and
 embeds it like a plain-text file (see [Web links](#web-links)).
@@ -37,8 +45,9 @@ embeds it like a plain-text file (see [Web links](#web-links)).
 | `src/worker/storage.py`    | Downloads files from the `sources` bucket                |
 | `src/worker/web.py`        | Fetches a link's page and extracts its readable text     |
 | `src/worker/loop.py`       | Polling loop and thread pool; turns errors into `failed` |
-| `src/worker/pipeline.py`   | Parses, chunks, and embeds each source                   |
+| `src/worker/pipeline.py`   | Parses, chunks, embeds, and summarizes each source       |
 | `src/worker/embeddings.py` | AI Gateway embedding requests and response validation    |
+| `src/worker/summary.py`    | AI Gateway request for each source's short summary       |
 
 ## Parsing and chunking
 

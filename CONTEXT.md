@@ -84,8 +84,8 @@ _Avoid_: "source" for the file itself, "blob", "attachment".
 **Processing status**:
 Where a source is in the worker's pipeline: `'pending' | 'processing' | 'ready' |
 'failed'` (`public.sources.status`). The worker moves it through the pipeline; the signed-in
-owner can retry a failed source to return it to `pending`. A source is answerable once it is
-`ready`.
+owner can retry a failed source, or process a ready one again, to return it to `pending`.
+A source is answerable once it is `ready`.
 _Avoid_: "state", "job" (there is no job table; the status column is the queue).
 
 **Claim**:
@@ -121,7 +121,8 @@ _Avoid_: "preview", "reader", "PDF viewer" (it also shows text files).
 **Passage number**:
 The `[n]` an answer cites a document chunk by: chunks are numbered in the order they go
 into one prompt (`PassageNumber` in `lib/ai.ts`), mapped back to chunk ids to write
-citations. Only meaningful within that one answer, so each citation row stores it.
+citations. In chat, passages the model fetches with a tool continue the count
+(`PassageBook` in `lib/answer.ts`). Only meaningful within that one answer, so each citation row stores it.
 _Avoid_: "chunk id" for the number (the model never sees ids), "reference".
 
 **Comparison**:

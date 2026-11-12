@@ -11,7 +11,14 @@ import {
   streamGroundedAnswer,
   toVectorLiteral,
 } from '@/lib/ai';
-import { findChatPassages, getChatSources, toChatCitations } from '@/lib/answer';
+import {
+  findChatPassages,
+  getChatSources,
+  getPassageNumbers,
+  toChatCitations,
+  toListedSources,
+  type PassageBook,
+} from '@/lib/answer';
 import {
   createChatMessage,
   createCitations,
@@ -19,6 +26,7 @@ import {
   splitRetry,
 } from '@/lib/chat';
 import { CHAT_ERROR_MESSAGES, type ChatErrorCode } from '@/lib/chat-errors';
+import { createChatTools } from '@/lib/chat-tools';
 import { getMessageText, type ChatUIMessage } from '@/lib/citations';
 import { getProject } from '@/lib/projects';
 import { listSources } from '@/lib/sources';
@@ -36,7 +44,8 @@ function chatError(code: ChatErrorCode, status: number) {
 }
 
 // Retrieves the passages closest to one question, streams a cited answer as an AI SDK UI
-// message stream, then saves the answer and the passages it cites.
+// message stream (the model can fetch more passages with tools on the way), then saves
+// the answer and the passages it cites.
 export async function POST(request: Request, context: Context) {
   const supabase = await createClient();
   const supabaseUser = await getSupabaseUser(supabase);
@@ -110,6 +119,7 @@ export async function POST(request: Request, context: Context) {
     supabase,
     project.id,
     chatSources,
+    question,
     toVectorLiteral(embeddingResult.embedding),
   );
 
@@ -130,21 +140,30 @@ export async function POST(request: Request, context: Context) {
     return Response.json({ error: 'Could not save your question.' }, { status: 500 });
   }
 
-  const passages = passagesResult.passages;
-  // No passages still goes to the model: the prompt says none matched, and it answers so.
-  const { result, passageNumbers } = streamGroundedAnswer({
-    chunks: passages,
+  // Numbers the passages retrieved here [1]…[n]; the tools add what the model fetches.
+  const book: PassageBook = { passages: [...passagesResult.passages] };
+  const tools = createChatTools({
+    supabase,
+    projectId: project.id,
+    sources: chatSources,
+    book,
+  });
+  // No passages still goes to the model: the prompt says none matched, and it can search.
+  const { result } = streamGroundedAnswer({
+    sources: toListedSources(chatSources),
+    chunks: passagesResult.passages,
     history: earlier,
     question,
+    tools,
   });
-  const citations = toChatCitations(passages, passageNumbers);
 
   const stream = toUIMessageStream<ToolSet, ChatUIMessage>({
     stream: result.stream,
     generateMessageId: generateId,
     messageMetadata: ({ part }) => {
-      if (part.type === 'start') {
-        return { sources: citations };
+      // At the start, what was retrieved up front; at the end, what the tools added too.
+      if (part.type === 'start' || part.type === 'finish') {
+        return { sources: toChatCitations(book.passages, getPassageNumbers(book)) };
       }
     },
     onEnd: async ({ responseMessage, outcome }) => {
@@ -168,7 +187,12 @@ export async function POST(request: Request, context: Context) {
       }
 
       // The answer is already on screen; a failed save only costs its links after a reload.
-      await createCitations(supabase, answerResult.message.id, answer, passageNumbers);
+      await createCitations(
+        supabase,
+        answerResult.message.id,
+        answer,
+        getPassageNumbers(book),
+      );
     },
     onError: () => {
       return CHAT_ERROR_MESSAGES['ai-unavailable'];
