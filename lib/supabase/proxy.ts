@@ -39,10 +39,10 @@ export async function updateSession(request: NextRequest) {
   const user = data?.claims;
   const isPublic = PUBLIC_PATHS.includes(request.nextUrl.pathname);
 
-  // `/` has no page of its own: signed in goes to the dashboard, signed out to the landing.
+  // `/` has no page of its own: signed in goes to Workspaces, signed out to the landing.
   if (request.nextUrl.pathname === '/') {
     const url = request.nextUrl.clone();
-    url.pathname = user ? '/dashboard' : '/home';
+    url.pathname = user ? '/workspaces' : '/home';
     return redirectWithSession(url, supabaseResponse);
   }
 
@@ -60,7 +60,7 @@ export async function updateSession(request: NextRequest) {
   // Signed-in users have no business on the sign-in form.
   if (user && request.nextUrl.pathname === '/login') {
     const url = request.nextUrl.clone();
-    url.pathname = '/dashboard';
+    url.pathname = '/workspaces';
     return redirectWithSession(url, supabaseResponse);
   }
 

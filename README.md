@@ -69,7 +69,7 @@ Done for the day? `npx supabase stop`.
 
 This repo is the project foundation: Next.js (App Router), Tailwind CSS v4,
 shadcn/ui, Supabase (auth + Postgres), ESLint, Prettier, and CI. Email OTP login,
-projects (dashboard, create, edit, delete, REST API), sources (upload, list, remove,
+projects (Workspaces page, create, edit, delete, REST API), sources (upload, list, remove,
 live status, retry), account settings (change email, delete account), and a first
 workspace chat work. The Python
 worker parses, chunks, and embeds uploads. The schema is in `supabase/migrations/`.
@@ -119,10 +119,10 @@ every pull request.
 
 ```
 app/                  App Router routes
-  page.tsx            / — redirects to /dashboard or /home by sign-in state
+  page.tsx            / — redirects to /workspaces or /home by sign-in state
   home/               Landing page (public)
   login/              Sign-in page (public): page.tsx, login-form.tsx, actions.ts, schema.ts
-  (app)/              Signed-in screens inside the app shell: dashboard, projects, settings
+  (app)/              Signed-in screens inside the app shell: workspaces, projects, settings
   api/health/route.ts GET /api/health → { "status": "ok" } (public)
   api/projects/       Project REST API (protected)
 components/           App components; components/ui/ is shadcn (npx shadcn@latest add <name>)

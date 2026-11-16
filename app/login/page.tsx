@@ -18,7 +18,7 @@ export default async function LoginPage({ searchParams }: PageProps<'/login'>) {
 
   // proxy.ts already bounces signed-in users; checking again keeps the page safe on its own.
   if (data?.claims) {
-    redirect('/dashboard');
+    redirect('/workspaces');
   }
 
   // /auth/callback sends a failed or cancelled Google sign-in back here with ?error=google.

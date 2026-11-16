@@ -1,78 +1,61 @@
 'use client';
 
-import Link from 'next/link';
 import { useParams, usePathname } from 'next/navigation';
-
-import { Fragment } from 'react';
 
 import {
   Breadcrumb,
   BreadcrumbItem,
-  BreadcrumbLink,
   BreadcrumbList,
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from '@/components/ui/breadcrumb';
+import { WorkspaceSwitcher, type WorkspaceOption } from '@/components/workspace-switcher';
 
-type Crumb = {
-  label: string;
-  href?: string;
-};
-
-const DASHBOARD_CRUMB: Crumb = { label: 'Dashboard', href: '/dashboard' };
-
-const STATIC_CRUMBS: Record<string, Crumb[]> = {
-  '/dashboard': [{ label: 'Dashboard' }],
-  '/settings': [{ label: 'Settings' }],
-  '/projects/new': [DASHBOARD_CRUMB, { label: 'New project' }],
+const STATIC_PAGE_LABELS: Record<string, string> = {
+  '/settings': 'Settings',
+  '/projects/new': 'New workspace',
 };
 
 const PROJECT_PAGE_LABELS: Record<string, string> = {
-  '': 'Workspace',
+  '': 'Chat',
   '/sources': 'Sources',
   '/summaries': 'Summaries',
   '/analysis': 'Analysis',
+  '/edit': 'Edit workspace',
 };
 
-function getCrumbs(pathname: string, projectId: string | undefined): Crumb[] {
+/** The label after the switcher, or null where the switcher alone says where you are. */
+function getPageLabel(pathname: string, projectId: string | undefined): string | null {
   if (!projectId) {
-    return STATIC_CRUMBS[pathname] ?? [{ label: 'Synthesis' }];
+    return STATIC_PAGE_LABELS[pathname] ?? null;
   }
 
   const base = `/projects/${projectId}`;
-  const pageLabel = PROJECT_PAGE_LABELS[pathname.slice(base.length)] ?? 'Workspace';
 
-  // Reads "Project" until projects have titles to show here.
-  return [DASHBOARD_CRUMB, { label: 'Project', href: base }, { label: pageLabel }];
+  return PROJECT_PAGE_LABELS[pathname.slice(base.length)] ?? null;
 }
 
-export function AppBreadcrumb() {
+/** The header trail: the workspace switcher, then the page you are on inside it. */
+export function AppBreadcrumb({ workspaces }: { workspaces: WorkspaceOption[] }) {
   const pathname = usePathname();
   const { projectId } = useParams<{ projectId?: string }>();
 
-  const crumbs = getCrumbs(pathname, projectId);
+  const pageLabel = getPageLabel(pathname, projectId);
 
   return (
-    <Breadcrumb>
-      <BreadcrumbList>
-        {crumbs.map((crumb, index) => {
-          const isLast = index === crumbs.length - 1;
-
-          return (
-            <Fragment key={crumb.label}>
-              <BreadcrumbItem className={isLast ? undefined : 'hidden md:block'}>
-                {crumb.href && !isLast ? (
-                  <BreadcrumbLink render={<Link href={crumb.href} />}>
-                    {crumb.label}
-                  </BreadcrumbLink>
-                ) : (
-                  <BreadcrumbPage>{crumb.label}</BreadcrumbPage>
-                )}
-              </BreadcrumbItem>
-              {!isLast && <BreadcrumbSeparator className="hidden md:block" />}
-            </Fragment>
-          );
-        })}
+    <Breadcrumb className="min-w-0">
+      <BreadcrumbList className="flex-nowrap">
+        <BreadcrumbItem>
+          <WorkspaceSwitcher workspaces={workspaces} />
+        </BreadcrumbItem>
+        {pageLabel && (
+          <>
+            <BreadcrumbSeparator className="hidden md:block" />
+            <BreadcrumbItem className="hidden md:block">
+              <BreadcrumbPage>{pageLabel}</BreadcrumbPage>
+            </BreadcrumbItem>
+          </>
+        )}
       </BreadcrumbList>
     </Breadcrumb>
   );

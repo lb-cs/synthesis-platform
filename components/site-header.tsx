@@ -36,8 +36,8 @@ export function SiteHeader({ isSignedIn }: { isSignedIn: boolean }) {
 
         <div className="ml-auto flex items-center gap-2">
           {isSignedIn ? (
-            <Button size="sm" render={<Link href="/dashboard" />} nativeButton={false}>
-              Open dashboard
+            <Button size="sm" render={<Link href="/workspaces" />} nativeButton={false}>
+              Open workspaces
             </Button>
           ) : (
             <>

@@ -24,10 +24,10 @@ import {
 } from '@/components/ui/empty';
 
 export const metadata: Metadata = {
-  title: 'Dashboard · Synthesis Platform',
+  title: 'Workspaces · Synthesis Platform',
 };
 
-export default async function DashboardPage({ searchParams }: PageProps<'/dashboard'>) {
+export default async function WorkspacesPage({ searchParams }: PageProps<'/workspaces'>) {
   const { notice } = await searchParams;
   const supabase = await createClient();
   const result = await listProjects(supabase);
@@ -35,13 +35,13 @@ export default async function DashboardPage({ searchParams }: PageProps<'/dashbo
   if (!result.ok) {
     return (
       <>
-        <DashboardHeader />
+        <WorkspacesHeader />
         <Empty>
           <EmptyHeader>
             <EmptyMedia variant="icon">
               <CircleAlert />
             </EmptyMedia>
-            <EmptyTitle>Could not load projects</EmptyTitle>
+            <EmptyTitle>Could not load workspaces</EmptyTitle>
             <EmptyDescription>Refresh the page to try again.</EmptyDescription>
           </EmptyHeader>
         </Empty>
@@ -53,11 +53,11 @@ export default async function DashboardPage({ searchParams }: PageProps<'/dashbo
 
   return (
     <>
-      <DashboardHeader />
+      <WorkspacesHeader />
 
       {notice === 'storage-cleanup' && (
         <p role="status" className="rounded-md border bg-muted p-3 text-sm">
-          The project was deleted, but some source files could not be removed from
+          The workspace was deleted, but some source files could not be removed from
           storage.
         </p>
       )}
@@ -68,15 +68,15 @@ export default async function DashboardPage({ searchParams }: PageProps<'/dashbo
             <EmptyMedia variant="icon">
               <FolderPlus />
             </EmptyMedia>
-            <EmptyTitle>No projects yet</EmptyTitle>
+            <EmptyTitle>No workspaces yet</EmptyTitle>
             <EmptyDescription>
-              Create a project to start collecting sources and asking questions.
+              Create a workspace to start collecting sources and asking questions.
             </EmptyDescription>
           </EmptyHeader>
           <EmptyContent>
             <Button render={<Link href="/projects/new" />} nativeButton={false}>
               <Plus />
-              Create a project
+              Create a workspace
             </Button>
           </EmptyContent>
         </Empty>
@@ -102,7 +102,7 @@ export default async function DashboardPage({ searchParams }: PageProps<'/dashbo
                   render={<Link href={`/projects/${project.id}`} />}
                   nativeButton={false}
                 >
-                  Open workspace
+                  Open
                 </Button>
                 <Button
                   variant="ghost"
@@ -110,7 +110,7 @@ export default async function DashboardPage({ searchParams }: PageProps<'/dashbo
                   nativeButton={false}
                 >
                   <Pencil />
-                  Edit project
+                  Edit
                 </Button>
               </CardFooter>
             </Card>
@@ -121,7 +121,7 @@ export default async function DashboardPage({ searchParams }: PageProps<'/dashbo
             className="flex min-h-40 flex-col items-center justify-center gap-2 rounded-xl border border-dashed p-6 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
           >
             <Plus className="size-5" />
-            Create a project
+            Create a workspace
           </Link>
         </div>
       )}
@@ -129,13 +129,12 @@ export default async function DashboardPage({ searchParams }: PageProps<'/dashbo
   );
 }
 
-function DashboardHeader() {
+// Creating one lives in the header's "Create New" and the grid's last card.
+function WorkspacesHeader() {
   return (
-    <PageHeader title="Dashboard" description="Your research projects, one per topic.">
-      <Button render={<Link href="/projects/new" />} nativeButton={false}>
-        <Plus />
-        New project
-      </Button>
-    </PageHeader>
+    <PageHeader
+      title="Workspaces"
+      description="Your research, one workspace per topic."
+    />
   );
 }

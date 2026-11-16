@@ -23,7 +23,7 @@ export async function GET(request: Request) {
     return NextResponse.redirect(failureUrl);
   }
 
-  return NextResponse.redirect(`${siteOrigin}/dashboard`);
+  return NextResponse.redirect(`${siteOrigin}/workspaces`);
 }
 
 // Behind Vercel's proxy the request URL carries the internal host; the forwarded one is

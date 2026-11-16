@@ -37,10 +37,11 @@ export async function createProject(
   });
 
   if (!result.ok) {
-    return { error: 'Could not create the project. Try again.' };
+    return { error: 'Could not create the workspace. Try again.' };
   }
 
-  revalidatePath('/dashboard');
+  // The layout's switcher lists workspaces, so every page's shell needs the new one.
+  revalidatePath('/', 'layout');
   redirect(`/projects/${result.project.id}`);
 }
 
@@ -51,7 +52,7 @@ export async function updateProject(input: {
   const parsedProjectId = projectIdSchema.safeParse(input.projectId);
 
   if (!parsedProjectId.success) {
-    return { error: 'This project no longer exists. Refresh the page.' };
+    return { error: 'This workspace no longer exists. Refresh the page.' };
   }
 
   const parsed = createProjectSchema.safeParse(input.values);
@@ -74,15 +75,14 @@ export async function updateProject(input: {
   });
 
   if (!result.ok && result.kind === 'not-found') {
-    return { error: 'This project no longer exists. Refresh the page.' };
+    return { error: 'This workspace no longer exists. Refresh the page.' };
   }
 
   if (!result.ok) {
-    return { error: 'Could not update the project. Try again.' };
+    return { error: 'Could not update the workspace. Try again.' };
   }
 
-  revalidatePath('/dashboard');
-  revalidatePath(`/projects/${projectId}`);
+  revalidatePath('/', 'layout');
 
   redirect(`/projects/${projectId}`);
 }
@@ -91,7 +91,7 @@ export async function deleteProject(projectId: string): Promise<{ error?: string
   const parsedProjectId = projectIdSchema.safeParse(projectId);
 
   if (!parsedProjectId.success) {
-    return { error: 'This project no longer exists. Refresh the page.' };
+    return { error: 'This workspace no longer exists. Refresh the page.' };
   }
 
   const supabase = await createClient();
@@ -104,18 +104,18 @@ export async function deleteProject(projectId: string): Promise<{ error?: string
   const result = await removeProject(supabase, parsedProjectId.data);
 
   if (!result.ok && result.kind === 'not-found') {
-    return { error: 'This project no longer exists. Refresh the page.' };
+    return { error: 'This workspace no longer exists. Refresh the page.' };
   }
 
   if (!result.ok && result.kind === 'storage-error') {
-    revalidatePath('/dashboard');
-    redirect('/dashboard?notice=storage-cleanup');
+    revalidatePath('/', 'layout');
+    redirect('/workspaces?notice=storage-cleanup');
   }
 
   if (!result.ok) {
-    return { error: 'Could not delete the project. Try again.' };
+    return { error: 'Could not delete the workspace. Try again.' };
   }
 
-  revalidatePath('/dashboard');
-  redirect('/dashboard');
+  revalidatePath('/', 'layout');
+  redirect('/workspaces');
 }

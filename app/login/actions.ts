@@ -44,7 +44,7 @@ export async function verifyCode(input: CodeInput): Promise<{ error?: string }> 
   }
 
   revalidatePath('/', 'layout');
-  redirect('/dashboard');
+  redirect('/workspaces');
 }
 
 // Returns Google's consent URL for the browser to open. Not a redirect(): leaving the

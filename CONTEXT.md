@@ -48,7 +48,7 @@ _Avoid_: "OAuth login" in user-facing copy, "SSO".
 A route the guard lets a signed-out visitor reach. The list is `PUBLIC_PATHS` in
 `lib/supabase/proxy.ts` (`/home`, `/login`, `/auth/callback`, `/api/health`); everything not on it is
 **protected**: a page redirects to `/login`, an `/api/*` route answers 401. `/` has no
-page: the proxy sends it to `/dashboard` or `/home` depending on whether there is a user.
+page: the proxy sends it to `/workspaces` or `/home` depending on whether there is a user.
 _Avoid_: "unprotected", "open route", "whitelist".
 
 ## Research content
@@ -57,13 +57,21 @@ _Avoid_: "unprotected", "open route", "whitelist".
 The unit a user organises research by — one topic, its sources, and its conversations.
 Routes live under `app/(app)/projects/[projectId]/`; the row is `public.projects`, owned
 by one user. Every other research table hangs off a project, and RLS follows its owner.
-_Avoid_: "workspace" as a noun for the project itself (that is the screen, below),
-"folder", "notebook".
+**In user-facing copy it is a "workspace"** (see below); code, routes, and tables keep
+`project`.
+_Avoid_: "project" in UI copy, "folder", "notebook".
 
 **Workspace**:
+What the UI calls a project: the switcher, the Workspaces page, and "Create workspace"
+all mean one `public.projects` row. Code never names a type or table `workspace`; it is
+the label, `project` is the thing.
+_Avoid_: "workspace" in code identifiers (use `project`), "team".
+
+**Chat**:
 The split-panel screen for one project — sources on one side, the AI chat on the other
-(`app/(app)/projects/[projectId]/page.tsx`). A project has exactly one.
-_Avoid_: "project page", "chat page".
+(`app/(app)/projects/[projectId]/page.tsx`). A project has exactly one. Labelled "Chat"
+in the sidebar and header, since "workspace" now names the project.
+_Avoid_: "workspace" for this screen, "project page".
 
 **Source**:
 Something a user adds to a project for the AI to draw on: an uploaded PDF or text file
@@ -147,21 +155,34 @@ _Avoid_: "source summary" for this (that is the worker's one-paragraph `sources.
 
 ## Shell
 
-**Dashboard**:
-The signed-in landing screen (`/dashboard`): the list of projects and the way to create
-one. Named after the Jira wireframes; not a metrics dashboard.
-_Avoid_: "home" (that is the landing page, `/home`), "projects page".
+**Workspaces page**:
+The signed-in landing screen (`/workspaces`): a card per project. Was the "Dashboard"
+(`/dashboard` still redirects here). Creating one is the header's **Create New**.
+_Avoid_: "dashboard", "home" (that is the landing page, `/home`), "projects page".
+
+**Workspace switcher**:
+The header's picker (`components/workspace-switcher.tsx`): shows the open project's
+title, or "All workspaces", and opens a searchable list of projects plus links to the
+Workspaces page and to create one. Its list comes from `app/(app)/layout.tsx`, so project
+actions revalidate the whole layout.
+_Avoid_: "project picker", "team switcher".
+
+**Create New**:
+The header's top-right menu (`components/create-new-menu.tsx`): always "Workspace", plus
+"Source" while a project is open.
+_Avoid_: "New project" (the old sidebar link it replaced).
 
 **App shell**:
 The sidebar-plus-header frame every signed-in screen renders inside —
-`app/(app)/layout.tsx`, `components/app-sidebar.tsx`, `components/app-breadcrumb.tsx`.
+`app/(app)/layout.tsx`, `components/app-sidebar.tsx`, `components/app-breadcrumb.tsx`
+(which leads with the workspace switcher), `components/create-new-menu.tsx`.
 Routes in the `(app)` group get it; `/home` and `/login` do not.
 _Avoid_: "nav", "chrome".
 
 **Landing page**:
 The public marketing page at `/home` (`app/home/`), with its own top bar
 (`components/site-header.tsx`) instead of the app shell. Where signed-out visitors land.
-_Avoid_: "home" for the dashboard, "splash".
+_Avoid_: "home" for the Workspaces page, "splash".
 
 ## Areas to expect
 

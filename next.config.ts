@@ -1,6 +1,13 @@
 import type { NextConfig } from 'next';
 
-const nextConfig: NextConfig = {/* config options here */};
+const nextConfig: NextConfig = {
+  redirects() {
+    return [
+      // The dashboard was renamed Workspaces; keep old links and bookmarks working.
+      { source: '/dashboard', destination: '/workspaces', permanent: false },
+    ];
+  },
+};
 
 export default nextConfig;
 
