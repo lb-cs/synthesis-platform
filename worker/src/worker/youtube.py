@@ -1,5 +1,6 @@
 """Fetch an English YouTube transcript as timestamped source text."""
 
+import logging
 import re
 from collections.abc import Iterable, Sequence
 from typing import Protocol
@@ -7,6 +8,8 @@ from urllib.parse import parse_qs, urlparse
 
 from worker.parsing import clean
 from worker.web import FetchError, WebPage
+
+log = logging.getLogger(__name__)
 
 YOUTUBE_HOSTS = frozenset(
     {
@@ -22,6 +25,12 @@ YOUTUBE_HOSTS = frozenset(
 VIDEO_ID_PATTERN = re.compile(r'^[A-Za-z0-9_-]{11}$')
 NO_VIDEO_ID = 'This YouTube link does not point to a supported video.'
 NO_TRANSCRIPT = 'YouTube captions could not be retrieved. Enable captions or retry later.'
+NO_CAPTIONS = 'No captions are available for this YouTube video.'
+YOUTUBE_REQUEST_BLOCKED = (
+    "The worker's request to YouTube was blocked. Retry later or contact the team."
+)
+BLOCKED_ERROR_NAMES = frozenset({'RequestBlocked', 'IpBlocked'})
+CAPTIONS_ERROR_NAMES = frozenset({'NoTranscriptFound', 'TranscriptsDisabled'})
 
 
 class TranscriptSnippet(Protocol):
@@ -41,6 +50,19 @@ class TranscriptEntry(Protocol):
 
 class TranscriptClient(Protocol):
     def list(self, video_id: str) -> Iterable[TranscriptEntry]: ...
+
+
+def transcript_error_message(error: Exception) -> str:
+    """Map known transcript failures to safe, useful messages for the sources page."""
+    error_name = type(error).__name__
+
+    if error_name in BLOCKED_ERROR_NAMES:
+        return YOUTUBE_REQUEST_BLOCKED
+
+    if error_name in CAPTIONS_ERROR_NAMES:
+        return NO_CAPTIONS
+
+    return NO_TRANSCRIPT
 
 
 def get_youtube_video_id(url: str) -> str | None:
@@ -120,7 +142,8 @@ def fetch_youtube_transcript(
     try:
         available = list(client.list(video_id))
     except Exception as error:
-        raise FetchError(NO_TRANSCRIPT) from error
+        log.warning('YouTube transcript listing failed (%s)', type(error).__name__)
+        raise FetchError(transcript_error_message(error)) from error
 
     english = next(
         (entry for entry in available if entry.language_code.lower().startswith('en')),
@@ -129,12 +152,14 @@ def fetch_youtube_transcript(
     selected = english or (available[0] if available else None)
 
     if selected is None:
-        raise FetchError(NO_TRANSCRIPT)
+        log.warning('YouTube video has no available transcript tracks')
+        raise FetchError(NO_CAPTIONS)
 
     try:
         transcript = selected.fetch()
     except Exception as error:
-        raise FetchError(NO_TRANSCRIPT) from error
+        log.warning('YouTube transcript fetch failed (%s)', type(error).__name__)
+        raise FetchError(transcript_error_message(error)) from error
 
     lines = [
         f'[{format_timestamp(snippet.start)}] {clean(snippet.text)}'
@@ -144,6 +169,7 @@ def fetch_youtube_transcript(
     text = clean('\n'.join(lines))
 
     if not text:
+        log.warning('YouTube transcript fetch returned no readable caption text')
         raise FetchError(NO_TRANSCRIPT)
 
     return WebPage(url=url, title=None, text=text)
