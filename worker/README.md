@@ -101,10 +101,15 @@ other boilerplate; the page title goes to `sources.metadata.title`, next to
 `text/plain` links are read as they are.
 
 YouTube video URLs use `src/worker/youtube.py` instead of extracting the video's HTML.
-It prefers English when available, then uses another available caption track. Caption
-lines keep timestamps in chunks, so citations retain where the evidence came from. If
-captions cannot be retrieved, the source fails with a message asking the user to enable
-captions or retry. Other web links continue through the page fetcher above.
+When `SUPADATA_API_KEY` is set, the worker asks Supadata for existing captions only; it
+does not request AI transcription. Without a key, it uses `youtube-transcript-api` and
+prefers English captions, then another available language. Caption lines keep timestamps
+in chunks, so citations retain where the evidence came from. Other web links continue
+through the page fetcher above.
+
+The optional Supadata key is set in `worker/.env` locally and in Railway's worker
+variables. Its free request allowance and terms can change, so check them before relying
+on it in production.
 
 **No internal addresses.** The worker runs inside the hosting network, so a user must not
 be able to point it at one. Each hop (the first request and every redirect) resolves the

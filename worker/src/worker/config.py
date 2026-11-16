@@ -19,12 +19,14 @@ class Config:
     concurrency: int = DEFAULT_CONCURRENCY
     poll_interval_seconds: int = DEFAULT_POLL_INTERVAL_SECONDS
     stale_after_minutes: int = DEFAULT_STALE_AFTER_MINUTES
+    supadata_api_key: str | None = None
 
 
 def load_config(env: Mapping[str, str] = os.environ) -> Config:
     supabase_url = env.get('SUPABASE_URL', '').strip()
     service_role_key = env.get('SUPABASE_SERVICE_ROLE_KEY', '').strip()
     ai_gateway_api_key = env.get('AI_GATEWAY_API_KEY', '').strip()
+    supadata_api_key = env.get('SUPADATA_API_KEY', '').strip() or None
 
     if not supabase_url or not service_role_key or not ai_gateway_api_key:
         raise ConfigError(
@@ -36,6 +38,7 @@ def load_config(env: Mapping[str, str] = os.environ) -> Config:
         supabase_url=supabase_url,
         service_role_key=service_role_key,
         ai_gateway_api_key=ai_gateway_api_key,
+        supadata_api_key=supadata_api_key,
         concurrency=read_positive_int(env, 'WORKER_CONCURRENCY', DEFAULT_CONCURRENCY),
         poll_interval_seconds=read_positive_int(
             env, 'WORKER_POLL_INTERVAL_SECONDS', DEFAULT_POLL_INTERVAL_SECONDS

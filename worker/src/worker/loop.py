@@ -61,9 +61,12 @@ def process_source(
     pages: Pages,
     embedder: Embedder,
     summarizer: Summarizer | None = None,
+    supadata_api_key: str | None = None,
 ) -> None:
     """Runs one claimed source to `ready` or `failed`. Never raises for a bad file."""
-    failure = run_pipeline(source, queue, files, pages, embedder, summarizer)
+    failure = run_pipeline(
+        source, queue, files, pages, embedder, summarizer, supadata_api_key
+    )
 
     if failure is not None:
         is_updated = queue.mark_failed(source.id, failure)
@@ -83,10 +86,13 @@ def run_pipeline(
     pages: Pages,
     embedder: Embedder,
     summarizer: Summarizer | None = None,
+    supadata_api_key: str | None = None,
 ) -> str | None:
     """Returns the user-facing failure message, or None when the source is ready."""
     try:
-        processed = read_source(source, files, pages, embedder, summarizer)
+        processed = read_source(
+            source, files, pages, embedder, summarizer, supadata_api_key
+        )
         save_results(source, queue, processed)
     except (ProcessingError, FetchError) as error:
         return str(error)
@@ -126,11 +132,17 @@ def read_source(
     pages: Pages,
     embedder: Embedder,
     summarizer: Summarizer | None = None,
+    supadata_api_key: str | None = None,
 ) -> pipeline.ProcessedSource:
     """A link is fetched from the web; every other kind is a file in storage."""
     if source.url is not None:
         if is_youtube_video_url(source.url):
-            page = fetch_youtube_transcript(source.url)
+            if supadata_api_key:
+                page = fetch_youtube_transcript(
+                    source.url, supadata_api_key=supadata_api_key
+                )
+            else:
+                page = fetch_youtube_transcript(source.url)
         else:
             page = pages.fetch(source.url)
 
@@ -179,7 +191,14 @@ def run(
 
             for source in claimed:
                 future = pool.submit(
-                    process_source, source, queue, files, pages, embedder, summarizer
+                    process_source,
+                    source,
+                    queue,
+                    files,
+                    pages,
+                    embedder,
+                    summarizer,
+                    config.supadata_api_key,
                 )
                 future.add_done_callback(log_crash)
                 in_flight.add(future)
