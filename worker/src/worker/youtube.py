@@ -32,10 +32,12 @@ NO_CAPTIONS = 'No captions are available for this YouTube video.'
 SUPADATA_ENDPOINT = 'https://api.supadata.ai/v1/transcript'
 SUPADATA_TIMEOUT_SECONDS = 20.0
 SUPADATA_RATE_LIMITED = (
-    'The transcript service reached its request limit. Retry later or upload a transcript.'
+    'The transcript service reached its request limit. Retry later or upload '
+    'a transcript.'
 )
 SUPADATA_UNAVAILABLE = (
-    'The transcript service could not retrieve captions. Retry later or upload a transcript.'
+    'The transcript service could not retrieve captions. Retry later or upload '
+    'a transcript.'
 )
 SUPADATA_BAD_KEY = 'The transcript service rejected its API key. Contact the team.'
 YOUTUBE_REQUEST_BLOCKED = (
