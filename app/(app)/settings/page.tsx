@@ -31,6 +31,11 @@ export default async function SettingsPage() {
     redirect('/login');
   }
 
+  const { data: identityData } = await supabase.auth.getUserIdentities();
+  const hasGoogle = identityData?.identities.some((identity) => {
+    return identity.provider === 'google';
+  });
+
   return (
     <>
       <PageHeader title="Settings" description="Your account and how you sign in." />
@@ -55,20 +60,25 @@ export default async function SettingsPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              Sign-in methods
-              <Badge variant="secondary">Stretch</Badge>
-            </CardTitle>
+            <CardTitle>Sign-in methods</CardTitle>
             <CardDescription>
-              Today you sign in with a one-time code. Google sign-in is planned.
+              {hasGoogle
+                ? 'You can sign in with Google or a one-time code.'
+                : 'Sign in with a one-time code, or use Continue with Google on the sign-in page with this same email to add Google.'}
             </CardDescription>
           </CardHeader>
-          <CardFooter>
-            {/* Not wired up: Google OAuth is a stretch goal (CECS491-17). */}
-            <Button variant="outline" disabled>
-              Connect Google
-            </Button>
-          </CardFooter>
+          <CardContent className="flex flex-col gap-3 text-sm">
+            <div className="flex items-center justify-between">
+              <span>Email one-time code</span>
+              <Badge variant="secondary">Enabled</Badge>
+            </div>
+            <div className="flex items-center justify-between">
+              <span>Google</span>
+              <Badge variant={hasGoogle ? 'secondary' : 'outline'}>
+                {hasGoogle ? 'Connected' : 'Not connected'}
+              </Badge>
+            </div>
+          </CardContent>
         </Card>
 
         <Card>
