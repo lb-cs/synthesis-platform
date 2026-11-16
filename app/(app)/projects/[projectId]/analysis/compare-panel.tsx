@@ -18,7 +18,8 @@ import {
   InputGroup,
   InputGroupAddon,
   InputGroupButton,
-  InputGroupInput,
+  InputGroupText,
+  InputGroupTextarea,
 } from '@/components/ui/input-group';
 
 import { AnalysisLayout, AnalysisResult } from './analysis-layout';
@@ -110,6 +111,22 @@ export function ComparePanel({
     runComparison({ topic: trimmedTopic, sourceIds: selectedIds });
   }
 
+  // Enter sends, Shift+Enter starts a new line, Escape stops a comparison mid-stream.
+  function handleKeyDown(event: React.KeyboardEvent<HTMLTextAreaElement>) {
+    if (event.key === 'Escape' && isBusy) {
+      event.preventDefault();
+      stop();
+      return;
+    }
+
+    if (event.key !== 'Enter' || event.shiftKey || event.nativeEvent.isComposing) {
+      return;
+    }
+
+    event.preventDefault();
+    event.currentTarget.form?.requestSubmit();
+  }
+
   const run = lastRequest
     ? {
         heading: `${joinTitles(comparedTitles)} on “${lastRequest.topic}”`,
@@ -161,24 +178,31 @@ export function ComparePanel({
         footer={
           <form onSubmit={handleSubmit}>
             <InputGroup className="bg-background">
-              <InputGroupInput
+              <InputGroupTextarea
                 aria-label="Topic"
                 placeholder={
                   hasEnoughSources
                     ? 'Topic, e.g. how each study measures sleep quality'
                     : `Pick at least ${MIN_COMPARED_SOURCES} sources first`
                 }
+                className="max-h-40 min-h-12"
                 maxLength={MAX_TOPIC_LENGTH}
                 value={topic}
                 disabled={isBusy || !hasEnoughSources}
                 onChange={(event) => setTopic(event.target.value)}
+                onKeyDown={handleKeyDown}
               />
-              <InputGroupAddon align="inline-end">
+              <InputGroupAddon align="block-end">
+                <InputGroupText className="hidden text-xs sm:flex">
+                  {isBusy
+                    ? 'Esc to stop'
+                    : 'Enter to compare · Shift+Enter for a new line'}
+                </InputGroupText>
                 {isBusy ? (
                   <InputGroupButton
                     size="icon-sm"
                     variant="default"
-                    className="rounded-full"
+                    className="ml-auto rounded-full"
                     aria-label="Stop comparing"
                     onClick={() => stop()}
                   >
@@ -189,7 +213,7 @@ export function ComparePanel({
                     type="submit"
                     size="icon-sm"
                     variant="default"
-                    className="rounded-full"
+                    className="ml-auto rounded-full"
                     aria-label="Compare"
                     disabled={!canCompare}
                   >
