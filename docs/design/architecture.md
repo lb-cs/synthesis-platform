@@ -109,19 +109,19 @@ build — something else already does it.
 
 ## Screens and routes
 
-| Screen                | Route                                                      | Use cases     | Status      |
-| --------------------- | ---------------------------------------------------------- | ------------- | ----------- |
-| Landing page          | `/home` (`/` redirects by sign-in state)                   | —             | Built       |
-| Sign in (and sign up) | `/login` — Google button, or email then 6-digit code       | UC-01, UC-03  | Built       |
-| Dashboard             | `/dashboard`                                               | UC-09         | Built       |
-| New project           | `/projects/new`                                            | UC-07         | Built       |
-| Workspace             | `/projects/[projectId]` — sources + chat                   | UC-09, UC-16  | Built       |
-| Sources               | `/projects/[projectId]/sources`                            | UC-11 – UC-14 | Built       |
-| Summaries             | `/projects/[projectId]/summaries`                          | UC-17         | Placeholder |
-| Analysis              | `/projects/[projectId]/analysis` — Compare and Themes tabs | UC-18, UC-19  | Built       |
-| Settings              | `/settings` — change email, sign out, delete account       | UC-04 – UC-06 | Built       |
-| Edit project          | `/projects/[projectId]/edit`                               | UC-08         | Built       |
-| Citation viewer       | A sheet over any project screen, opened by a `[n]` chip    | UC-20         | Built       |
+| Screen                | Route                                                      | Use cases     | Status |
+| --------------------- | ---------------------------------------------------------- | ------------- | ------ |
+| Landing page          | `/home` (`/` redirects by sign-in state)                   | —             | Built  |
+| Sign in (and sign up) | `/login` — Google button, or email then 6-digit code       | UC-01, UC-03  | Built  |
+| Dashboard             | `/dashboard`                                               | UC-09         | Built  |
+| New project           | `/projects/new`                                            | UC-07         | Built  |
+| Workspace             | `/projects/[projectId]` — sources + chat                   | UC-09, UC-16  | Built  |
+| Sources               | `/projects/[projectId]/sources`                            | UC-11 – UC-14 | Built  |
+| Summaries             | `/projects/[projectId]/summaries`                          | UC-17         | Built  |
+| Analysis              | `/projects/[projectId]/analysis` — Compare and Themes tabs | UC-18, UC-19  | Built  |
+| Settings              | `/settings` — change email, sign out, delete account       | UC-04 – UC-06 | Built  |
+| Edit project          | `/projects/[projectId]/edit`                               | UC-08         | Built  |
+| Citation viewer       | A sheet over any project screen, opened by a `[n]` chip    | UC-20         | Built  |
 
 ## How a source gets processed (UC-11, UC-15)
 

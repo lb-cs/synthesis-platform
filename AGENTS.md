@@ -23,7 +23,8 @@ the first features over it — projects (dashboard, create, edit, delete, REST A
 `app/api/projects/`), sources (upload, add a web link, list, rename, remove, live status, retry),
 Settings (change email, sign out, delete account), a first workspace chat (AI SDK over Vercel AI
 Gateway, retrieval over embedded chunks in `lib/answer.ts`), the Analysis page's Compare
-and Themes tabs (cited comparisons and key themes over the worker's chunks), and the Python worker in
+and Themes tabs (cited comparisons and key themes over the worker's chunks), the Summaries page (a cited
+summary of chosen sources), and the Python worker in
 `worker/` (deployed on Railway) that claims uploaded sources, parses, chunks, and embeds
 them, and moves their status. [Architecture](docs/design/architecture.md)
 tracks status per screen.
