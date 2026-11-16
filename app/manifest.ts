@@ -4,7 +4,8 @@ export default function manifest(): MetadataRoute.Manifest {
   return {
     name: 'Synthesis Platform',
     short_name: 'Synthesis',
-    description: 'AI-assisted research workspace for CECS 491.',
+    description:
+      'Research workspace that answers only from your sources, with every claim cited.',
     start_url: '/',
     display: 'standalone',
     background_color: '#ffffff',

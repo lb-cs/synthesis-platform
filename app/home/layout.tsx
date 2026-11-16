@@ -16,7 +16,7 @@ export default async function HomeLayout({ children }: LayoutProps<'/home'>) {
         <div className="mx-auto flex max-w-6xl flex-col gap-4 px-6 py-6 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
           <div className="flex flex-col gap-2">
             <span>Synthesis Platform</span>
-            <span>CECS 491 · Team Quintessential Algorithms</span>
+            <span>Built by Team Quintessential Algorithms</span>
           </div>
           <ThemeSwitcher />
         </div>

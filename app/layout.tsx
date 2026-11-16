@@ -16,7 +16,8 @@ const fontMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: 'Synthesis Platform',
-  description: 'AI-assisted research workspace for CECS 491.',
+  description:
+    'Research workspace that answers only from your sources, with every claim cited.',
   icons: {
     icon: [
       { url: '/favicon.ico', sizes: 'any' },

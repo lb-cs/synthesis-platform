@@ -19,36 +19,36 @@ const SHOWCASES: Showcase[] = [
   {
     title: 'All your sources, one workspace',
     description:
-      'Upload PDFs, text, and markdown, or paste a web link. Synthesis reads and indexes each one in the background, and you can watch it go from pending to ready.',
+      'Upload PDFs, text, and markdown, or paste a web link. Synthesis reads and indexes each one in the background, so your library is ready to question in moments.',
     image: '/landing/sources.jpg',
     height: 1161,
     alt: 'The Sources page: a drop zone for files, a search box, status filters, and a list of ready sources.',
     points: [
       'PDF, .txt, .md, and web links',
-      'Live status, with one-click retry if a source fails',
+      'Live processing status, with one-click retry',
       'Search, filter, rename, and remove',
     ],
   },
   {
     title: 'Answers only from your sources',
     description:
-      'Ask in plain language. The AI draws on the passages it finds in your workspace and nothing else. If your sources do not say, it tells you so.',
+      'Ask in plain language. Synthesis draws only on the passages it finds in your workspace. When your sources do not say, it tells you instead of guessing.',
     image: '/landing/chat.jpg',
     height: 1159,
     alt: 'The workspace chat: a sources panel beside a long answer with numbered citations.',
     points: [
-      'Retrieval over your own embedded text',
-      'Suggested questions to get started',
-      'Chat history stays with the workspace',
+      'Grounded in your own materials, never the open web',
+      'Suggested questions to get you started',
+      'Conversations are saved with the workspace',
     ],
   },
   {
     title: 'Every claim cited, down to the page',
     description:
-      'Each claim carries a citation. Open one and the original PDF appears at the right page with the supporting passage highlighted.',
+      'Every claim carries a citation. Open one and the original PDF appears at the right page with the supporting passage highlighted.',
     image: '/landing/citation.jpg',
     height: 1162,
-    alt: 'A source viewer showing page 5 of a PDF with the cited passage highlighted in yellow.',
+    alt: 'The source viewer open on page 17 of a PDF, with the cited passages highlighted in yellow.',
     points: [
       'Highlighted passage, not just a filename',
       'Jump to the original file at any time',
@@ -96,15 +96,15 @@ export default function HomePage() {
   return (
     <>
       <section className="mx-auto flex w-full max-w-6xl flex-col items-center gap-8 px-6 py-24 text-center">
-        <Badge variant="outline">CECS 491 · Early preview</Badge>
+        <Badge variant="outline">AI research workspace</Badge>
         <div className="flex flex-col gap-4">
           <h1 className="text-4xl font-semibold tracking-tight sm:text-5xl">
             Research, grounded in your sources.
           </h1>
           <p className="mx-auto max-w-xl text-lg text-muted-foreground">
-            A research workspace for students and researchers. Add your readings, ask
-            questions, and get answers drawn only from what you added. Every claim is
-            cited to the page behind it.
+            Synthesis is the research workspace for students and researchers. Add your
+            readings, ask anything, and get answers drawn only from what you added, with
+            every claim cited to the page behind it.
           </p>
         </div>
         <div className="flex flex-wrap justify-center gap-3">
@@ -133,8 +133,8 @@ export default function HomePage() {
       <section id="features" className="scroll-mt-14 border-t bg-muted/40">
         <div className="mx-auto flex max-w-6xl flex-col gap-16 px-6 py-20">
           <SectionHeading
-            title="An AI that stays on your page"
-            description="Unlike a general chatbot, it answers from your materials and nothing else."
+            title="Answers you can check"
+            description="A general chatbot guesses. Synthesis answers from your materials and shows its work."
           />
           {SHOWCASES.map((showcase, index) => (
             <div
@@ -194,11 +194,10 @@ export default function HomePage() {
       <section className="border-t bg-muted/40">
         <div className="mx-auto flex max-w-6xl flex-col items-center gap-4 px-6 py-20 text-center">
           <h2 className="text-2xl font-semibold tracking-tight">
-            Start your first workspace
+            Bring your readings. Get answers you can cite.
           </h2>
           <p className="text-muted-foreground">
-            Continue with Google, or sign in with an emailed one-time code. No password to
-            remember.
+            Sign in with Google or a one-time email code. No password to remember.
           </p>
           <Button render={<Link href="/login" />} nativeButton={false}>
             Get started
