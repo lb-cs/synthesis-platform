@@ -10,18 +10,18 @@ type Showcase = {
   description: string;
   image: string;
   alt: string;
-  height?: number;
+  height: number;
   points: string[];
 };
 
-// Real captures of the app, from `public/landing/`. Most are 800 x 499; sources is 800 x 600.
+// Real captures of the app, from `public/landing/`. Each is 2000 px wide; `height` is the real pixel height of that file.
 const SHOWCASES: Showcase[] = [
   {
     title: 'All your sources, one workspace',
     description:
       'Upload PDFs, text, and markdown, or paste a web link. Synthesis reads and indexes each one in the background, and you can watch it go from pending to ready.',
-    image: '/landing/sources.png',
-    height: 600,
+    image: '/landing/sources.jpg',
+    height: 1161,
     alt: 'The Sources page: a drop zone for files, a search box, status filters, and a list of ready sources.',
     points: [
       'PDF, .txt, .md, and web links',
@@ -33,7 +33,8 @@ const SHOWCASES: Showcase[] = [
     title: 'Answers only from your sources',
     description:
       'Ask in plain language. The AI draws on the passages it finds in your workspace and nothing else. If your sources do not say, it tells you so.',
-    image: '/landing/chat.png',
+    image: '/landing/chat.jpg',
+    height: 1159,
     alt: 'The workspace chat: a sources panel beside a long answer with numbered citations.',
     points: [
       'Retrieval over your own embedded text',
@@ -45,7 +46,8 @@ const SHOWCASES: Showcase[] = [
     title: 'Every claim cited, down to the page',
     description:
       'Each claim carries a citation. Open one and the original PDF appears at the right page with the supporting passage highlighted.',
-    image: '/landing/citation.png',
+    image: '/landing/citation.jpg',
+    height: 1162,
     alt: 'A source viewer showing page 5 of a PDF with the cited passage highlighted in yellow.',
     points: [
       'Highlighted passage, not just a filename',
@@ -56,7 +58,8 @@ const SHOWCASES: Showcase[] = [
     title: 'Summaries of the sources you choose',
     description:
       'Pick one to five sources and get a structured, cited summary: an overview, key points, and a breakdown by source.',
-    image: '/landing/summaries.png',
+    image: '/landing/summaries.jpg',
+    height: 1159,
     alt: 'The Summaries page: a source picker beside a cited summary with an overview and key points.',
     points: ['Overview, key points, and per-source detail', 'Citations on every point'],
   },
@@ -64,7 +67,8 @@ const SHOWCASES: Showcase[] = [
     title: 'Compare sources and surface themes',
     description:
       'Choose two to five sources and a topic to see where they agree, where they differ, and why. Or let Synthesis pull out the key themes across a workspace.',
-    image: '/landing/analysis.png',
+    image: '/landing/analysis.jpg',
+    height: 1159,
     alt: 'The Analysis page comparing two sources on a topic, listing where they agree with citations.',
     points: [
       'Compare tab: agreements and differences',
@@ -118,7 +122,8 @@ export default function HomePage() {
           </Button>
         </div>
         <Screenshot
-          src="/landing/chat.png"
+          src="/landing/chat.jpg"
+          height={1159}
           alt="The Synthesis workspace: your sources on the left and a cited answer on the right."
           priority
           className="mt-8 max-w-3xl"
@@ -216,13 +221,13 @@ function SectionHeading({ title, description }: { title: string; description: st
 function Screenshot({
   src,
   alt,
-  height = 499,
+  height,
   priority = false,
   className = '',
 }: {
   src: string;
   alt: string;
-  height?: number;
+  height: number;
   priority?: boolean;
   className?: string;
 }) {
@@ -233,7 +238,7 @@ function Screenshot({
       <Image
         src={src}
         alt={alt}
-        width={800}
+        width={2000}
         height={height}
         priority={priority}
         sizes="(min-width: 1024px) 560px, 100vw"
