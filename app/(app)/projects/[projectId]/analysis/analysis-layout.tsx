@@ -36,7 +36,7 @@ export function AnalysisLayout({
   children: ReactNode;
 }) {
   return (
-    <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]">
+    <div className="grid flex-1 gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]">
       <Card className="flex flex-col">
         <CardHeader>
           <CardTitle>{sourcesTitle}</CardTitle>
@@ -46,7 +46,7 @@ export function AnalysisLayout({
       </Card>
 
       {/* Capped so a long result scrolls inside the card, keeping the footer in view. */}
-      <Card className="flex max-h-[70svh] min-h-96 flex-col lg:max-h-[calc(100svh-14rem)]">
+      <Card className="flex max-h-[70svh] min-h-96 flex-col lg:max-h-[calc(100svh-13.5rem)]">
         {children}
       </Card>
     </div>
