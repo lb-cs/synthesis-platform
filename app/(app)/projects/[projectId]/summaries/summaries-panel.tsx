@@ -123,6 +123,7 @@ export function SummariesPanel({
 
   return (
     <AnalysisLayout
+      hasTabs={false}
       sourcesTitle="Sources"
       sourcesDescription={`Pick ${MIN_SUMMARIZED_SOURCES} to ${MAX_SUMMARIZED_SOURCES} to summarize. ${selectedIds.length} selected.`}
       sources={
