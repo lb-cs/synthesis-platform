@@ -103,6 +103,33 @@ def test_a_youtube_link_uses_timestamped_captions_in_the_normal_pipeline(
     assert chunks[0].embedding is not None
 
 
+def test_passes_the_configured_supadata_key_to_youtube_fetcher(
+    monkeypatch: pytest.MonkeyPatch,
+):
+    url = 'https://www.youtube.com/watch?v=dQw4w9WgXcQ'
+    source = make_source(1, kind='link', url=url)
+    queue = FakeQueue([])
+    received_keys: list[str | None] = []
+
+    def fetch_transcript(link: str, supadata_api_key: str | None = None) -> WebPage:
+        assert link == url
+        received_keys.append(supadata_api_key)
+        return WebPage(url=link, title=None, text='[00:00] Video transcript text.')
+
+    monkeypatch.setattr('worker.loop.fetch_youtube_transcript', fetch_transcript)
+    process_source(
+        source,
+        queue,
+        FakeFiles(),
+        FakePages(),
+        FakeEmbedder(),
+        supadata_api_key='supadata-test-key',
+    )
+
+    assert received_keys == ['supadata-test-key']
+    assert queue.ready == ['source-1']
+
+
 def test_a_page_that_cannot_be_read_fails_the_link_with_its_reason():
     source = make_source(1, kind='link')
     queue = FakeQueue([])

@@ -12,9 +12,16 @@ REQUIRED = {
 def test_uses_defaults_when_only_the_required_values_are_set():
     config = load_config(REQUIRED)
 
+    assert config.supadata_api_key is None
     assert config.concurrency == 4
     assert config.poll_interval_seconds == 5
     assert config.stale_after_minutes == 15
+
+
+def test_trims_the_optional_supadata_api_key():
+    config = load_config({**REQUIRED, 'SUPADATA_API_KEY': '  supadata-test  '})
+
+    assert config.supadata_api_key == 'supadata-test'
 
 
 def test_refuses_to_start_without_the_service_role_key():
