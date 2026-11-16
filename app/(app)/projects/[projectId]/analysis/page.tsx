@@ -144,7 +144,7 @@ function ThemesContent({
     return <ProjectTooLarge projectId={projectId} readiness={readiness} />;
   }
 
-  return <ThemesPanel projectId={projectId} sourceCount={readiness.sources.length} />;
+  return <ThemesPanel projectId={projectId} sources={readiness.sources} />;
 }
 
 export default async function AnalysisPage({
@@ -187,7 +187,7 @@ export default async function AnalysisPage({
       />
 
       {/* Base UI needs an enabled default when rendering on the server. */}
-      <Tabs defaultValue={canCompare ? 'compare' : 'themes'}>
+      <Tabs className="flex-1" defaultValue={canCompare ? 'compare' : 'themes'}>
         <TabsList>
           <TabsTrigger
             value="compare"
@@ -203,11 +203,11 @@ export default async function AnalysisPage({
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="compare" className="pt-4">
+        <TabsContent value="compare" className="flex flex-col pt-4">
           <ComparePanel projectId={projectId} sources={comparable} />
         </TabsContent>
 
-        <TabsContent value="themes" className="pt-4">
+        <TabsContent value="themes" className="flex flex-col pt-4">
           <ThemesContent projectId={projectId} readiness={themesReadiness} />
         </TabsContent>
       </Tabs>
