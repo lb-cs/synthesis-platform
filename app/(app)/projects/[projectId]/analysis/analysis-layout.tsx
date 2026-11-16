@@ -118,30 +118,33 @@ export function AnalysisResult({
       <CardContent
         aria-live="polite"
         aria-busy={run.isBusy}
-        className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto text-sm"
+        className="min-h-0 flex-1 overflow-y-auto text-sm"
       >
-        <h3 className="font-medium">{run.heading}</h3>
+        {/* Own flex box so the scrolling parent can't squash its children into overlap. */}
+        <div className="flex flex-col gap-3">
+          <h3 className="font-medium">{run.heading}</h3>
 
-        {isWaiting && <Shimmer>Reading your sources…</Shimmer>}
+          {isWaiting && <Shimmer>Reading your sources…</Shimmer>}
 
-        {run.message && text !== '' && (
-          <AnswerText
-            projectId={projectId}
-            text={text}
-            sources={run.message.metadata?.sources ?? []}
-            isStreaming={run.isStreaming}
-          />
-        )}
+          {run.message && text !== '' && (
+            <AnswerText
+              projectId={projectId}
+              text={text}
+              sources={run.message.metadata?.sources ?? []}
+              isStreaming={run.isStreaming}
+            />
+          )}
 
-        {run.errorMessage && (
-          <div role="alert" className="flex flex-wrap items-center gap-3">
-            <p className="text-destructive">{run.errorMessage}</p>
-            <Button variant="outline" size="sm" onClick={run.onRetry}>
-              <RotateCcw />
-              Try again
-            </Button>
-          </div>
-        )}
+          {run.errorMessage && (
+            <div role="alert" className="flex flex-wrap items-center gap-3">
+              <p className="text-destructive">{run.errorMessage}</p>
+              <Button variant="outline" size="sm" onClick={run.onRetry}>
+                <RotateCcw />
+                Try again
+              </Button>
+            </div>
+          )}
+        </div>
       </CardContent>
       {footer && <CardFooter className="flex-col items-stretch">{footer}</CardFooter>}
     </>
