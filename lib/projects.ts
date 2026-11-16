@@ -20,6 +20,8 @@ export type Project = {
   updatedAt: string;
 };
 
+export type ProjectSummary = Project & { sourceCount: number };
+
 export type CreateProjectInput = Pick<TablesInsert<'projects'>, 'title' | 'description'>;
 
 export type UpdateProjectInput = Pick<TablesUpdate<'projects'>, 'title' | 'description'>;
@@ -28,7 +30,7 @@ export type ProjectResult =
   { ok: true; project: Project } | { ok: false; kind: 'not-found' | 'database-error' };
 
 export type ProjectListResult =
-  { ok: true; projects: Project[] } | { ok: false; kind: 'database-error' };
+  { ok: true; projects: ProjectSummary[] } | { ok: false; kind: 'database-error' };
 
 export type DeleteProjectResult =
   { ok: true } | { ok: false; kind: 'not-found' | 'database-error' | 'storage-error' };
@@ -55,14 +57,19 @@ function toProject(row: ProjectRow): Project {
 export async function listProjects(supabase: Client): Promise<ProjectListResult> {
   const { data, error } = await supabase
     .from('projects')
-    .select(PROJECT_COLUMNS)
+    .select(`${PROJECT_COLUMNS}, sources(count)`)
     .order('created_at', { ascending: false });
 
   if (error) {
     return { ok: false, kind: 'database-error' };
   }
 
-  return { ok: true, projects: data.map(toProject) };
+  const projects = data.map((row) => ({
+    ...toProject(row),
+    sourceCount: row.sources[0]?.count ?? 0,
+  }));
+
+  return { ok: true, projects };
 }
 
 export async function getProject(
