@@ -115,9 +115,11 @@ failed part-way can still have some.
 returns the best few chunks from each chosen source instead, so a long source can't
 crowd a short one out of a comparison. Same rules: runs as the caller, `ready` only.
 
-`sample_source_chunks(project_id, chunks_per_source = 8)` takes up to N chunks spread
-evenly through each ready source in the project, in reading order. Themes has no query
-to embed, so it samples instead of searching. Same rules: runs as the caller.
+`sample_source_chunks(project_id, chunks_per_source = 8, source_ids = null)` takes up to N
+chunks spread evenly through each ready source in the project, in reading order. Themes
+and Summaries have no query to embed, so they sample instead of searching. `source_ids`
+limits it to the sources a user picked (Summaries); null means every ready source
+(Themes). Same rules: runs as the caller.
 
 ### `chat_messages`
 

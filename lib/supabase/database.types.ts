@@ -284,6 +284,7 @@ export type Database = {
         Args: {
           chunks_per_source?: number;
           project_id: string;
+          source_ids?: string[];
         };
         Returns: {
           chunk_index: number;

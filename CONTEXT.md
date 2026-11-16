@@ -138,6 +138,13 @@ cited evidence by the Analysis page's Themes tab (`lib/themes.ts`, `streamThemes
 Not stored: each run stands alone.
 _Avoid_: "topic" (that is what a comparison is about), "insight" in code (UC-19's name).
 
+**Summary**:
+A streamed, cited, structured overview of 1–5 chosen ready sources (an overview, key
+points, and one list per source), from the Summaries page (`lib/summaries.ts`,
+`streamSummary` in `lib/ai.ts`). Written from a sample of passages spread through each
+source, cited by passage number. Not stored: each run stands alone.
+_Avoid_: "source summary" for this (that is the worker's one-paragraph `sources.summary`).
+
 ## Shell
 
 **Dashboard**:
