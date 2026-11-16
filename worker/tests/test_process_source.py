@@ -99,9 +99,7 @@ def test_a_youtube_link_uses_timestamped_captions_in_the_normal_pipeline(
     metadata, chunks = queue.saved['source-1']
     expected_text = '[00:00] Sources can be processed from a video transcript.'
     assert metadata == {'character_count': len(expected_text)}
-    assert [chunk.content for chunk in chunks] == [
-        expected_text
-    ]
+    assert [chunk.content for chunk in chunks] == [expected_text]
     assert chunks[0].embedding is not None
 
 

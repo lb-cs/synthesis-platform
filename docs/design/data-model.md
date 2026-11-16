@@ -70,19 +70,19 @@ Code: `lib/projects.ts` (list, get, create, update, delete). API: `/api/projects
 
 ### `sources`
 
-| Column                  | Type              | Notes                                                                                                                     |
-| ----------------------- | ----------------- | ------------------------------------------------------------------------------------------------------------------------- |
-| `id`                    | uuid              |                                                                                                                           |
-| `project_id`            | uuid              |                                                                                                                           |
-| `kind`                  | text              | `pdf` \| `text` \| `link`. YouTube transcripts use `link` and retain timestamps in chunk text                              |
-| `title`                 | text              | 1–200 characters. The only column a user can change                                                                       |
-| `storage_path`          | text, null        | `{user_id}/{project_id}/{file}` in the `sources` bucket. Unique. Null for a link                                          |
-| `url`                   | text, null        | A link's `http(s)` address, up to 2,048 characters. Null for a file. A source has a `storage_path` or a `url`, never both |
-| `status`                | text              | `pending` → `processing` → `ready` \| `failed`. The worker's queue                                                        |
-| `processing_error`      | text, null        | Why it failed                                                                                                             |
-| `processing_started_at` | timestamptz, null | When the worker claimed it. A stale value means the worker died                                                           |
-| `metadata`              | jsonb             | Whatever the parser finds: author, page count, …, plus the worker's short `summary`. Chat lists it in every prompt        |
-| `created_at`            | timestamptz       |                                                                                                                           |
+| Column                  | Type              | Notes                                                                                                                      |
+| ----------------------- | ----------------- | ------------------------------------------------------------------------------------------------------------------------- -|
+| `id`                    | uuid              |                                                                                                                            |
+| `project_id`            | uuid              |                                                                                                                            |
+| `kind`                  | text              | `pdf` \| `text` \| `link`. YouTube transcripts use `link` and retain timestamps in chunk text                               |
+| `title`                 | text              | 1–200 characters. The only column a user can change                                                                        |
+| `storage_path`          | text, null        | `{user_id}/{project_id}/{file}` in the `sources` bucket. Unique. Null for a link                                           |
+| `url`                   | text, null        | A link's `http(s)` address, up to 2,048 characters. Null for a file. A source has a `storage_path` or a `url`, never both  |
+| `status`                | text              | `pending` → `processing` → `ready` \| `failed`. The worker's queue                                                         |
+| `processing_error`      | text, null        | Why it failed                                                                                                              |
+| `processing_started_at` | timestamptz, null | When the worker claimed it. A stale value means the worker died                                                            |
+| `metadata`              | jsonb             | Whatever the parser finds: author, page count, …, plus the worker's short `summary`. Chat lists it in every prompt         |
+| `created_at`            | timestamptz       |                                                                                                                            |
 
 The bucket accepts PDF, plain text, and Markdown up to 50 MiB.
 

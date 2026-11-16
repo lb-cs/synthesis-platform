@@ -9,9 +9,7 @@ from worker.db import ClaimedSource
 from worker.web import WebPage
 
 
-def make_source(
-    number: int, kind: str = 'text', url: str | None = None
-) -> ClaimedSource:
+def make_source(number: int, kind: str = 'text', url: str | None = None) -> ClaimedSource:
     extension = 'pdf' if kind == 'pdf' else 'txt'
     path = f'user-1/project-1/file-{number}.{extension}'
 

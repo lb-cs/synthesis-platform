@@ -95,9 +95,7 @@ def test_fetches_english_captions_as_timestamped_web_page_text():
             TranscriptEntry('es', Transcript([Snippet('Primer punto.', 0)])),
             TranscriptEntry(
                 'en',
-                Transcript(
-                    [Snippet('  First point. ', 0), Snippet('Second point.', 65)]
-                ),
+                Transcript([Snippet('  First point. ', 0), Snippet('Second point.', 65)]),
             ),
         ]
     )

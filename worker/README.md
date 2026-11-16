@@ -46,7 +46,7 @@ chunking, embedding, and summary pipeline (see
 | `src/worker/db.py`         | Every query against `public.sources`                     |
 | `src/worker/storage.py`    | Downloads files from the `sources` bucket                |
 | `src/worker/web.py`        | Fetches a link's page and extracts its readable text     |
-| `src/worker/youtube.py`    | Fetches timestamped captions for YouTube videos         |
+| `src/worker/youtube.py`    | Fetches timestamped captions for YouTube videos          |
 | `src/worker/loop.py`       | Polling loop and thread pool; turns errors into `failed` |
 | `src/worker/pipeline.py`   | Parses, chunks, embeds, and summarizes each source       |
 | `src/worker/embeddings.py` | AI Gateway embedding requests and response validation    |
