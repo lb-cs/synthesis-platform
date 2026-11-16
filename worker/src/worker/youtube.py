@@ -1,5 +1,6 @@
 """Fetch an English YouTube transcript as timestamped source text."""
 
+import logging
 import re
 from collections.abc import Iterable, Sequence
 from typing import Protocol
@@ -7,6 +8,8 @@ from urllib.parse import parse_qs, urlparse
 
 from worker.parsing import clean
 from worker.web import FetchError, WebPage
+
+log = logging.getLogger(__name__)
 
 YOUTUBE_HOSTS = frozenset(
     {
@@ -120,6 +123,7 @@ def fetch_youtube_transcript(
     try:
         available = list(client.list(video_id))
     except Exception as error:
+        log.warning('YouTube transcript listing failed (%s)', type(error).__name__)
         raise FetchError(NO_TRANSCRIPT) from error
 
     english = next(
@@ -129,11 +133,13 @@ def fetch_youtube_transcript(
     selected = english or (available[0] if available else None)
 
     if selected is None:
+        log.warning('YouTube video has no available transcript tracks')
         raise FetchError(NO_TRANSCRIPT)
 
     try:
         transcript = selected.fetch()
     except Exception as error:
+        log.warning('YouTube transcript fetch failed (%s)', type(error).__name__)
         raise FetchError(NO_TRANSCRIPT) from error
 
     lines = [
@@ -144,6 +150,7 @@ def fetch_youtube_transcript(
     text = clean('\n'.join(lines))
 
     if not text:
+        log.warning('YouTube transcript fetch returned no readable caption text')
         raise FetchError(NO_TRANSCRIPT)
 
     return WebPage(url=url, title=None, text=text)

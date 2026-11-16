@@ -126,12 +126,31 @@ def test_reports_videos_without_readable_captions():
         )
 
 
-def test_reports_transcript_service_errors_with_a_safe_message():
+def test_reports_transcript_service_errors_with_a_safe_message(caplog):
     with pytest.raises(FetchError, match=NO_TRANSCRIPT):
         fetch_youtube_transcript(
             'https://youtu.be/dQw4w9WgXcQ',
             FakeTranscriptApi(error=RuntimeError('private request detail')),
         )
+
+    assert 'YouTube transcript listing failed (RuntimeError)' in caplog.text
+
+
+def test_logs_when_fetching_an_available_transcript_fails(caplog):
+    api = FakeTranscriptApi(
+        [
+            TranscriptEntry(
+                'en',
+                Transcript([]),
+                error=RuntimeError('private request detail'),
+            )
+        ]
+    )
+
+    with pytest.raises(FetchError, match=NO_TRANSCRIPT):
+        fetch_youtube_transcript('https://youtu.be/dQw4w9WgXcQ', api)
+
+    assert 'YouTube transcript fetch failed (RuntimeError)' in caplog.text
 
 
 def test_rejects_malformed_youtube_video_id():
