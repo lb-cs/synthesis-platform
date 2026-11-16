@@ -10,16 +10,18 @@ type Showcase = {
   description: string;
   image: string;
   alt: string;
+  height?: number;
   points: string[];
 };
 
-// Real captures of the app, from `public/landing/`. Each is 800 x 499.
+// Real captures of the app, from `public/landing/`. Most are 800 x 499; sources is 800 x 600.
 const SHOWCASES: Showcase[] = [
   {
     title: 'All your sources, one workspace',
     description:
       'Upload PDFs, text, and markdown, or paste a web link. Synthesis reads and indexes each one in the background, and you can watch it go from pending to ready.',
     image: '/landing/sources.png',
+    height: 600,
     alt: 'The Sources page: a drop zone for files, a search box, status filters, and a list of ready sources.',
     points: [
       'PDF, .txt, .md, and web links',
@@ -154,7 +156,11 @@ export default function HomePage() {
                   ))}
                 </ul>
               </div>
-              <Screenshot src={showcase.image} alt={showcase.alt} />
+              <Screenshot
+                src={showcase.image}
+                alt={showcase.alt}
+                height={showcase.height}
+              />
             </div>
           ))}
         </div>
@@ -210,11 +216,13 @@ function SectionHeading({ title, description }: { title: string; description: st
 function Screenshot({
   src,
   alt,
+  height = 499,
   priority = false,
   className = '',
 }: {
   src: string;
   alt: string;
+  height?: number;
   priority?: boolean;
   className?: string;
 }) {
@@ -226,7 +234,7 @@ function Screenshot({
         src={src}
         alt={alt}
         width={800}
-        height={499}
+        height={height}
         priority={priority}
         sizes="(min-width: 1024px) 560px, 100vw"
         className="h-auto w-full"
