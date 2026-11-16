@@ -2,7 +2,7 @@
 
 import { useChat } from '@ai-sdk/react';
 import { DefaultChatTransport } from 'ai';
-import { GitCompare, RotateCcw, Square } from 'lucide-react';
+import { ArrowUp, GitCompare, Square } from 'lucide-react';
 import { useState } from 'react';
 
 import { getMessageText, type ChatUIMessage } from '@/lib/citations';
@@ -12,21 +12,16 @@ import {
   MIN_COMPARED_SOURCES,
   type ComparableSource,
 } from '@/lib/comparison';
-import { Shimmer } from '@/components/ai-elements/shimmer';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Field, FieldGroup, FieldLabel } from '@/components/ui/field';
 import {
-  Field,
-  FieldDescription,
-  FieldGroup,
-  FieldLabel,
-  FieldLegend,
-  FieldSet,
-} from '@/components/ui/field';
-import { Input } from '@/components/ui/input';
+  InputGroup,
+  InputGroupAddon,
+  InputGroupButton,
+  InputGroupInput,
+} from '@/components/ui/input-group';
 
-import { AnswerText } from '../answer-text';
+import { AnalysisLayout, AnalysisResult } from './analysis-layout';
 import { getRequestErrorMessage } from './request-error';
 
 const DEFAULT_ERROR =
@@ -77,12 +72,10 @@ export function ComparePanel({
   const isBusy = status === 'submitted' || status === 'streaming';
   const trimmedTopic = topic.trim();
   const isFull = selectedIds.length >= MAX_COMPARED_SOURCES;
-  const canCompare =
-    !isBusy && trimmedTopic !== '' && selectedIds.length >= MIN_COMPARED_SOURCES;
+  const hasEnoughSources = selectedIds.length >= MIN_COMPARED_SOURCES;
+  const canCompare = !isBusy && trimmedTopic !== '' && hasEnoughSources;
 
-  const result = messages.find((message) => message.role === 'assistant');
-  const resultText = result ? getMessageText(result) : '';
-  const isWaiting = isBusy && resultText === '';
+  const message = messages.find((item) => item.role === 'assistant');
   const titleById = new Map(sources.map((source) => [source.id, source.title]));
   const comparedTitles = (lastRequest?.sourceIds ?? []).flatMap((id) => {
     const title = titleById.get(id);
@@ -117,107 +110,97 @@ export function ComparePanel({
     runComparison({ topic: trimmedTopic, sourceIds: selectedIds });
   }
 
+  const run = lastRequest
+    ? {
+        heading: `${joinTitles(comparedTitles)} on “${lastRequest.topic}”`,
+        message,
+        isBusy,
+        isStreaming: status === 'streaming',
+        errorMessage: error ? getRequestErrorMessage(error, DEFAULT_ERROR) : null,
+        onRetry: () => runComparison(lastRequest),
+      }
+    : null;
+
+  const emptyDescription = `Tick ${MIN_COMPARED_SOURCES} to ${MAX_COMPARED_SOURCES} sources on the left, then type a topic below. The comparison uses only what those sources say about it.`;
+
   return (
-    // Capped so the topic field and the comparison keep a readable line length.
-    <div className="flex max-w-3xl flex-col gap-6">
-      <form onSubmit={handleSubmit}>
-        <FieldGroup>
-          <FieldSet>
-            <FieldLegend variant="label">Sources to compare</FieldLegend>
-            <FieldDescription>
-              Pick {MIN_COMPARED_SOURCES} to {MAX_COMPARED_SOURCES} ready sources.{' '}
-              {selectedIds.length} selected.
-            </FieldDescription>
-            <FieldGroup className="gap-3">
-              {sources.map((source) => {
-                const isChecked = selectedIds.includes(source.id);
-                const checkboxId = `compare-source-${source.id}`;
+    <AnalysisLayout
+      sourcesTitle="Sources"
+      sourcesDescription={`Pick ${MIN_COMPARED_SOURCES} to ${MAX_COMPARED_SOURCES} to compare. ${selectedIds.length} selected.`}
+      sources={
+        <FieldGroup className="gap-3">
+          {sources.map((source) => {
+            const isChecked = selectedIds.includes(source.id);
+            const checkboxId = `compare-source-${source.id}`;
 
-                return (
-                  <Field key={source.id} orientation="horizontal">
-                    <Checkbox
-                      id={checkboxId}
-                      checked={isChecked}
-                      disabled={isBusy || (isFull && !isChecked)}
-                      onCheckedChange={(checked) => toggleSource(source.id, checked)}
-                    />
-                    <FieldLabel htmlFor={checkboxId} className="font-normal">
-                      {source.title}
-                    </FieldLabel>
-                  </Field>
-                );
-              })}
-            </FieldGroup>
-          </FieldSet>
-
-          <Field>
-            <FieldLabel htmlFor="compare-topic">Topic</FieldLabel>
-            <Input
-              id="compare-topic"
-              placeholder="e.g. how each study measures sleep quality"
-              maxLength={MAX_TOPIC_LENGTH}
-              value={topic}
-              disabled={isBusy}
-              onChange={(event) => setTopic(event.target.value)}
-            />
-            <FieldDescription>
-              The comparison uses only what these sources say about it.
-            </FieldDescription>
-          </Field>
-
-          <div>
-            {isBusy ? (
-              <Button type="button" variant="outline" onClick={() => stop()}>
-                <Square className="fill-current" />
-                Stop
-              </Button>
-            ) : (
-              <Button type="submit" disabled={!canCompare}>
-                <GitCompare />
-                Compare
-              </Button>
-            )}
-          </div>
+            return (
+              <Field key={source.id} orientation="horizontal">
+                <Checkbox
+                  id={checkboxId}
+                  checked={isChecked}
+                  disabled={isBusy || (isFull && !isChecked)}
+                  onCheckedChange={(checked) => toggleSource(source.id, checked)}
+                />
+                <FieldLabel htmlFor={checkboxId} className="font-normal">
+                  {source.title}
+                </FieldLabel>
+              </Field>
+            );
+          })}
         </FieldGroup>
-      </form>
-
-      {lastRequest && (
-        <Card aria-live="polite" aria-busy={isBusy}>
-          <CardHeader>
-            <CardTitle className="text-base">
-              {joinTitles(comparedTitles)} on “{lastRequest.topic}”
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="flex flex-col gap-3 text-sm">
-            {isWaiting && <Shimmer>Reading your sources…</Shimmer>}
-
-            {result && resultText !== '' && (
-              <AnswerText
-                projectId={projectId}
-                text={resultText}
-                sources={result.metadata?.sources ?? []}
-                isStreaming={status === 'streaming'}
+      }
+    >
+      <AnalysisResult
+        projectId={projectId}
+        title="Compare"
+        description="Where your chosen sources agree, differ, and why."
+        emptyIcon={<GitCompare />}
+        emptyTitle="Compare sources on a topic"
+        emptyDescription={emptyDescription}
+        run={run}
+        footer={
+          <form onSubmit={handleSubmit}>
+            <InputGroup className="bg-background">
+              <InputGroupInput
+                aria-label="Topic"
+                placeholder={
+                  hasEnoughSources
+                    ? 'Topic, e.g. how each study measures sleep quality'
+                    : `Pick at least ${MIN_COMPARED_SOURCES} sources first`
+                }
+                maxLength={MAX_TOPIC_LENGTH}
+                value={topic}
+                disabled={isBusy || !hasEnoughSources}
+                onChange={(event) => setTopic(event.target.value)}
               />
-            )}
-
-            {error && (
-              <div role="alert" className="flex flex-wrap items-center gap-3">
-                <p className="text-destructive">
-                  {getRequestErrorMessage(error, DEFAULT_ERROR)}
-                </p>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => runComparison(lastRequest)}
-                >
-                  <RotateCcw />
-                  Try again
-                </Button>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      )}
-    </div>
+              <InputGroupAddon align="inline-end">
+                {isBusy ? (
+                  <InputGroupButton
+                    size="icon-sm"
+                    variant="default"
+                    className="rounded-full"
+                    aria-label="Stop comparing"
+                    onClick={() => stop()}
+                  >
+                    <Square className="fill-current" />
+                  </InputGroupButton>
+                ) : (
+                  <InputGroupButton
+                    type="submit"
+                    size="icon-sm"
+                    variant="default"
+                    className="rounded-full"
+                    aria-label="Compare"
+                    disabled={!canCompare}
+                  >
+                    <ArrowUp />
+                  </InputGroupButton>
+                )}
+              </InputGroupAddon>
+            </InputGroup>
+          </form>
+        }
+      />
+    </AnalysisLayout>
   );
 }

@@ -144,7 +144,7 @@ function ThemesContent({
     return <ProjectTooLarge projectId={projectId} readiness={readiness} />;
   }
 
-  return <ThemesPanel projectId={projectId} sourceCount={readiness.sources.length} />;
+  return <ThemesPanel projectId={projectId} sources={readiness.sources} />;
 }
 
 export default async function AnalysisPage({

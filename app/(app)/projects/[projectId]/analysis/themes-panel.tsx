@@ -2,15 +2,14 @@
 
 import { useChat } from '@ai-sdk/react';
 import { DefaultChatTransport } from 'ai';
-import { Layers, RotateCcw, Square } from 'lucide-react';
+import { FileText, Layers, Square } from 'lucide-react';
 
-import { getMessageText, type ChatUIMessage } from '@/lib/citations';
+import type { ChatUIMessage } from '@/lib/citations';
+import type { PassageSource } from '@/lib/passages';
 import { PASSAGES_PER_SOURCE } from '@/lib/themes';
-import { Shimmer } from '@/components/ai-elements/shimmer';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
-import { AnswerText } from '../answer-text';
+import { AnalysisLayout, AnalysisResult } from './analysis-layout';
 import { getRequestErrorMessage } from './request-error';
 
 const DEFAULT_ERROR = 'Could not find themes. Check your connection and try again.';
@@ -21,10 +20,10 @@ const FIND_THEMES_TEXT = 'Find the key themes across my sources.';
 // UC-19: one button streams the key themes across every ready source, with evidence.
 export function ThemesPanel({
   projectId,
-  sourceCount,
+  sources,
 }: {
   projectId: string;
-  sourceCount: number;
+  sources: PassageSource[];
 }) {
   const { messages, sendMessage, setMessages, status, stop, error } =
     useChat<ChatUIMessage>({
@@ -39,10 +38,8 @@ export function ThemesPanel({
     });
 
   const isBusy = status === 'submitted' || status === 'streaming';
-  const result = messages.find((message) => message.role === 'assistant');
-  const resultText = result ? getMessageText(result) : '';
-  const isWaiting = isBusy && resultText === '';
   const hasRun = messages.length > 0;
+  const message = messages.find((item) => item.role === 'assistant');
 
   function findThemes() {
     // One run at a time: a new run replaces the last result.
@@ -50,61 +47,54 @@ export function ThemesPanel({
     sendMessage({ text: FIND_THEMES_TEXT });
   }
 
+  const findButton = isBusy ? (
+    <Button type="button" variant="outline" onClick={() => stop()}>
+      <Square className="fill-current" />
+      Stop
+    </Button>
+  ) : (
+    <Button type="button" onClick={findThemes}>
+      <Layers />
+      {hasRun ? 'Find themes again' : 'Find themes'}
+    </Button>
+  );
+
+  const run = hasRun
+    ? {
+        heading: `Key themes across ${sources.length} sources`,
+        message,
+        isBusy,
+        isStreaming: status === 'streaming',
+        errorMessage: error ? getRequestErrorMessage(error, DEFAULT_ERROR) : null,
+        onRetry: findThemes,
+      }
+    : null;
+
   return (
-    // Capped so the themes keep a readable line length, like the Compare tab.
-    <div className="flex max-w-3xl flex-col gap-6">
-      <div className="flex flex-col items-start gap-3">
-        <p className="text-sm text-muted-foreground">
-          Reads up to {PASSAGES_PER_SOURCE} passages spread through each of your{' '}
-          {sourceCount} ready sources and finds the themes they share, with the evidence
-          for each.
-        </p>
-        {isBusy ? (
-          <Button type="button" variant="outline" onClick={() => stop()}>
-            <Square className="fill-current" />
-            Stop
-          </Button>
-        ) : (
-          <Button type="button" onClick={findThemes}>
-            <Layers />
-            {hasRun ? 'Find themes again' : 'Find themes'}
-          </Button>
-        )}
-      </div>
-
-      {hasRun && (
-        <Card aria-live="polite" aria-busy={isBusy}>
-          <CardHeader>
-            <CardTitle className="text-base">
-              Key themes across {sourceCount} sources
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="flex flex-col gap-3 text-sm">
-            {isWaiting && <Shimmer>Reading your sources…</Shimmer>}
-
-            {result && resultText !== '' && (
-              <AnswerText
-                projectId={projectId}
-                text={resultText}
-                sources={result.metadata?.sources ?? []}
-                isStreaming={status === 'streaming'}
-              />
-            )}
-
-            {error && (
-              <div role="alert" className="flex flex-wrap items-center gap-3">
-                <p className="text-destructive">
-                  {getRequestErrorMessage(error, DEFAULT_ERROR)}
-                </p>
-                <Button variant="outline" size="sm" onClick={findThemes}>
-                  <RotateCcw />
-                  Try again
-                </Button>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      )}
-    </div>
+    <AnalysisLayout
+      sourcesTitle="Sources"
+      sourcesDescription="Themes reads every ready source."
+      sources={
+        <ol className="flex flex-col gap-1">
+          {sources.map((source) => (
+            <li key={source.id} className="flex items-center gap-2 px-2 py-2 text-sm">
+              <FileText className="size-4 shrink-0 text-muted-foreground" />
+              <span className="min-w-0 flex-1 truncate">{source.title}</span>
+            </li>
+          ))}
+        </ol>
+      }
+    >
+      <AnalysisResult
+        projectId={projectId}
+        title="Themes"
+        description="The ideas your sources share, with the evidence for each."
+        emptyIcon={<Layers />}
+        emptyTitle="Find the key themes"
+        emptyDescription={`Reads up to ${PASSAGES_PER_SOURCE} passages spread through each of your ${sources.length} ready sources and finds the themes they share.`}
+        run={run}
+        footer={<div className="flex justify-end">{findButton}</div>}
+      />
+    </AnalysisLayout>
   );
 }
