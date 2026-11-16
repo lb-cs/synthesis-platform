@@ -72,8 +72,8 @@ export function EditProjectForm({
   return (
     <Card className="w-full max-w-lg">
       <CardHeader>
-        <CardTitle>Project details</CardTitle>
-        <CardDescription>Changes apply to this project only.</CardDescription>
+        <CardTitle>Workspace details</CardTitle>
+        <CardDescription>Changes apply to this workspace only.</CardDescription>
       </CardHeader>
       <CardContent>
         <form id="edit-project-form" onSubmit={form.handleSubmit(onSubmit)}>
@@ -134,7 +134,7 @@ export function EditProjectForm({
           disabled={isDeleting || form.formState.isSubmitting}
           onClick={onDelete}
         >
-          {isDeleting ? 'Deleting…' : 'Delete project'}
+          {isDeleting ? 'Deleting…' : 'Delete workspace'}
         </Button>
         <div className="flex gap-2">
           <Button

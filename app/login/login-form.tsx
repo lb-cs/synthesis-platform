@@ -169,7 +169,7 @@ function CodeStep({ email, onBack }: { email: string; onBack: () => void }) {
     defaultValues: { email, token: '' },
   });
 
-  // Redirects to /dashboard on success, so we only ever see an error back.
+  // Redirects to /workspaces on success, so we only ever see an error back.
   async function onSubmit(values: CodeInput) {
     const { error } = await verifyCode(values);
     form.setError('root', { message: error });

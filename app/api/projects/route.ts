@@ -14,7 +14,7 @@ export async function GET() {
   const result = await listProjects(supabase);
 
   if (!result.ok) {
-    return Response.json({ error: 'Could not load projects.' }, { status: 500 });
+    return Response.json({ error: 'Could not load workspaces.' }, { status: 500 });
   }
 
   return Response.json({ projects: result.projects });
@@ -42,7 +42,7 @@ export async function POST(request: Request) {
   const result = await createProject(supabase, parsed.data);
 
   if (!result.ok) {
-    return Response.json({ error: 'Could not create project.' }, { status: 500 });
+    return Response.json({ error: 'Could not create workspace.' }, { status: 500 });
   }
 
   const location = `/api/projects/${result.project.id}`;

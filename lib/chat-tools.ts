@@ -72,7 +72,7 @@ export function createChatTools({
   return {
     searchSources: tool({
       description:
-        'Search the project for passages about a query. Returns numbered passages you can cite. Give `source` to search only one source.',
+        'Search the workspace for passages about a query. Returns numbered passages you can cite. Give `source` to search only one source.',
       inputSchema: z.object({
         query: z
           .string()

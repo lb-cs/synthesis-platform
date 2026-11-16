@@ -3,10 +3,9 @@
 import {
   BookOpen,
   FileText,
+  LayoutGrid,
   Layers,
-  LayoutDashboard,
   MessageSquare,
-  Plus,
   Sparkles,
 } from 'lucide-react';
 import Link from 'next/link';
@@ -36,15 +35,14 @@ type NavItem = {
 };
 
 const MAIN_NAV: NavItem[] = [
-  { title: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-  { title: 'New project', href: '/projects/new', icon: Plus },
+  { title: 'Workspaces', href: '/workspaces', icon: LayoutGrid },
 ];
 
 function getProjectNav(projectId: string): NavItem[] {
   const base = `/projects/${projectId}`;
 
   return [
-    { title: 'Workspace', href: base, icon: MessageSquare },
+    { title: 'Chat', href: base, icon: MessageSquare },
     { title: 'Sources', href: `${base}/sources`, icon: FileText },
     { title: 'Summaries', href: `${base}/summaries`, icon: BookOpen },
     { title: 'Analysis', href: `${base}/analysis`, icon: Layers },
@@ -55,7 +53,7 @@ export function AppSidebar({ email }: { email: string }) {
   const pathname = usePathname();
   const { projectId } = useParams<{ projectId?: string }>();
 
-  // The project group only exists while a project is open.
+  // The workspace group only exists while a workspace is open.
   const projectNav = projectId ? getProjectNav(projectId) : [];
 
   return (
@@ -63,7 +61,7 @@ export function AppSidebar({ email }: { email: string }) {
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton size="lg" render={<Link href="/dashboard" />}>
+            <SidebarMenuButton size="lg" render={<Link href="/workspaces" />}>
               <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
                 <Sparkles />
               </div>
@@ -79,7 +77,7 @@ export function AppSidebar({ email }: { email: string }) {
       <SidebarContent>
         <NavGroup items={MAIN_NAV} pathname={pathname} />
         {projectNav.length > 0 && (
-          <NavGroup label="Project" items={projectNav} pathname={pathname} />
+          <NavGroup label="Workspace" items={projectNav} pathname={pathname} />
         )}
       </SidebarContent>
 

@@ -42,8 +42,8 @@ export function ProjectForm() {
   return (
     <Card className="w-full max-w-lg">
       <CardHeader>
-        <CardTitle>Project details</CardTitle>
-        <CardDescription>You can rename the project later.</CardDescription>
+        <CardTitle>Workspace details</CardTitle>
+        <CardDescription>You can rename the workspace later.</CardDescription>
       </CardHeader>
       <CardContent>
         <form id="new-project-form" onSubmit={form.handleSubmit(onSubmit)}>
@@ -98,7 +98,7 @@ export function ProjectForm() {
         </form>
       </CardContent>
       <CardFooter className="justify-end gap-2">
-        <Button variant="ghost" render={<Link href="/dashboard" />} nativeButton={false}>
+        <Button variant="ghost" render={<Link href="/workspaces" />} nativeButton={false}>
           Cancel
         </Button>
         <Button
@@ -106,7 +106,7 @@ export function ProjectForm() {
           form="new-project-form"
           disabled={form.formState.isSubmitting}
         >
-          {form.formState.isSubmitting ? 'Creating…' : 'Create project'}
+          {form.formState.isSubmitting ? 'Creating…' : 'Create workspace'}
         </Button>
       </CardFooter>
     </Card>

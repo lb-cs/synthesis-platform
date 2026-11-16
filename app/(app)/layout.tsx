@@ -1,8 +1,11 @@
 import { redirect } from 'next/navigation';
 
+import { listProjects } from '@/lib/projects';
 import { createClient } from '@/lib/supabase/server';
 import { AppBreadcrumb } from '@/components/app-breadcrumb';
 import { AppSidebar } from '@/components/app-sidebar';
+import { CreateNewMenu } from '@/components/create-new-menu';
+import type { WorkspaceOption } from '@/components/workspace-switcher';
 import { Separator } from '@/components/ui/separator';
 import { SidebarInset, SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 
@@ -19,6 +22,15 @@ export default async function AppLayout({ children }: LayoutProps<'/'>) {
   // Sign-in is email-only, so the email claim is always present.
   const email = data.claims.email!;
 
+  // The header's switcher lists every workspace. If the list fails to load, the switcher
+  // shows none rather than taking the whole shell down; the page itself reports errors.
+  const result = await listProjects(supabase);
+  const workspaces: WorkspaceOption[] = result.ok
+    ? result.projects.map((project) => {
+        return { id: project.id, title: project.title };
+      })
+    : [];
+
   return (
     <SidebarProvider>
       <AppSidebar email={email} />
@@ -29,7 +41,10 @@ export default async function AppLayout({ children }: LayoutProps<'/'>) {
             orientation="vertical"
             className="mr-2 data-vertical:h-4 data-vertical:self-auto"
           />
-          <AppBreadcrumb />
+          <AppBreadcrumb workspaces={workspaces} />
+          <div className="ml-auto">
+            <CreateNewMenu />
+          </div>
         </header>
         <div className="flex flex-1 flex-col gap-6 p-6">{children}</div>
       </SidebarInset>

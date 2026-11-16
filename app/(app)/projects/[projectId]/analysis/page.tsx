@@ -45,7 +45,7 @@ function LoadError() {
         <EmptyMedia variant="icon">
           <CircleAlert />
         </EmptyMedia>
-        <EmptyTitle>Could not load this project&apos;s sources</EmptyTitle>
+        <EmptyTitle>Could not load this workspace&apos;s sources</EmptyTitle>
         <EmptyDescription>Refresh the page to try again.</EmptyDescription>
       </EmptyHeader>
     </Empty>
@@ -54,10 +54,10 @@ function LoadError() {
 
 function getReadyCountText(readyCount: number): string {
   if (readyCount === 0) {
-    return 'None of this project’s sources are ready yet.';
+    return 'None of this workspace’s sources are ready yet.';
   }
 
-  return 'Only one of this project’s sources is ready.';
+  return 'Only one of this workspace’s sources is ready.';
 }
 
 function SourcesButton({ projectId }: { projectId: string }) {
@@ -114,9 +114,9 @@ function ProjectTooLarge({
         <EmptyMedia variant="icon">
           <CircleAlert />
         </EmptyMedia>
-        <EmptyTitle>This project is too large for Themes</EmptyTitle>
+        <EmptyTitle>This workspace is too large for Themes</EmptyTitle>
         <EmptyDescription>
-          Themes reads up to {MAX_THEME_SOURCES} ready sources at once, and this project
+          Themes reads up to {MAX_THEME_SOURCES} ready sources at once, and this workspace
           has {readiness.readyCount}. Compare still works on any {MIN_COMPARED_SOURCES} to{' '}
           {MAX_COMPARED_SOURCES} of them, or remove sources until there are{' '}
           {MAX_THEME_SOURCES} or fewer.
@@ -183,7 +183,7 @@ export default async function AnalysisPage({
     <>
       <PageHeader
         title="Analysis"
-        description="Compare concepts and surface themes across the sources in this project."
+        description="Compare concepts and surface themes across the sources in this workspace."
       />
 
       {/* Base UI needs an enabled default when rendering on the server. */}

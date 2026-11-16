@@ -14,7 +14,7 @@ export function DeleteAccountButton() {
 
   function onDelete() {
     const confirmed = window.confirm(
-      'Delete your account? All your projects, sources, chat history and uploaded files will be permanently deleted. This cannot be undone.',
+      'Delete your account? All your workspaces, sources, chat history and uploaded files will be permanently deleted. This cannot be undone.',
     );
 
     if (!confirmed) {

@@ -32,7 +32,7 @@ function LoadError() {
         <EmptyMedia variant="icon">
           <CircleAlert />
         </EmptyMedia>
-        <EmptyTitle>Could not load this project&apos;s sources</EmptyTitle>
+        <EmptyTitle>Could not load this workspace&apos;s sources</EmptyTitle>
         <EmptyDescription>Refresh the page to try again.</EmptyDescription>
       </EmptyHeader>
     </Empty>

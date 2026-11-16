@@ -17,7 +17,7 @@ import { createClient } from '@/lib/supabase/server';
 import { EditProjectForm } from './edit-project-form';
 
 export const metadata: Metadata = {
-  title: 'Edit project · Synthesis Platform',
+  title: 'Edit workspace · Synthesis Platform',
 };
 
 export default async function EditProjectPage({
@@ -43,7 +43,7 @@ export default async function EditProjectPage({
           <EmptyMedia variant="icon">
             <CircleAlert />
           </EmptyMedia>
-          <EmptyTitle>Could not load project</EmptyTitle>
+          <EmptyTitle>Could not load workspace</EmptyTitle>
           <EmptyDescription>Refresh the page to try again.</EmptyDescription>
         </EmptyHeader>
       </Empty>
@@ -52,7 +52,7 @@ export default async function EditProjectPage({
 
   return (
     <>
-      <PageHeader title="Edit project" description="Update the title or description." />
+      <PageHeader title="Edit workspace" description="Update the title or description." />
       <EditProjectForm projectId={projectId} project={result.project} />
     </>
   );

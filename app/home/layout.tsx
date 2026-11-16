@@ -2,7 +2,7 @@ import { SiteHeader } from '@/components/site-header';
 import { ThemeSwitcher } from '@/components/theme-switcher';
 import { createClient } from '@/lib/supabase/server';
 
-// Public, so a signed-in visitor can land here too; the header offers them the dashboard.
+// Public, so a signed-in visitor can land here too; the header offers them their workspaces.
 export default async function HomeLayout({ children }: LayoutProps<'/home'>) {
   const supabase = await createClient();
   const { data } = await supabase.auth.getClaims();

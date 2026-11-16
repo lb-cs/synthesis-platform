@@ -36,17 +36,17 @@ export async function GET(_request: Request, context: Context) {
   const projectId = await getProjectId(context);
 
   if (!projectId) {
-    return Response.json({ error: 'Project not found.' }, { status: 404 });
+    return Response.json({ error: 'Workspace not found.' }, { status: 404 });
   }
 
   const projectResult = await getProject(supabase, projectId);
 
   if (!projectResult.ok && projectResult.kind === 'not-found') {
-    return Response.json({ error: 'Project not found.' }, { status: 404 });
+    return Response.json({ error: 'Workspace not found.' }, { status: 404 });
   }
 
   if (!projectResult.ok) {
-    return Response.json({ error: 'Could not load project.' }, { status: 500 });
+    return Response.json({ error: 'Could not load workspace.' }, { status: 500 });
   }
 
   const result = await listSources(supabase, projectId);
@@ -82,17 +82,17 @@ export async function POST(request: Request, context: Context) {
   const projectId = await getProjectId(context);
 
   if (!projectId) {
-    return Response.json({ error: 'Project not found.' }, { status: 404 });
+    return Response.json({ error: 'Workspace not found.' }, { status: 404 });
   }
 
   const projectResult = await getProject(supabase, projectId);
 
   if (!projectResult.ok && projectResult.kind === 'not-found') {
-    return Response.json({ error: 'Project not found.' }, { status: 404 });
+    return Response.json({ error: 'Workspace not found.' }, { status: 404 });
   }
 
   if (!projectResult.ok) {
-    return Response.json({ error: 'Could not load project.' }, { status: 500 });
+    return Response.json({ error: 'Could not load workspace.' }, { status: 500 });
   }
 
   const body: unknown = await request.json().catch(() => null);
@@ -124,7 +124,7 @@ export async function POST(request: Request, context: Context) {
 
   if (!input.storagePath.startsWith(expectedPathPrefix)) {
     return Response.json(
-      { error: 'The file must belong to this project.' },
+      { error: 'The file must belong to this workspace.' },
       { status: 400 },
     );
   }

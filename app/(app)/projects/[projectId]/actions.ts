@@ -71,7 +71,7 @@ export async function startNewChat(projectId: string): Promise<{ error?: string 
   const parsed = projectIdSchema.safeParse(projectId);
 
   if (!parsed.success) {
-    return { error: 'This project no longer exists. Refresh the page.' };
+    return { error: 'This workspace no longer exists. Refresh the page.' };
   }
 
   const supabase = await createClient();

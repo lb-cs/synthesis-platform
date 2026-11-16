@@ -42,17 +42,17 @@ export async function POST(request: Request, context: Context) {
   const parsedProjectId = projectIdSchema.safeParse(projectId);
 
   if (!parsedProjectId.success) {
-    return Response.json({ error: 'Project not found.' }, { status: 404 });
+    return Response.json({ error: 'Workspace not found.' }, { status: 404 });
   }
 
   const projectResult = await getProject(supabase, parsedProjectId.data);
 
   if (!projectResult.ok && projectResult.kind === 'not-found') {
-    return Response.json({ error: 'Project not found.' }, { status: 404 });
+    return Response.json({ error: 'Workspace not found.' }, { status: 404 });
   }
 
   if (!projectResult.ok) {
-    return Response.json({ error: 'Could not load project.' }, { status: 500 });
+    return Response.json({ error: 'Could not load workspace.' }, { status: 500 });
   }
 
   const body: unknown = await request.json().catch(() => null);
@@ -77,7 +77,7 @@ export async function POST(request: Request, context: Context) {
 
   if (chosen.length !== parsed.data.sourceIds.length) {
     return Response.json(
-      { error: 'Every source you compare must be in this project and ready.' },
+      { error: 'Every source you compare must be in this workspace and ready.' },
       { status: 409 },
     );
   }
