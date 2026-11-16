@@ -42,7 +42,7 @@ export function ProjectForm() {
   return (
     <Card className="w-full max-w-lg">
       <CardHeader>
-        <CardTitle>Project details</CardTitle>
+        <CardTitle>Workspace details</CardTitle>
         <CardDescription>You can rename the workspace later.</CardDescription>
       </CardHeader>
       <CardContent>

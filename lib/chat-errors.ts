@@ -15,7 +15,7 @@ export type ChatErrorCode = (typeof CHAT_ERROR_CODES)[number];
 export type ChatErrorKind = ChatErrorCode | 'connection' | 'unknown';
 
 export const CHAT_ERROR_MESSAGES: Record<ChatErrorKind, string> = {
-  'no-sources': 'Add a source to this project before asking.',
+  'no-sources': 'Add a source to this workspace before asking.',
   'sources-processing':
     'Your sources are still being processed. Try again once one shows Ready.',
   'ai-unavailable': 'The AI service is unavailable right now. Try again in a moment.',

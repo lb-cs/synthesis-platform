@@ -162,8 +162,8 @@ _Avoid_: "dashboard", "home" (that is the landing page, `/home`), "projects page
 
 **Workspace switcher**:
 The header's picker (`components/workspace-switcher.tsx`): shows the open project's
-title, or "All workspaces", and opens a searchable list of projects plus links to the
-Workspaces page and to create one. Its list comes from `app/(app)/layout.tsx`, so project
+title, or "All workspaces", and opens a searchable list of projects with "Create workspace" at the
+foot. Styled after Vercel's project switcher. Its list comes from `app/(app)/layout.tsx`, so project
 actions revalidate the whole layout.
 _Avoid_: "project picker", "team switcher".
 

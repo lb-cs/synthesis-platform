@@ -16,7 +16,7 @@ type Feature = {
 
 const FEATURES: Feature[] = [
   {
-    title: 'All your sources, one project',
+    title: 'All your sources, one workspace',
     description:
       'Upload PDFs, text files, and transcripts. Web pages and YouTube links are next.',
     icon: FileText,
@@ -40,7 +40,10 @@ const FEATURES: Feature[] = [
 ];
 
 const STEPS = [
-  { title: 'Create a project', description: 'One project per topic, paper, or class.' },
+  {
+    title: 'Create a workspace',
+    description: 'One workspace per topic, paper, or class.',
+  },
   {
     title: 'Add your sources',
     description: 'Drop in the readings, notes, and transcripts you already have.',
@@ -125,7 +128,7 @@ export default function HomePage() {
       <section className="border-t bg-muted/40">
         <div className="mx-auto flex max-w-6xl flex-col items-center gap-4 px-6 py-20 text-center">
           <h2 className="text-2xl font-semibold tracking-tight">
-            Start your first project
+            Start your first workspace
           </h2>
           <p className="text-muted-foreground">
             Sign in with your email — no password needed.

@@ -23,7 +23,7 @@ export async function addLinkSource(input: AddLinkInput): Promise<{ error?: stri
     const urlIssue = parsed.error.issues.find((issue) => issue.path[0] === 'url');
 
     return {
-      error: urlIssue?.message ?? 'This project no longer exists. Refresh the page.',
+      error: urlIssue?.message ?? 'This workspace no longer exists. Refresh the page.',
     };
   }
 

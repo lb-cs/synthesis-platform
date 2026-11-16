@@ -36,7 +36,7 @@ function LoadError() {
         <EmptyMedia variant="icon">
           <CircleAlert />
         </EmptyMedia>
-        <EmptyTitle>Could not load this project</EmptyTitle>
+        <EmptyTitle>Could not load this workspace</EmptyTitle>
         <EmptyDescription>Refresh the page to try again.</EmptyDescription>
       </EmptyHeader>
     </Empty>
@@ -89,7 +89,7 @@ export default async function WorkspacePage({
   const chatSources = getChatSources(sourcesResult.sources);
   const description =
     project.description ??
-    "Ask questions and get answers grounded in this project's sources.";
+    "Ask questions and get answers grounded in this workspace's sources.";
 
   return (
     <>

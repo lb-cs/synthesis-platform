@@ -1,6 +1,6 @@
 'use client';
 
-import { ChevronsUpDown, FolderOpen, LayoutGrid, Plus } from 'lucide-react';
+import { ChevronsUpDown, FolderOpen, Plus, Search } from 'lucide-react';
 import { Combobox as ComboboxPrimitive } from '@base-ui/react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
@@ -12,10 +12,8 @@ import {
   Combobox,
   ComboboxContent,
   ComboboxEmpty,
-  ComboboxInput,
   ComboboxItem,
   ComboboxList,
-  ComboboxSeparator,
 } from '@/components/ui/combobox';
 
 /** What the switcher needs of a project: enough to list it and open it. */
@@ -24,12 +22,10 @@ export type WorkspaceOption = {
   title: string;
 };
 
-const FOOTER_LINK_CLASS =
-  'flex items-center gap-2 rounded-md px-1.5 py-1 text-sm outline-hidden hover:bg-accent hover:text-accent-foreground focus-visible:bg-accent focus-visible:text-accent-foreground [&_svg]:size-4 [&_svg]:shrink-0';
-
 /**
- * The header's workspace picker: shows the open workspace (or "All workspaces"), and
- * opens a searchable list of the user's workspaces with links to see them all or make one.
+ * The header's workspace picker, styled after Vercel's project switcher: shows the open
+ * workspace (or "All workspaces"), and opens a search row, the list of workspaces with a
+ * check on the open one, and "Create workspace" at the foot.
  */
 export function WorkspaceSwitcher({ workspaces }: { workspaces: WorkspaceOption[] }) {
   const router = useRouter();
@@ -75,25 +71,40 @@ export function WorkspaceSwitcher({ workspaces }: { workspaces: WorkspaceOption[
         <ChevronsUpDown className="text-muted-foreground" />
       </ComboboxPrimitive.Trigger>
 
-      <ComboboxContent align="start" className="w-72">
-        <ComboboxInput placeholder="Find workspace…" showTrigger={false} />
-        <ComboboxEmpty>No workspaces found.</ComboboxEmpty>
-        <ComboboxList>
+      <ComboboxContent align="start" sideOffset={8} className="w-80 rounded-xl">
+        {/* A bare input, not ComboboxInput: Vercel's search row is borderless, full width. */}
+        <div className="flex h-12 items-center gap-3 border-b px-4">
+          <Search className="size-4 shrink-0 text-muted-foreground" />
+          <ComboboxPrimitive.Input
+            placeholder="Find workspace…"
+            className="h-full min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
+          />
+          <kbd className="pointer-events-none rounded-md border px-1.5 py-0.5 font-sans text-xs text-muted-foreground">
+            Esc
+          </kbd>
+        </div>
+
+        <ComboboxEmpty className="py-6">No workspaces found.</ComboboxEmpty>
+        <ComboboxList className="p-2 data-empty:p-0">
           {(workspace: WorkspaceOption) => (
-            <ComboboxItem key={workspace.id} value={workspace}>
+            <ComboboxItem
+              key={workspace.id}
+              value={workspace}
+              className="gap-3 rounded-lg py-2 pr-9 pl-2.5"
+            >
               <FolderOpen className="text-muted-foreground" />
               <span className="truncate">{workspace.title}</span>
             </ComboboxItem>
           )}
         </ComboboxList>
-        <ComboboxSeparator className="mx-0" />
-        <div className="flex flex-col p-1">
-          <Link href="/workspaces" className={FOOTER_LINK_CLASS} onClick={closeMenu}>
-            <LayoutGrid />
-            All workspaces
-          </Link>
-          <Link href="/projects/new" className={FOOTER_LINK_CLASS} onClick={closeMenu}>
-            <Plus />
+
+        <div className="border-t p-2">
+          <Link
+            href="/projects/new"
+            onClick={closeMenu}
+            className="flex items-center gap-3 rounded-lg px-2.5 py-2 text-sm outline-hidden hover:bg-accent hover:text-accent-foreground focus-visible:bg-accent focus-visible:text-accent-foreground"
+          >
+            <Plus className="size-4 shrink-0 text-muted-foreground" />
             Create workspace
           </Link>
         </div>

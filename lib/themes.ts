@@ -47,10 +47,10 @@ export function getThemesUnavailableMessage(
   readiness: Exclude<ThemesReadiness, { kind: 'ready' }>,
 ): string {
   if (readiness.kind === 'too-few') {
-    return `Themes needs at least ${MIN_THEME_SOURCES} ready sources. This project has ${readiness.readyCount}.`;
+    return `Themes needs at least ${MIN_THEME_SOURCES} ready sources. This workspace has ${readiness.readyCount}.`;
   }
 
-  return `This project is too large for Themes: it reads up to ${MAX_THEME_SOURCES} ready sources at once, and this project has ${readiness.readyCount}.`;
+  return `This workspace is too large for Themes: it reads up to ${MAX_THEME_SOURCES} ready sources at once, and this workspace has ${readiness.readyCount}.`;
 }
 
 /**
