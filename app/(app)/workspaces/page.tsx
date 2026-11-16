@@ -94,7 +94,9 @@ export default async function WorkspacesPage({ searchParams }: PageProps<'/works
                 )}
               </CardHeader>
               <CardContent>
-                <p className="text-sm text-muted-foreground">0 sources</p>
+                <p className="text-sm text-muted-foreground">
+                  {project.sourceCount} {project.sourceCount === 1 ? 'source' : 'sources'}
+                </p>
               </CardContent>
               <CardFooter className="gap-2">
                 <Button
