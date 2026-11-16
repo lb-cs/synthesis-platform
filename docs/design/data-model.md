@@ -74,7 +74,7 @@ Code: `lib/projects.ts` (list, get, create, update, delete). API: `/api/projects
 | ----------------------- | ----------------- | ------------------------------------------------------------------------------------------------------------------------- |
 | `id`                    | uuid              |                                                                                                                           |
 | `project_id`            | uuid              |                                                                                                                           |
-| `kind`                  | text              | `pdf` \| `text` \| `link`. YouTube is a stretch goal                                                                      |
+| `kind`                  | text              | `pdf` \| `text` \| `link`. YouTube transcripts use `link` and retain timestamps in chunk text                              |
 | `title`                 | text              | 1–200 characters. The only column a user can change                                                                       |
 | `storage_path`          | text, null        | `{user_id}/{project_id}/{file}` in the `sources` bucket. Unique. Null for a link                                          |
 | `url`                   | text, null        | A link's `http(s)` address, up to 2,048 characters. Null for a file. A source has a `storage_path` or a `url`, never both |
@@ -199,8 +199,8 @@ be stored.
 
 ## Still open from the spec
 
-- **YouTube sources** need a `kind` value, and a location that isn't a page (the spec's
-  `timestampRange`). Web links are built (`kind = 'link'`, `url`): the worker fetches
-  them into chunks (CECS491-85), with the page title in `metadata.title`, and their
-  citations open the page by `url` instead of `…/sources/[sourceId]/file`
+- **YouTube citations** keep transcript timestamps in chunk text; there is no separate
+  `timestampRange` column. General web links use `kind = 'link'` and `url`; the worker
+  fetches them into chunks (CECS491-85), with the page title in `metadata.title`, and
+  their citations open the page by `url` instead of `…/sources/[sourceId]/file`
 - **"Typical" and "moderate-size"** — the spec never gives numbers

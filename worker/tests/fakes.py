@@ -9,7 +9,9 @@ from worker.db import ClaimedSource
 from worker.web import WebPage
 
 
-def make_source(number: int, kind: str = 'text') -> ClaimedSource:
+def make_source(
+    number: int, kind: str = 'text', url: str | None = None
+) -> ClaimedSource:
     extension = 'pdf' if kind == 'pdf' else 'txt'
     path = f'user-1/project-1/file-{number}.{extension}'
 
@@ -19,7 +21,7 @@ def make_source(number: int, kind: str = 'text') -> ClaimedSource:
         kind=kind,
         # A link has no file in the bucket, and a file has no url.
         storage_path=None if kind == 'link' else path,
-        url=f'https://example.com/article-{number}' if kind == 'link' else None,
+        url=(url or f'https://example.com/article-{number}') if kind == 'link' else None,
     )
 
 

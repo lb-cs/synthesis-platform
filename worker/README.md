@@ -19,9 +19,11 @@ if the Gateway call fails, the source still ends `ready`, without one. A source
 processed before this change has no summary until it is processed again (**Process
 again** on the source in the app).
 
-Web link sources (`kind = 'link'`) have a `url` and no file. The worker fetches the
-page instead of downloading a file, keeps its readable text, and from there chunks and
-embeds it like a plain-text file (see [Web links](#web-links)).
+Web link sources (`kind = 'link'`) have a `url` and no file. For YouTube video links,
+the worker prefers English captions, falls back to another available caption language,
+and retains timestamps; other links use readable page text. Both paths use the same
+chunking, embedding, and summary pipeline (see
+[Web links](#web-links)).
 
 ## How it works
 
@@ -44,6 +46,7 @@ embeds it like a plain-text file (see [Web links](#web-links)).
 | `src/worker/db.py`         | Every query against `public.sources`                     |
 | `src/worker/storage.py`    | Downloads files from the `sources` bucket                |
 | `src/worker/web.py`        | Fetches a link's page and extracts its readable text     |
+| `src/worker/youtube.py`    | Fetches timestamped captions for YouTube videos         |
 | `src/worker/loop.py`       | Polling loop and thread pool; turns errors into `failed` |
 | `src/worker/pipeline.py`   | Parses, chunks, embeds, and summarizes each source       |
 | `src/worker/embeddings.py` | AI Gateway embedding requests and response validation    |
@@ -96,6 +99,12 @@ a separate requirement), text that isn't UTF-8, and binary files with a text ext
 other boilerplate; the page title goes to `sources.metadata.title`, next to
 `character_count`. A page has no page numbers, so it is one entry, like plain text.
 `text/plain` links are read as they are.
+
+YouTube video URLs use `src/worker/youtube.py` instead of extracting the video's HTML.
+It prefers English when available, then uses another available caption track. Caption
+lines keep timestamps in chunks, so citations retain where the evidence came from. If
+captions cannot be retrieved, the source fails with a message asking the user to enable
+captions or retry. Other web links continue through the page fetcher above.
 
 **No internal addresses.** The worker runs inside the hosting network, so a user must not
 be able to point it at one. Each hop (the first request and every redirect) resolves the

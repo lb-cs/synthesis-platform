@@ -20,6 +20,7 @@ from worker.embeddings import Embedder
 from worker.pipeline import ProcessingError
 from worker.summary import Summarizer
 from worker.web import FetchError, WebPage
+from worker.youtube import fetch_youtube_transcript, is_youtube_video_url
 
 log = logging.getLogger(__name__)
 
@@ -128,7 +129,11 @@ def read_source(
 ) -> pipeline.ProcessedSource:
     """A link is fetched from the web; every other kind is a file in storage."""
     if source.url is not None:
-        page = pages.fetch(source.url)
+        if is_youtube_video_url(source.url):
+            page = fetch_youtube_transcript(source.url)
+        else:
+            page = pages.fetch(source.url)
+
         return pipeline.process_page(page, embedder, summarizer)
 
     if source.storage_path is None:
