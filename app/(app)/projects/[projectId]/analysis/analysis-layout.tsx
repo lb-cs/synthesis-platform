@@ -3,6 +3,7 @@ import { RotateCcw } from 'lucide-react';
 
 import type { ChatUIMessage } from '@/lib/citations';
 import { getMessageText } from '@/lib/citations';
+import { cn } from '@/lib/utils';
 import { Shimmer } from '@/components/ai-elements/shimmer';
 import { Button } from '@/components/ui/button';
 import {
@@ -28,11 +29,14 @@ export function AnalysisLayout({
   sourcesTitle,
   sourcesDescription,
   sources,
+  hasTabs = true,
   children,
 }: {
   sourcesTitle: string;
   sourcesDescription: string;
   sources: ReactNode;
+  // Analysis sits under a tab row; a page without one has that much more room.
+  hasTabs?: boolean;
   children: ReactNode;
 }) {
   return (
@@ -46,7 +50,12 @@ export function AnalysisLayout({
       </Card>
 
       {/* Capped so a long result scrolls inside the card, keeping the footer in view. */}
-      <Card className="flex max-h-[70svh] min-h-96 flex-col lg:max-h-[calc(100svh-13.5rem)]">
+      <Card
+        className={cn(
+          'flex max-h-[70svh] min-h-96 flex-col',
+          hasTabs ? 'lg:max-h-[calc(100svh-13.5rem)]' : 'lg:max-h-[calc(100svh-10rem)]',
+        )}
+      >
         {children}
       </Card>
     </div>
