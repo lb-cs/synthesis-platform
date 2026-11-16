@@ -67,6 +67,42 @@ def test_a_link_is_fetched_and_ends_ready_with_the_page_title():
     assert chunks[0].embedding is not None
 
 
+def test_a_youtube_link_uses_timestamped_captions_in_the_normal_pipeline(
+    monkeypatch: pytest.MonkeyPatch,
+):
+    url = 'https://www.youtube.com/watch?v=dQw4w9WgXcQ'
+    source = make_source(1, kind='link', url=url)
+    queue = FakeQueue([])
+
+    def fetch_transcript(link: str) -> WebPage:
+        assert link == url
+        return WebPage(
+            url=link,
+            title=None,
+            text='[00:00] Sources can be processed from a video transcript.',
+        )
+
+    def unexpected_page_fetch(_: str) -> WebPage:
+        raise AssertionError('YouTube videos should use their captions')
+
+    monkeypatch.setattr('worker.loop.fetch_youtube_transcript', fetch_transcript)
+    process_source(
+        source,
+        queue,
+        FakeFiles(),
+        FakePages(unexpected_page_fetch),
+        FakeEmbedder(),
+    )
+
+    assert queue.ready == ['source-1']
+    assert queue.failed == {}
+    metadata, chunks = queue.saved['source-1']
+    expected_text = '[00:00] Sources can be processed from a video transcript.'
+    assert metadata == {'character_count': len(expected_text)}
+    assert [chunk.content for chunk in chunks] == [expected_text]
+    assert chunks[0].embedding is not None
+
+
 def test_a_page_that_cannot_be_read_fails_the_link_with_its_reason():
     source = make_source(1, kind='link')
     queue = FakeQueue([])
