@@ -1,41 +1,79 @@
-import { ArrowRight, BookOpen, FileText, Quote, ShieldCheck } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
+import Image from 'next/image';
 import Link from 'next/link';
-
-import type { LucideIcon } from 'lucide-react';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Skeleton } from '@/components/ui/skeleton';
 
-type Feature = {
+type Showcase = {
   title: string;
   description: string;
-  icon: LucideIcon;
+  image: string;
+  alt: string;
+  height: number;
+  points: string[];
 };
 
-const FEATURES: Feature[] = [
+// Real captures of the app, from `public/landing/`. Each is 2000 px wide; `height` is the real pixel height of that file.
+const SHOWCASES: Showcase[] = [
   {
     title: 'All your sources, one workspace',
     description:
-      'Upload PDFs, text files, and transcripts. Web pages and YouTube links are next.',
-    icon: FileText,
+      'Upload PDFs, text, and markdown, or paste a web link. Synthesis reads and indexes each one in the background, so your library is ready to question in moments.',
+    image: '/landing/sources.jpg',
+    height: 1161,
+    alt: 'The Sources page: a drop zone for files, a search box, status filters, and a list of ready sources.',
+    points: [
+      'PDF, .txt, .md, and web links',
+      'Live processing status, with one-click retry',
+      'Search, filter, rename, and remove',
+    ],
   },
   {
     title: 'Answers only from your sources',
     description:
-      'The AI never reaches outside what you added. If it is not there, it says so.',
-    icon: ShieldCheck,
+      'Ask in plain language. Synthesis draws only on the passages it finds in your workspace. When your sources do not say, it tells you instead of guessing.',
+    image: '/landing/chat.jpg',
+    height: 1159,
+    alt: 'The workspace chat: a sources panel beside a long answer with numbered citations.',
+    points: [
+      'Grounded in your own materials, never the open web',
+      'Suggested questions to get you started',
+      'Conversations are saved with the workspace',
+    ],
   },
   {
-    title: 'Every claim cited',
-    description: 'Click a citation to jump straight to the passage and page behind it.',
-    icon: Quote,
+    title: 'Every claim cited, down to the page',
+    description:
+      'Every claim carries a citation. Open one and the original PDF appears at the right page with the supporting passage highlighted.',
+    image: '/landing/citation.jpg',
+    height: 1162,
+    alt: 'The source viewer open on page 17 of a PDF, with the cited passages highlighted in yellow.',
+    points: [
+      'Highlighted passage, not just a filename',
+      'Jump to the original file at any time',
+    ],
   },
   {
-    title: 'Summaries and themes',
-    description: 'Summarize a stack of sources, compare ideas, and pull out key themes.',
-    icon: BookOpen,
+    title: 'Summaries of the sources you choose',
+    description:
+      'Pick one to five sources and get a structured, cited summary: an overview, key points, and a breakdown by source.',
+    image: '/landing/summaries.jpg',
+    height: 1159,
+    alt: 'The Summaries page: a source picker beside a cited summary with an overview and key points.',
+    points: ['Overview, key points, and per-source detail', 'Citations on every point'],
+  },
+  {
+    title: 'Compare sources and surface themes',
+    description:
+      'Choose two to five sources and a topic to see where they agree, where they differ, and why. Or let Synthesis pull out the key themes across a workspace.',
+    image: '/landing/analysis.jpg',
+    height: 1159,
+    alt: 'The Analysis page comparing two sources on a topic, listing where they agree with citations.',
+    points: [
+      'Compare tab: agreements and differences',
+      'Themes tab: what keeps coming up',
+    ],
   },
 ];
 
@@ -46,11 +84,11 @@ const STEPS = [
   },
   {
     title: 'Add your sources',
-    description: 'Drop in the readings, notes, and transcripts you already have.',
+    description: 'Drop in the readings, notes, and links you already have.',
   },
   {
     title: 'Ask and synthesize',
-    description: 'Ask questions, get cited answers, and build summaries as you go.',
+    description: 'Ask questions, compare sources, and build summaries as you go.',
   },
 ];
 
@@ -58,14 +96,15 @@ export default function HomePage() {
   return (
     <>
       <section className="mx-auto flex w-full max-w-6xl flex-col items-center gap-8 px-6 py-24 text-center">
-        <Badge variant="outline">CECS 491 · Early preview</Badge>
+        <Badge variant="outline">AI research workspace</Badge>
         <div className="flex flex-col gap-4">
           <h1 className="text-4xl font-semibold tracking-tight sm:text-5xl">
             Research, grounded in your sources.
           </h1>
           <p className="mx-auto max-w-xl text-lg text-muted-foreground">
-            A research workspace for students and researchers. Upload your materials, ask
-            questions, and get answers drawn only from what you added — every claim cited.
+            Synthesis is the research workspace for students and researchers. Add your
+            readings, ask anything, and get answers drawn only from what you added, with
+            every claim cited to the page behind it.
           </p>
         </div>
         <div className="flex flex-wrap justify-center gap-3">
@@ -76,32 +115,59 @@ export default function HomePage() {
           <Button
             size="lg"
             variant="outline"
-            render={<Link href="#how-it-works" />}
+            render={<Link href="#features" />}
             nativeButton={false}
           >
-            How it works
+            See what it does
           </Button>
         </div>
-        <WorkspacePreview />
+        <Screenshot
+          src="/landing/chat.jpg"
+          height={1159}
+          alt="The Synthesis workspace: your sources on the left and a cited answer on the right."
+          priority
+          className="mt-8 max-w-3xl"
+        />
       </section>
 
       <section id="features" className="scroll-mt-14 border-t bg-muted/40">
-        <div className="mx-auto flex max-w-6xl flex-col gap-10 px-6 py-20">
+        <div className="mx-auto flex max-w-6xl flex-col gap-16 px-6 py-20">
           <SectionHeading
-            title="An AI that stays on your page"
-            description="Unlike a general chatbot, it answers from your materials and nothing else."
+            title="Answers you can check"
+            description="A general chatbot guesses. Synthesis answers from your materials and shows its work."
           />
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {FEATURES.map((feature) => (
-              <Card key={feature.title}>
-                <CardHeader>
-                  <feature.icon className="mb-2 size-5 text-muted-foreground" />
-                  <CardTitle>{feature.title}</CardTitle>
-                  <CardDescription>{feature.description}</CardDescription>
-                </CardHeader>
-              </Card>
-            ))}
-          </div>
+          {SHOWCASES.map((showcase, index) => (
+            <div
+              key={showcase.title}
+              className="grid items-center gap-8 lg:grid-cols-2 lg:gap-12"
+            >
+              <div
+                className={
+                  index % 2 === 1
+                    ? 'flex flex-col gap-4 lg:order-2'
+                    : 'flex flex-col gap-4'
+                }
+              >
+                <h3 className="text-xl font-semibold tracking-tight">{showcase.title}</h3>
+                <p className="text-muted-foreground">{showcase.description}</p>
+                <ul className="flex flex-col gap-1.5 text-sm text-muted-foreground">
+                  {showcase.points.map((point) => (
+                    <li key={point} className="flex gap-2">
+                      <span aria-hidden className="text-foreground">
+                        ·
+                      </span>
+                      {point}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <Screenshot
+                src={showcase.image}
+                alt={showcase.alt}
+                height={showcase.height}
+              />
+            </div>
+          ))}
         </div>
       </section>
 
@@ -128,10 +194,10 @@ export default function HomePage() {
       <section className="border-t bg-muted/40">
         <div className="mx-auto flex max-w-6xl flex-col items-center gap-4 px-6 py-20 text-center">
           <h2 className="text-2xl font-semibold tracking-tight">
-            Start your first workspace
+            Bring your readings. Get answers you can cite.
           </h2>
           <p className="text-muted-foreground">
-            Sign in with your email — no password needed.
+            Sign in with Google or a one-time email code. No password to remember.
           </p>
           <Button render={<Link href="/login" />} nativeButton={false}>
             Get started
@@ -151,25 +217,32 @@ function SectionHeading({ title, description }: { title: string; description: st
   );
 }
 
-// Stand-in for a real screenshot: the workspace's sources-plus-chat split, in skeletons.
-function WorkspacePreview() {
+function Screenshot({
+  src,
+  alt,
+  height,
+  priority = false,
+  className = '',
+}: {
+  src: string;
+  alt: string;
+  height: number;
+  priority?: boolean;
+  className?: string;
+}) {
   return (
     <div
-      aria-hidden
-      className="mt-8 grid w-full max-w-4xl grid-cols-3 gap-4 rounded-xl border bg-card p-4 text-left shadow-sm"
+      className={`w-full overflow-hidden rounded-xl border bg-card shadow-sm ${className}`}
     >
-      <div className="flex flex-col gap-3 border-r pr-4">
-        <Skeleton className="h-4 w-20" />
-        <Skeleton className="h-8 w-full" />
-        <Skeleton className="h-8 w-full" />
-        <Skeleton className="h-8 w-3/4" />
-      </div>
-      <div className="col-span-2 flex flex-col gap-3">
-        <Skeleton className="h-10 w-2/3 self-end" />
-        <Skeleton className="h-20 w-5/6" />
-        <Skeleton className="h-10 w-1/2 self-end" />
-        <Skeleton className="mt-auto h-9 w-full" />
-      </div>
+      <Image
+        src={src}
+        alt={alt}
+        width={2000}
+        height={height}
+        priority={priority}
+        sizes="(min-width: 1024px) 560px, 100vw"
+        className="h-auto w-full"
+      />
     </div>
   );
 }

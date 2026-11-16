@@ -16,7 +16,15 @@ const fontMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: 'Synthesis Platform',
-  description: 'AI-assisted research workspace for CECS 491.',
+  description:
+    'Research workspace that answers only from your sources, with every claim cited.',
+  icons: {
+    icon: [
+      { url: '/favicon.ico', sizes: 'any' },
+      { url: '/brand/favicon.svg', type: 'image/svg+xml' },
+    ],
+    apple: '/brand/apple-touch-icon.png',
+  },
 };
 
 export default function RootLayout({ children }: LayoutProps<'/'>) {

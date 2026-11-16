@@ -1,8 +1,8 @@
-import { Sparkles } from 'lucide-react';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 
+import { LogoMark } from '@/components/logo-mark';
 import { createClient } from '@/lib/supabase/server';
 
 import { LoginForm } from './login-form';
@@ -30,9 +30,7 @@ export default async function LoginPage({ searchParams }: PageProps<'/login'>) {
       {/* Same height and gutter as SiteHeader, so the brand doesn't shift on the way here. */}
       <div className="mx-auto flex h-14 items-center px-6 pt-10">
         <Link href="/home" className="flex items-center gap-2 font-medium">
-          <span className="flex size-7 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-            <Sparkles className="size-4" />
-          </span>
+          <LogoMark />
           Synthesis
         </Link>
       </div>

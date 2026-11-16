@@ -1,18 +1,12 @@
 'use client';
 
-import {
-  BookOpen,
-  FileText,
-  LayoutGrid,
-  Layers,
-  MessageSquare,
-  Sparkles,
-} from 'lucide-react';
+import { BookOpen, FileText, LayoutGrid, Layers, MessageSquare } from 'lucide-react';
 import Link from 'next/link';
 import { useParams, usePathname } from 'next/navigation';
 
 import type { LucideIcon } from 'lucide-react';
 
+import { LogoMark } from '@/components/logo-mark';
 import { NavUser } from '@/components/nav-user';
 import {
   Sidebar,
@@ -62,8 +56,8 @@ export function AppSidebar({ email }: { email: string }) {
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" render={<Link href="/workspaces" />}>
-              <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
-                <Sparkles />
+              <div className="flex size-8 shrink-0 items-center justify-center">
+                <LogoMark className="size-8" />
               </div>
               <div className="grid flex-1 text-left text-sm leading-tight">
                 <span className="truncate font-medium">Synthesis</span>
